@@ -1,1555 +1,1487 @@
 /**
- * ============================================================================
- * 《全壘打大作戰》（Home Run Adventure）
- * 核心遊戲邏輯、知識決策系統、拋體物理引擎、Canvas 2D 渲染與 Web Audio 音效合成
- * ============================================================================
+ * 《生理時鐘大冒險》（Chronotype Adventure）
+ * 核心遊戲邏輯：關卡管理、時間排程、睡眠時數計算、衝突偵測、精神值模擬、評分與互動環境
  */
 
-(function () {
-  "use strict";
+// =============================================================================
+// 一、 音效與 Web Audio API 合成管理器（支援離線無依賴運作）
+// =============================================================================
+class SoundManager {
+  constructor() {
+    this.muted = false;
+    this.audioCtx = null;
+    this.cachedBuffers = {};
 
-  /* ==========================================================================
-     一、 音效管理模組（Web Audio API 程序化合成，零外部依賴）
-     ========================================================================== */
-  class SoundManager {
-    constructor() {
-      this.ctx = null;
-      this.enabled = true;
-      this.initialized = false;
+    // 讀取本機靜音設定
+    try {
+      this.muted = localStorage.getItem('chronotype_sound_muted') === 'true';
+    } catch (e) {
+      this.muted = false;
     }
 
-    init() {
-      if (this.initialized) return;
-      try {
-        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-        if (AudioContextClass) {
-          this.ctx = new AudioContextClass();
-          this.initialized = true;
-        }
-      } catch (e) {
-        console.warn("Web Audio API not supported", e);
-      }
-    }
+    this.initAudioContext();
+  }
 
-    resume() {
-      if (this.ctx && this.ctx.state === "suspended") {
-        this.ctx.resume();
-      }
-    }
-
-    toggle() {
-      this.enabled = !this.enabled;
-      return this.enabled;
-    }
-
-    // 1. 按鈕點擊聲（清脆泡泡音）
-    playClick() {
-      if (!this.enabled || !this.ctx) return;
-      this.resume();
-      const now = this.ctx.currentTime;
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-
-      osc.type = "sine";
-      osc.frequency.setValueAtTime(600, now);
-      osc.frequency.exponentialRampToValueAtTime(880, now + 0.08);
-
-      gain.gain.setValueAtTime(0.15, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
-
-      osc.connect(gain);
-      gain.connect(this.ctx.destination);
-
-      osc.start(now);
-      osc.stop(now + 0.08);
-    }
-
-    // 2. 揮棒破空聲（風切聲）
-    playSwing() {
-      if (!this.enabled || !this.ctx) return;
-      this.resume();
-      const now = this.ctx.currentTime;
-      const bufferSize = this.ctx.sampleRate * 0.2;
-      const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-      const output = buffer.getChannelData(0);
-      for (let i = 0; i < bufferSize; i++) {
-        output[i] = Math.random() * 2 - 1;
-      }
-
-      const whiteNoise = this.ctx.createBufferSource();
-      whiteNoise.buffer = buffer;
-
-      const filter = this.ctx.createBiquadFilter();
-      filter.type = "bandpass";
-      filter.frequency.setValueAtTime(400, now);
-      filter.frequency.exponentialRampToValueAtTime(1200, now + 0.1);
-      filter.frequency.exponentialRampToValueAtTime(300, now + 0.2);
-      filter.Q.value = 3.0;
-
-      const gain = this.ctx.createGain();
-      gain.gain.setValueAtTime(0.01, now);
-      gain.gain.linearRampToValueAtTime(0.3, now + 0.08);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
-
-      whiteNoise.connect(filter);
-      filter.connect(gain);
-      gain.connect(this.ctx.destination);
-
-      whiteNoise.start(now);
-      whiteNoise.stop(now + 0.2);
-    }
-
-    // 3. 擊球木棒清脆聲
-    playHit() {
-      if (!this.enabled || !this.ctx) return;
-      this.resume();
-      const now = this.ctx.currentTime;
-
-      // 擊球高頻瞬態沖擊
-      const osc1 = this.ctx.createOscillator();
-      const gain1 = this.ctx.createGain();
-      osc1.type = "triangle";
-      osc1.frequency.setValueAtTime(1200, now);
-      osc1.frequency.exponentialRampToValueAtTime(320, now + 0.12);
-      gain1.gain.setValueAtTime(0.5, now);
-      gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
-      osc1.connect(gain1);
-      gain1.connect(this.ctx.destination);
-      osc1.start(now);
-      osc1.stop(now + 0.12);
-
-      // 木質共振低音
-      const osc2 = this.ctx.createOscillator();
-      const gain2 = this.ctx.createGain();
-      osc2.type = "sine";
-      osc2.frequency.setValueAtTime(260, now);
-      osc2.frequency.exponentialRampToValueAtTime(90, now + 0.18);
-      gain2.gain.setValueAtTime(0.4, now);
-      gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
-      osc2.connect(gain2);
-      gain2.connect(this.ctx.destination);
-      osc2.start(now);
-      osc2.stop(now + 0.18);
-    }
-
-    // 4. 擊中全壘打牆撞擊聲
-    playWallHit() {
-      if (!this.enabled || !this.ctx) return;
-      this.resume();
-      const now = this.ctx.currentTime;
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-      osc.type = "sine";
-      osc.frequency.setValueAtTime(160, now);
-      osc.frequency.exponentialRampToValueAtTime(40, now + 0.25);
-      gain.gain.setValueAtTime(0.35, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
-      osc.connect(gain);
-      gain.connect(this.ctx.destination);
-      osc.start(now);
-      osc.stop(now + 0.25);
-    }
-
-    // 5. 全壘打慶祝歡呼與勝利和弦
-    playHomeRun() {
-      if (!this.enabled || !this.ctx) return;
-      this.resume();
-      const notes = [261.63, 329.63, 392.0, 523.25]; // C4, E4, G4, C5
-      notes.forEach((freq, i) => {
-        const startTime = this.ctx.currentTime + i * 0.12;
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-        osc.type = "triangle";
-        osc.frequency.setValueAtTime(freq, startTime);
-        gain.gain.setValueAtTime(0.25, startTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.45);
-        osc.connect(gain);
-        gain.connect(this.ctx.destination);
-        osc.start(startTime);
-        osc.stop(startTime + 0.45);
-      });
-
-      // 觀眾歡呼聲（模擬多重噪聲）
-      const bufferSize = this.ctx.sampleRate * 1.8;
-      const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-      const data = buffer.getChannelData(0);
-      for (let i = 0; i < bufferSize; i++) {
-        data[i] = Math.random() * 2 - 1;
-      }
-      const noise = this.ctx.createBufferSource();
-      noise.buffer = buffer;
-      const filter = this.ctx.createBiquadFilter();
-      filter.type = "bandpass";
-      filter.frequency.setValueAtTime(800, this.ctx.currentTime);
-      filter.Q.value = 1.5;
-
-      const cheerGain = this.ctx.createGain();
-      const cNow = this.ctx.currentTime + 0.2;
-      cheerGain.gain.setValueAtTime(0.01, cNow);
-      cheerGain.gain.linearRampToValueAtTime(0.25, cNow + 0.4);
-      cheerGain.gain.exponentialRampToValueAtTime(0.001, cNow + 1.6);
-
-      noise.connect(filter);
-      filter.connect(cheerGain);
-      cheerGain.connect(this.ctx.destination);
-      noise.start(cNow);
-      noise.stop(cNow + 1.6);
-    }
-
-    // 6. 挑戰失敗音效（下行沮喪滑音）
-    playFail() {
-      if (!this.enabled || !this.ctx) return;
-      this.resume();
-      const now = this.ctx.currentTime;
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-      osc.type = "sawtooth";
-      osc.frequency.setValueAtTime(330, now);
-      osc.frequency.linearRampToValueAtTime(140, now + 0.5);
-      gain.gain.setValueAtTime(0.2, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
-      osc.connect(gain);
-      gain.connect(this.ctx.destination);
-      osc.start(now);
-      osc.stop(now + 0.5);
-    }
-
-    // 7. 最終冠軍盛大慶典和弦
-    playChampion() {
-      if (!this.enabled || !this.ctx) return;
-      this.resume();
-      const melody = [
-        { f: 261.63, d: 0.2 },
-        { f: 261.63, d: 0.2 },
-        { f: 261.63, d: 0.2 },
-        { f: 329.63, d: 0.4 },
-        { f: 392.0, d: 0.3 },
-        { f: 523.25, d: 0.8 },
-      ];
-      let t = this.ctx.currentTime;
-      melody.forEach((note) => {
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-        osc.type = "triangle";
-        osc.frequency.setValueAtTime(note.f, t);
-        gain.gain.setValueAtTime(0.28, t);
-        gain.gain.exponentialRampToValueAtTime(0.001, t + note.d);
-        osc.connect(gain);
-        gain.connect(this.ctx.destination);
-        osc.start(t);
-        osc.stop(t + note.d);
-        t += note.d * 0.9;
-      });
+  initAudioContext() {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (AudioContextClass && !this.audioCtx) {
+      this.audioCtx = new AudioContextClass();
     }
   }
 
-  /* ==========================================================================
-     二、 關卡資料、知識決策題目與物理常數設定
-     ========================================================================== */
-  const PHYSICS = {
-    g: 9.8, // 重力加速度 (遊戲單位/秒^2)
-    vScale: 35.5, // 滿力道初速基準 (遊戲單位/秒)
-    y0: 1.2, // 打擊點離地高度 (遊戲單位)
-    ballRadius: 0.5, // 棒球物理半徑 (遊戲單位)
-    originX: 150, // Canvas 打擊點像素 X
-    groundY: 570, // Canvas 地面像素 Y
-    scale: 9.0, // 像素 / 遊戲單位 (1 遊戲單位 = 9.0 像素)
-  };
+  ensureAudioContext() {
+    if (this.audioCtx && this.audioCtx.state === 'suspended') {
+      this.audioCtx.resume();
+    }
+  }
 
-  const LEVELS = [
-    {
-      id: 1,
-      team: "紐約大都會隊",
-      name: "Citi Field（花旗球場）",
-      difficulty: "距離縮短策略",
-      distance: 75,
-      height: 5,
-      wallColor: "#002d72", // 大都會隊深藍
-      wallTopColor: "#ff5910", // 大都會隊亮橘
-      skyColor: ["#64b5f6", "#e3f2fd"],
-      flagText: "Citi Field",
+  toggleMute() {
+    this.muted = !this.muted;
+    try {
+      localStorage.setItem('chronotype_sound_muted', this.muted);
+    } catch (e) {}
+    return this.muted;
+  }
 
-      // 知識決策題目
-      decision: {
-        badge: "⚾ 球團總管決策室 ． 第 1 關",
-        title: "大都會隊的困境",
-        context: "隊上打者最近手感冰冷，全壘打遲遲打不出來，球迷直呼比賽沉悶！身為球團總管，休賽季該如何改建主場，幫助自家打者更容易轟出全壘打？",
-        optA: "把全壘打牆距離向前縮短",
-        optB: "把全壘打牆往後退（拉長距離）",
-        correctChoice: "A",
-        correctFeedback: "🎯 決策完全正確！球場改建中...",
-        wrongFeedback: "🤔 哎呀！如果圍牆往後退，打者會更難打出全壘打喔！",
-        knowledgeText: "💡 知識小百科：2013 年紐約大都會隊主場（Citi Field）就曾因應球員打擊能力不佳而將全壘打牆距離大幅縮短，結果成功提升了隊上球員的全壘打產量，有效拯救了進攻火力！",
+  // 1. 點擊音效（柔和 Pop 聲）
+  playClick() {
+    if (this.muted) return;
+    this.ensureAudioContext();
+    if (!this.audioCtx) return;
+
+    const t = this.audioCtx.currentTime;
+    const osc = this.audioCtx.createOscillator();
+    const gain = this.audioCtx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(650, t);
+    osc.frequency.exponentialRampToValueAtTime(300, t + 0.08);
+
+    gain.gain.setValueAtTime(0.2, t);
+    gain.gain.exponentialRampToValueAtTime(0.01, t + 0.08);
+
+    osc.connect(gain);
+    gain.connect(this.audioCtx.destination);
+
+    osc.start(t);
+    osc.stop(t + 0.08);
+  }
+
+  // 2. 卡片吸附鎖定音效（清脆 Snap 雙音）
+  playSnap() {
+    if (this.muted) return;
+    this.ensureAudioContext();
+    if (!this.audioCtx) return;
+
+    const t = this.audioCtx.currentTime;
+    const osc = this.audioCtx.createOscillator();
+    const gain = this.audioCtx.createGain();
+
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(523.25, t); // C5
+    osc.frequency.setValueAtTime(783.99, t + 0.06); // G5
+
+    gain.gain.setValueAtTime(0.25, t);
+    gain.gain.exponentialRampToValueAtTime(0.01, t + 0.14);
+
+    osc.connect(gain);
+    gain.connect(this.audioCtx.destination);
+
+    osc.start(t);
+    osc.stop(t + 0.14);
+  }
+
+  // 3. 成功音效（輕快上行琶音）
+  playSuccess() {
+    if (this.muted) return;
+    this.ensureAudioContext();
+    if (!this.audioCtx) return;
+
+    const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+    const t = this.audioCtx.currentTime;
+
+    notes.forEach((freq, idx) => {
+      const osc = this.audioCtx.createOscillator();
+      const gain = this.audioCtx.createGain();
+      const noteTime = t + idx * 0.1;
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, noteTime);
+
+      gain.gain.setValueAtTime(0.2, noteTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, noteTime + 0.18);
+
+      osc.connect(gain);
+      gain.connect(this.audioCtx.destination);
+
+      osc.start(noteTime);
+      osc.stop(noteTime + 0.18);
+    });
+  }
+
+  // 4. 評分叮咚音效
+  playScore() {
+    if (this.muted) return;
+    this.ensureAudioContext();
+    if (!this.audioCtx) return;
+
+    const t = this.audioCtx.currentTime;
+    const osc = this.audioCtx.createOscillator();
+    const gain = this.audioCtx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(880, t); // A5
+    osc.frequency.exponentialRampToValueAtTime(440, t + 0.3);
+
+    gain.gain.setValueAtTime(0.25, t);
+    gain.gain.exponentialRampToValueAtTime(0.01, t + 0.3);
+
+    osc.connect(gain);
+    gain.connect(this.audioCtx.destination);
+
+    osc.start(t);
+    osc.stop(t + 0.3);
+  }
+
+  // 5. 最終通關歡慶大合音
+  playFanfare() {
+    if (this.muted) return;
+    this.ensureAudioContext();
+    if (!this.audioCtx) return;
+
+    const chords = [
+      { t: 0.0, freqs: [523.25, 659.25, 783.99] }, // C
+      { t: 0.3, freqs: [587.33, 739.99, 880.00] }, // D
+      { t: 0.6, freqs: [659.25, 830.61, 1046.50] }, // E
+      { t: 0.9, freqs: [783.99, 987.77, 1318.51] }  // G
+    ];
+
+    const baseT = this.audioCtx.currentTime;
+    chords.forEach(chord => {
+      chord.freqs.forEach(freq => {
+        const osc = this.audioCtx.createOscillator();
+        const gain = this.audioCtx.createGain();
+        const startT = baseT + chord.t;
+
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, startT);
+
+        gain.gain.setValueAtTime(0.12, startT);
+        gain.gain.exponentialRampToValueAtTime(0.005, startT + 0.35);
+
+        osc.connect(gain);
+        gain.connect(this.audioCtx.destination);
+
+        osc.start(startT);
+        osc.stop(startT + 0.35);
+      });
+    });
+  }
+}
+
+// =============================================================================
+// 二、 關卡資料與時段模型定義（Level Configurations）
+// =============================================================================
+const LEVELS = [
+  // -------------------------------------------------------------
+  // 第一關：晨光活力計畫（Inu - 晨型人）
+  // -------------------------------------------------------------
+  {
+    id: 1,
+    name: '第一關：晨光活力計畫',
+    character: 'inu',
+    charName: 'Inu（晨型人）',
+    typeBadge: '🌅 晨型人代表',
+    typeClass: 'morning',
+    avatar: 'assets/characters/inu.svg',
+    story: '「Inu 喜歡早起，早上總是精神滿滿！可是今天他的時間表被打亂了。你能幫他重新安排一天的生活，確保充足睡眠嗎？」',
+    targetSleep: 9.5, // 建議 9.5 小時
+    slots: [
+      {
+        id: 'slot_sleep_night',
+        timeRange: '21:00～06:30',
+        period: '深夜至清晨',
+        hours: 9.5,
+        isFixed: false,
+        isSleepSlot: true,
+        bestActId: 'act_sleep',
+        label: '晚間深層好眠時段'
       },
-
-      tip: "圍牆已向前縮短至 75 單位！試著調整角度與力道，轟出大都會隊的第一支全壘打吧！",
-      successMsg: "全壘打！漂亮的一擊！圍牆距離一縮短，剛才那球就順利轟過大都會隊外野了！",
-      summaryKnowledge: "💡 知識小結：縮短全壘打牆距離，是最直接讓全壘打數量增加的球場改建方式！",
-    },
-    {
-      id: 2,
-      team: "波士頓紅襪隊",
-      name: "芬威球場（綠色怪物）",
-      difficulty: "高牆仰角挑戰",
-      distance: 75,
-      height: 18,
-      wallColor: "#1d472a", // 傳奇綠色怪物芬威綠
-      wallTopColor: "#ffeb3b",
-      skyColor: ["#42a5f5", "#bbdefb"],
-      flagText: "綠色怪物 11M",
-
-      // 知識決策題目
-      decision: {
-        badge: "⚾ 球團總管決策室 ． 第 2 關",
-        title: "波士頓紅襪隊的綠色怪物",
-        context: "紅襪隊主場（芬威球場）位於市區，受街區地形限制，左外野距離本壘非常近（僅 310 英尺），很容易被對手隨便撈出全壘打！在無法向外擴建土地的情況下，身為總管該怎麼防堵對手的全壘打？",
-        optA: "把左外野圍牆大幅加高（建造高牆障礙）",
-        optB: "把左外野圍牆拆掉或降低高度",
-        correctChoice: "A",
-        correctFeedback: "🎯 太有遠見了！傳奇綠色怪物誕生！",
-        wrongFeedback: "🤔 哎呀！如果降低圍牆，對手會更容易撈出全壘打，投手會哭暈在投手丘上！",
-        knowledgeText: "💡 知識小百科：波士頓紅襪隊因街區限制無法拉長外野，於是一口氣將左外野圍牆加高到 11 公尺！這面巨大綠色圍牆就是大聯盟著名的『綠色怪物（Green Monster）』！打者必須打出極高仰角才能翻過高牆！",
+      {
+        id: 'slot_wake_morning',
+        timeRange: '06:30～07:15',
+        period: '清晨甦醒',
+        hours: 0.75,
+        isFixed: false,
+        isSleepSlot: false,
+        bestActId: 'act_wakeup',
+        label: '晨間甦醒梳洗時段'
       },
-
-      tip: "眼前就是 11 公尺高的綠色怪物！光打得遠還不夠，試著調高擊球角度，才能翻越高牆！",
-      successMsg: "太神啦！你用高仰角漂亮飛越了 11 公尺高的綠色怪物！",
-      summaryKnowledge: "💡 知識小結：面對腹地不足的短外野，加高圍牆能有效防禦全壘打，考驗打者的高仰角打擊技巧！",
-    },
-    {
-      id: 3,
-      team: "科羅拉多落磯隊",
-      name: "庫爾斯球場（高原天堂）",
-      difficulty: "高海拔極限距離",
-      distance: 105,
-      height: 5,
-      wallColor: "#330066", // 落磯隊經典深紫
-      wallTopColor: "#c0c0c0", // 銀白
-      skyColor: ["#ff9800", "#fff3e0"], // 冠軍黃昏氛圍
-      flagText: "海拔 1600M 庫爾斯球場",
-
-      // 知識決策題目
-      decision: {
-        badge: "⚾ 球團總管決策室 ． 第 3 關",
-        title: "科羅拉多落磯隊的高原天堂",
-        context: "落磯隊主場海拔超過 1,600 公尺，高山空氣稀薄、地心引力與空氣阻力小，棒球被擊中後容易飛得極遠！為了避免比賽失衡被打成全壘打大賽、保護自家投手，建造球場時球團該怎麼做？",
-        optA: "把全壘打牆的距離加長（建造超深遠外野）",
-        optB: "把全壘打牆的距離縮短到只有 250 英尺",
-        correctChoice: "A",
-        correctFeedback: "🎯 完美決策！打造大聯盟最深遠的外野！",
-        wrongFeedback: "🤔 哎呀！如果把圍牆縮短，在高山空氣稀薄條件下，每場比賽恐怕會被打爆成全壘打大賽！",
-        knowledgeText: "💡 知識小百科：落磯隊球場被稱為『打者天堂、投手墳場』！球團在興建時便將全壘打牆加長（中外野深達 415 英尺），但因為高山空氣稀薄阻力小，至今仍經常出現超過 500 英尺的超大號全壘打！",
+      {
+        id: 'slot_breakfast_morning',
+        timeRange: '07:15～07:50',
+        period: '晨間早餐',
+        hours: 0.58,
+        isFixed: false,
+        isSleepSlot: false,
+        bestActId: 'act_breakfast',
+        label: '活力營養早餐時段'
       },
+      {
+        id: 'slot_school_day',
+        timeRange: '08:00～16:00',
+        period: '白天學習',
+        hours: 8.0,
+        isFixed: true,
+        fixedAct: {
+          id: 'act_school',
+          name: '學校上學課程',
+          icon: '🏫',
+          type: '學習',
+          desc: '固定課堂學習'
+        },
+        isSleepSlot: false,
+        bestActId: 'act_school',
+        label: '學校固定上學時間'
+      },
+      {
+        id: 'slot_exercise_afternoon',
+        timeRange: '16:30～17:30',
+        period: '課後傍晚',
+        hours: 1.0,
+        isFixed: false,
+        isSleepSlot: false,
+        bestActId: 'act_sport',
+        label: '課後體育運動時段'
+      },
+      {
+        id: 'slot_study_evening',
+        timeRange: '18:30～19:45',
+        period: '夜間專注',
+        hours: 1.25,
+        isFixed: false,
+        isSleepSlot: false,
+        bestActId: 'act_study',
+        label: '晚間作業複習時段'
+      },
+      {
+        id: 'slot_rest_prebed',
+        timeRange: '20:00～21:00',
+        period: '睡前準備',
+        hours: 1.0,
+        isFixed: false,
+        isSleepSlot: false,
+        bestActId: 'act_rest',
+        label: '睡前放鬆沉澱時段'
+      }
+    ],
+    cards: [
+      { id: 'act_wakeup', name: '晨間起床', icon: '🌅', type: '起床', desc: '起床梳洗、拉開窗簾' },
+      { id: 'act_breakfast', name: '營養早餐', icon: '🍳', type: '飲食', desc: '補充早晨活力' },
+      { id: 'act_sport', name: '戶外運動', icon: '⚽', type: '運動', desc: '跑步、打球活絡筋骨' },
+      { id: 'act_study', name: '作業讀書', icon: '📖', type: '學習', desc: '專注完成學校作業' },
+      { id: 'act_rest', name: '放鬆休息', icon: '🍵', type: '休息', desc: '聊天、整理書包' },
+      { id: 'act_sleep', name: '充足睡眠', icon: '💤', type: '睡眠', desc: '安心進入深層睡眠' }
+    ]
+  },
 
-      tip: "高山球場外野深達 105 單位！將力道拉滿、找出 40°~45° 的最佳拋物線，轟出 500 英尺超大號全壘打！",
-      successMsg: "超大號冠軍全壘打！在高海拔稀薄空氣下，你轟出了超越 500 英尺的冠軍極限遠射！",
-      summaryKnowledge: "💡 知識小結：高海拔空氣稀薄、阻力較小，球能飛得更遠，因此球場需要更深遠的圍牆來平衡比賽！",
-    },
-  ];
+  // -------------------------------------------------------------
+  // 第二關：夜貓子的時間表（Neko - 夜型人 - 假日自由安排）
+  // -------------------------------------------------------------
+  {
+    id: 2,
+    name: '第二關：夜貓子的時間表',
+    character: 'neko',
+    charName: 'Neko（夜型人）',
+    typeBadge: '🌙 夜型人代表',
+    typeClass: 'night',
+    avatar: 'assets/characters/neko.svg',
+    story: '「Neko 晚上總是比較有精神！大家卻一直叫他早點睡、早點起。今天是週末假日，你能幫 Neko 安排一份符合夜型作息的生活時間表嗎？」',
+    targetSleep: 9.5, // 23:00～08:30 = 9.5 小時
+    slots: [
+      {
+        id: 'slot_sleep_night',
+        timeRange: '23:00～08:30',
+        period: '深夜至早晨',
+        hours: 9.5,
+        isFixed: false,
+        isSleepSlot: true,
+        bestActId: 'act_sleep',
+        label: '夜型人深層好眠時段'
+      },
+      {
+        id: 'slot_wake_morning',
+        timeRange: '08:30～09:30',
+        period: '早晨甦醒',
+        hours: 1.0,
+        isFixed: false,
+        isSleepSlot: false,
+        bestActId: 'act_wakeup',
+        label: '自然醒甦醒時段'
+      },
+      {
+        id: 'slot_brunch_morning',
+        timeRange: '09:30～10:30',
+        period: '上午早午餐',
+        hours: 1.0,
+        isFixed: false,
+        isSleepSlot: false,
+        bestActId: 'act_breakfast',
+        label: '美味早午餐時段'
+      },
+      {
+        id: 'slot_exercise_afternoon',
+        timeRange: '14:30～16:00',
+        period: '下午活力',
+        hours: 1.5,
+        isFixed: false,
+        isSleepSlot: false,
+        bestActId: 'act_sport',
+        label: '午後戶外運動時段'
+      },
+      {
+        id: 'slot_rest_evening',
+        timeRange: '16:30～18:00',
+        period: '傍晚休閒',
+        hours: 1.5,
+        isFixed: false,
+        isSleepSlot: false,
+        bestActId: 'act_rest',
+        label: '傍晚休閒放鬆時段'
+      },
+      {
+        id: 'slot_study_night',
+        timeRange: '19:30～21:30',
+        period: '夜間專注高峰',
+        hours: 2.0,
+        isFixed: false,
+        isSleepSlot: false,
+        bestActId: 'act_study',
+        label: '夜貓專注高效自學時段'
+      }
+    ],
+    cards: [
+      { id: 'act_wakeup', name: '自然醒起床', icon: '🛌', type: '起床', desc: '充足休息後自然醒' },
+      { id: 'act_breakfast', name: '美味早午餐', icon: '🥞', type: '飲食', desc: '營養均衡的早午餐' },
+      { id: 'act_sport', name: '體育運動', icon: '🏃', type: '運動', desc: '慢跑、伸展運動' },
+      { id: 'act_rest', name: '休閒放鬆', icon: '🎮', type: '休息', desc: '音樂、繪畫或閱讀' },
+      { id: 'act_study', name: '夜間高效學習', icon: '💡', type: '學習', desc: '夜間精神敏銳時段' },
+      { id: 'act_sleep', name: '夜間充足睡眠', icon: '🌙', type: '睡眠', desc: '睡滿 9.5 小時好眠' }
+    ]
+  },
 
-  /* ==========================================================================
-     三、 粒子系統（彩帶與星星火花）
-     ========================================================================== */
-  class ParticleSystem {
-    constructor() {
-      this.particles = [];
-      this.colors = ["#f44336", "#e91e63", "#9c27b0", "#2196f3", "#4caf50", "#ffeb3b", "#ff9800"];
+  // -------------------------------------------------------------
+  // 第三關：健康作息大挑戰（Neko + Usagi - 12歲上學日作息調整）
+  // -------------------------------------------------------------
+  {
+    id: 3,
+    name: '第三關：健康作息大挑戰',
+    character: 'neko_usagi',
+    charName: 'Neko（12 歲學生）',
+    typeBadge: '🌟 挑戰關卡',
+    typeClass: 'challenge',
+    avatar: 'assets/characters/neko.svg',
+    story: '「明天早上 8 點就要上學了！可是 12 歲的 Neko 平常習慣晚睡，早上常起不來。Usagi 決定陪他一起調整作息。你能幫助 Neko 兼顧固定上學與健康睡眠嗎？」',
+    targetSleep: 9.5, // 21:30～07:00 = 9.5 小時（符合 12 歲兒童 9-12 小時建議）
+    slots: [
+      {
+        id: 'slot_sleep_night',
+        timeRange: '21:30～07:00',
+        period: '深夜至清晨',
+        hours: 9.5,
+        isFixed: false,
+        isSleepSlot: true,
+        bestActId: 'act_sleep',
+        label: '提早就寢深層好眠（9.5 小時）'
+      },
+      {
+        id: 'slot_wake_morning',
+        timeRange: '07:00～07:30',
+        period: '清晨準時起床',
+        hours: 0.5,
+        isFixed: false,
+        isSleepSlot: false,
+        bestActId: 'act_wakeup',
+        label: '07:00 準時甦醒梳洗'
+      },
+      {
+        id: 'slot_breakfast_morning',
+        timeRange: '07:30～08:00',
+        period: '晨間營養早餐',
+        hours: 0.5,
+        isFixed: false,
+        isSleepSlot: false,
+        bestActId: 'act_breakfast',
+        label: '出門前營養早餐'
+      },
+      {
+        id: 'slot_school_fixed',
+        timeRange: '08:00～16:00',
+        period: '固定學校作息',
+        hours: 8.0,
+        isFixed: true,
+        fixedAct: {
+          id: 'act_school_fixed',
+          name: '學校固定課程',
+          icon: '🏫',
+          type: '學習',
+          desc: '準時上學不遲到'
+        },
+        isSleepSlot: false,
+        bestActId: 'act_school_fixed',
+        label: '學校固定上學時間（不可衝突）'
+      },
+      {
+        id: 'slot_homework_evening',
+        timeRange: '18:30～20:00',
+        period: '晚間作業複習',
+        hours: 1.5,
+        isFixed: false,
+        isSleepSlot: false,
+        bestActId: 'act_study',
+        label: '課後作業與課業複習'
+      },
+      {
+        id: 'slot_relax_prebed',
+        timeRange: '20:30～21:30',
+        period: '睡前放鬆活動',
+        hours: 1.0,
+        isFixed: false,
+        isSleepSlot: false,
+        bestActId: 'act_relax',
+        label: '睡前放鬆與環境調整'
+      }
+    ],
+    cards: [
+      { id: 'act_sleep', name: '提早睡眠', icon: '🛌', type: '睡眠', desc: '睡足 9.5 小時好眠' },
+      { id: 'act_wakeup', name: '準時起床', icon: '⏰', type: '起床', desc: '07:00 鬧鐘響起' },
+      { id: 'act_breakfast', name: '活力早餐', icon: '🥣', type: '飲食', desc: '補足晨間上學能量' },
+      { id: 'act_study', name: '作業複習', icon: '📖', type: '學習', desc: '專注完成當日功課' },
+      { id: 'act_relax', name: '睡前放鬆活動', icon: '🧘', type: '休息', desc: '聽輕音樂、簡單伸展' }
+    ]
+  }
+];
+
+// =============================================================================
+// 三、 第三關臥室物件互動定義（Bedroom Interactive Items）
+// =============================================================================
+const BEDROOM_ITEMS = {
+  phone: {
+    name: '手機使用',
+    icon: '📱',
+    badState: '睡前滑手機中',
+    goodState: '關閉手機放進收納盒',
+    badReason: '睡前滑手機螢幕藍光刺激大腦，會強烈抑制褪黑激素分泌！',
+    goodReason: '太棒了！睡前 1 小時停止使用手機，大腦能順利切換到休息模式！'
+  },
+  lamp: {
+    name: '臥室燈光',
+    icon: '💡',
+    badState: '刺眼強光 (100%)',
+    goodState: '柔和暖黃夜燈 (20%)',
+    badReason: '刺眼的大白光會讓身體誤以為仍處於正午，難以產生睡意！',
+    goodReason: '降低燈光亮度並改用暖色光，能向大腦發出「夜晚已到」的生理訊號！'
+  },
+  desk: {
+    name: '書桌狀態',
+    icon: '📚',
+    badState: '散落考卷雜物',
+    goodState: '收拾整齊書包已備',
+    badReason: '雜亂的課本容易帶來心理壓力和焦慮，影響入睡放鬆！',
+    goodReason: '將書包與作業收拾整齊，代表今天的任務結束，心情更踏實好眠！'
+  },
+  curtain: {
+    name: '臥室窗簾',
+    icon: '🪟',
+    badState: '大開（路燈直射）',
+    goodState: '拉上雙層遮光窗簾',
+    badReason: '窗外的路燈與清晨強光會干擾褪黑激素與深度睡眠週期！',
+    goodReason: '拉上遮光窗簾營造幽暗安靜的睡眠環境，睡眠品質大幅提升！'
+  },
+  alarm: {
+    name: '起床鬧鐘',
+    icon: '⏰',
+    badState: '未定鬧鐘',
+    goodState: '設定 07:00 鬧鐘',
+    badReason: '沒定鬧鐘容易睡過頭或讓晨間出門時手忙腳亂，增加緊張感！',
+    goodReason: '設定 07:00 鬧鐘，保留充足時間梳洗吃早餐，上學從容不迫！'
+  },
+  bed: {
+    name: '床鋪整潔',
+    icon: '🛏️',
+    badState: '堆滿雜物',
+    goodState: '蓬鬆舒適床鋪',
+    badReason: '床上堆滿雜物會影響睡眠姿勢，且無法建立床鋪與睡眠的良好大腦制約！',
+    goodReason: '乾淨舒適的床鋪能強化「上床就是要放鬆入睡」的正向大腦制約！'
+  }
+};
+
+// =============================================================================
+// 四、 遊戲主體狀態機與控制器（Game Controller）
+// =============================================================================
+class ChronotypeGame {
+  constructor() {
+    this.sound = new SoundManager();
+    this.currentLevelIndex = 0;
+    this.playerSchedule = {}; // { [slotId]: cardObject }
+    this.selectedCard = null; // 支援「點擊卡片 ➔ 點擊槽位」雙模式
+    this.roomItemsState = {
+      phone: false,
+      lamp: false,
+      desk: false,
+      curtain: false,
+      alarm: false,
+      bed: false
+    };
+
+    // Confetti 動畫狀態
+    this.confettiCanvas = null;
+    this.confettiCtx = null;
+    this.confettiParticles = [];
+    this.confettiAnimId = null;
+
+    this.initDOMReferences();
+    this.bindEvents();
+    this.updateSoundIcon();
+  }
+
+  // 1. 初始化 DOM 參考
+  initDOMReferences() {
+    // 畫面 Sections
+    this.screenStart = document.getElementById('screen-start');
+    this.screenLevel = document.getElementById('screen-level');
+    this.modalEval = document.getElementById('modal-eval');
+    this.screenVictory = document.getElementById('screen-victory');
+
+    // 頂部 HUD
+    this.hudLevelTag = document.getElementById('hud-level-tag');
+    this.hudLevelTitle = document.getElementById('hud-level-title');
+    this.hudCharAvatar = document.getElementById('hud-char-avatar');
+    this.hudCharName = document.getElementById('hud-char-name');
+    this.hudSleepHours = document.getElementById('hud-sleep-hours');
+    this.hudSleepStatus = document.getElementById('hud-sleep-status');
+    this.hudEnergyBar = document.getElementById('hud-energy-bar');
+    this.hudEnergyVal = document.getElementById('hud-energy-val');
+    this.btnSoundToggle = document.getElementById('btn-sound-toggle');
+    this.soundIcon = document.getElementById('sound-icon');
+    this.btnResetLevel = document.getElementById('btn-reset-level');
+
+    // 關卡引導與橫幅
+    this.levelStoryAvatar = document.getElementById('level-story-avatar');
+    this.levelTagBadge = document.getElementById('level-tag-badge');
+    this.characterTypeBadge = document.getElementById('character-type-badge');
+    this.levelStoryText = document.getElementById('level-story-text');
+
+    // 第三關臥室面板
+    this.level3EnvPanel = document.getElementById('level3-environment-panel');
+    this.envCompletedCount = document.getElementById('env-completed-count');
+    this.envRequirementTag = document.getElementById('env-requirement-tag');
+    this.roomDialogText = document.getElementById('room-dialog-text');
+
+    // 時間軸與卡片托盤
+    this.slotsGrid = document.getElementById('slots-grid');
+    this.cardsTray = document.getElementById('cards-tray');
+    this.trayCountBadge = document.getElementById('tray-count-badge');
+    this.placedSlotsCount = document.getElementById('placed-slots-count');
+    this.totalSlotsCount = document.getElementById('total-slots-count');
+
+    // 精神評估與即時回饋
+    this.energyFaceEmoji = document.getElementById('energy-face-emoji');
+    this.energyGradeText = document.getElementById('energy-grade-text');
+    this.energyGaugeFill = document.getElementById('energy-gauge-fill');
+    this.liveCompanionTip = document.getElementById('live-companion-tip');
+    this.btnCheckSchedule = document.getElementById('btn-check-schedule');
+
+    // 結算彈窗評分項目
+    this.evalTierStamp = document.getElementById('eval-tier-stamp');
+    this.evalLevelName = document.getElementById('eval-level-name');
+    this.evalTotalScore = document.getElementById('eval-total-score');
+    this.rubricScoreSleep = document.getElementById('rubric-score-sleep');
+    this.rubricBarSleep = document.getElementById('rubric-bar-sleep');
+    this.rubricDescSleep = document.getElementById('rubric-desc-sleep');
+    this.rubricScoreSchedule = document.getElementById('rubric-score-schedule');
+    this.rubricBarSchedule = document.getElementById('rubric-bar-schedule');
+    this.rubricDescSchedule = document.getElementById('rubric-desc-schedule');
+    this.rubricScoreChronotype = document.getElementById('rubric-score-chronotype');
+    this.rubricBarChronotype = document.getElementById('rubric-bar-chronotype');
+    this.rubricDescChronotype = document.getElementById('rubric-desc-chronotype');
+    this.rubricScoreHabits = document.getElementById('rubric-score-habits');
+    this.rubricBarHabits = document.getElementById('rubric-bar-habits');
+    this.rubricDescHabits = document.getElementById('rubric-desc-habits');
+    this.evalDetailedFeedback = document.getElementById('eval-detailed-feedback');
+    this.btnEvalTweak = document.getElementById('btn-eval-tweak');
+    this.btnEvalNext = document.getElementById('btn-eval-next');
+    this.btnEvalNextText = document.getElementById('btn-eval-next-text');
+
+    // 最終通關按鈕
+    this.btnVictoryReplay = document.getElementById('btn-victory-replay');
+    this.btnVictoryHome = document.getElementById('btn-victory-home');
+
+    // 浮動提示 Toast
+    this.toastElem = document.getElementById('toast-toast');
+    this.toastText = document.getElementById('toast-text');
+
+    // 開始冒險按鈕
+    this.btnStartAdventure = document.getElementById('btn-start-adventure');
+  }
+
+  // 2. 綁定按鈕與全域互動事件
+  bindEvents() {
+    // 開始冒險
+    this.btnStartAdventure.addEventListener('click', () => {
+      this.sound.playClick();
+      this.startLevel(0);
+    });
+
+    // 音效開關
+    this.btnSoundToggle.addEventListener('click', () => {
+      const isMuted = this.sound.toggleMute();
+      this.updateSoundIcon();
+      if (!isMuted) this.sound.playClick();
+    });
+
+    // 重設本關
+    this.btnResetLevel.addEventListener('click', () => {
+      this.sound.playClick();
+      this.resetCurrentLevel();
+      this.showToast('已重設本關時間表！');
+    });
+
+    // 檢查我的時間表
+    this.btnCheckSchedule.addEventListener('click', () => {
+      this.sound.playClick();
+      this.evaluateSchedule();
+    });
+
+    // 結算彈窗按鈕
+    this.btnEvalTweak.addEventListener('click', () => {
+      this.sound.playClick();
+      this.closeModal();
+    });
+
+    this.btnEvalNext.addEventListener('click', () => {
+      this.sound.playClick();
+      this.closeModal();
+      if (this.currentLevelIndex < LEVELS.length - 1) {
+        this.startLevel(this.currentLevelIndex + 1);
+      } else {
+        this.showVictoryScreen();
+      }
+    });
+
+    // 最終畫面按鈕
+    this.btnVictoryReplay.addEventListener('click', () => {
+      this.sound.playClick();
+      this.stopConfetti();
+      this.startLevel(0);
+    });
+
+    this.btnVictoryHome.addEventListener('click', () => {
+      this.sound.playClick();
+      this.stopConfetti();
+      this.showStartScreen();
+    });
+
+    // 第三關臥室物件點擊切換
+    const roomBtns = document.querySelectorAll('.room-item-btn');
+    roomBtns.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const itemKey = btn.dataset.item;
+        this.toggleRoomItem(itemKey);
+      });
+    });
+
+    // 視窗大小改變時重整 Confetti Canvas
+    window.addEventListener('resize', () => {
+      if (this.confettiCanvas) {
+        this.confettiCanvas.width = this.screenVictory.clientWidth;
+        this.confettiCanvas.height = this.screenVictory.clientHeight;
+      }
+    });
+  }
+
+  updateSoundIcon() {
+    this.soundIcon.textContent = this.sound.muted ? '🔇' : '🔊';
+  }
+
+  showToast(message) {
+    if (!this.toastElem) return;
+    this.toastText.textContent = message;
+    this.toastElem.classList.remove('toast-hidden');
+
+    if (this.toastTimeout) clearTimeout(this.toastTimeout);
+    this.toastTimeout = setTimeout(() => {
+      this.toastElem.classList.add('toast-hidden');
+    }, 2500);
+  }
+
+  showStartScreen() {
+    this.screenStart.classList.add('active');
+    this.screenLevel.classList.remove('active');
+    this.modalEval.classList.remove('active');
+    this.screenVictory.classList.remove('active');
+  }
+
+  // ===========================================================================
+  // 五、 關卡啟動與介面渲染（Level Initialization & UI Rendering）
+  // ===========================================================================
+  startLevel(levelIndex) {
+    this.currentLevelIndex = levelIndex;
+    const level = LEVELS[levelIndex];
+
+    // 切換顯示
+    this.screenStart.classList.remove('active');
+    this.screenLevel.classList.add('active');
+    this.modalEval.classList.remove('active');
+    this.screenVictory.classList.remove('active');
+
+    // 重設狀態
+    this.playerSchedule = {};
+    this.selectedCard = null;
+
+    // 若第三關，重設房間物件狀態
+    if (level.id === 3) {
+      this.roomItemsState = {
+        phone: false,
+        lamp: false,
+        desk: false,
+        curtain: false,
+        alarm: false,
+        bed: false
+      };
+      this.level3EnvPanel.classList.remove('room-panel-hidden');
+      this.updateRoomItemsUI();
+    } else {
+      this.level3EnvPanel.classList.add('room-panel-hidden');
     }
 
-    // 爆發慶祝彩帶
-    explodeConfetti(x, y, count = 120) {
-      for (let i = 0; i < count; i++) {
-        const angle = Math.random() * Math.PI * 2;
-        const speed = 2 + Math.random() * 8;
-        this.particles.push({
-          x: x,
-          y: y,
-          vx: Math.cos(angle) * speed,
-          vy: Math.sin(angle) * speed - 3,
-          color: this.colors[Math.floor(Math.random() * this.colors.length)],
-          size: 6 + Math.random() * 6,
-          rotation: Math.random() * 360,
-          rotSpeed: (Math.random() - 0.5) * 15,
-          alpha: 1,
-          gravity: 0.15,
-          life: 90 + Math.random() * 40,
-          type: Math.random() > 0.4 ? "rect" : "star",
+    // 更新 HUD 資訊
+    this.hudLevelTag.textContent = `關卡 ${level.id}／${LEVELS.length}`;
+    this.hudLevelTitle.textContent = level.name.replace(/^第[一二三]關：/, '');
+    this.hudCharAvatar.src = level.avatar;
+    this.hudCharName.textContent = level.charName;
+
+    // 更新關卡引導條
+    this.levelStoryAvatar.src = level.avatar;
+    this.levelTagBadge.textContent = level.name;
+    this.characterTypeBadge.textContent = level.typeBadge;
+    this.characterTypeBadge.className = `type-badge ${level.typeClass}`;
+    this.levelStoryText.textContent = level.story;
+
+    // 若槽位中有固定活動，自動填入
+    level.slots.forEach(slot => {
+      if (slot.isFixed && slot.fixedAct) {
+        this.playerSchedule[slot.id] = { ...slot.fixedAct, isFixed: true };
+      }
+    });
+
+    // 渲染槽位與卡片
+    this.renderSlots();
+    this.renderCardsTray();
+    this.updateStatsAndInsights();
+  }
+
+  resetCurrentLevel() {
+    const level = LEVELS[this.currentLevelIndex];
+    this.playerSchedule = {};
+    this.selectedCard = null;
+
+    // 固定活動保留
+    level.slots.forEach(slot => {
+      if (slot.isFixed && slot.fixedAct) {
+        this.playerSchedule[slot.id] = { ...slot.fixedAct, isFixed: true };
+      }
+    });
+
+    this.renderSlots();
+    this.renderCardsTray();
+    this.updateStatsAndInsights();
+  }
+
+  // 3. 渲染槽位（Timeline Slots）
+  renderSlots() {
+    const level = LEVELS[this.currentLevelIndex];
+    this.slotsGrid.innerHTML = '';
+
+    level.slots.forEach(slot => {
+      const slotElem = document.createElement('div');
+      slotElem.className = 'time-slot';
+      slotElem.dataset.slotId = slot.id;
+
+      const placedAct = this.playerSchedule[slot.id];
+
+      // 頂部時段標籤
+      const metaDiv = document.createElement('div');
+      metaDiv.className = 'slot-meta';
+      metaDiv.innerHTML = `
+        <span class="slot-time-range">${slot.timeRange}</span>
+        <span class="slot-period-tag">${slot.period}</span>
+      `;
+      slotElem.appendChild(metaDiv);
+
+      if (slot.isFixed) {
+        // 固定時段（如學校固定課程）
+        slotElem.classList.add('slot-fixed');
+        const actCardDiv = document.createElement('div');
+        actCardDiv.className = 'slot-activity-card';
+        actCardDiv.innerHTML = `
+          <div class="slot-act-left">
+            <span class="slot-act-icon">${placedAct.icon}</span>
+            <span class="slot-act-name">${placedAct.name}</span>
+            <span class="slot-fixed-badge">固定上學</span>
+          </div>
+        `;
+        slotElem.appendChild(actCardDiv);
+      } else if (placedAct) {
+        // 已排入玩家活動卡片
+        slotElem.classList.add('slot-filled');
+        const actCardDiv = document.createElement('div');
+        actCardDiv.className = 'slot-activity-card';
+        actCardDiv.innerHTML = `
+          <div class="slot-act-left">
+            <span class="slot-act-icon">${placedAct.icon}</span>
+            <div>
+              <div class="slot-act-name">${placedAct.name}</div>
+              <span class="slot-act-type-tag">${placedAct.type}</span>
+            </div>
+          </div>
+          <button class="slot-act-remove-btn" title="移回卡片" aria-label="移回卡片">✕</button>
+        `;
+
+        // 點擊移除按鈕移回托盤
+        actCardDiv.querySelector('.slot-act-remove-btn').addEventListener('click', (e) => {
+          e.stopPropagation();
+          this.removeActivityFromSlot(slot.id);
         });
+
+        slotElem.appendChild(actCardDiv);
+      } else {
+        // 尚未安排卡片
+        slotElem.classList.add('slot-empty');
+        const placeholderDiv = document.createElement('div');
+        placeholderDiv.className = 'slot-placeholder';
+        placeholderDiv.innerHTML = `
+          <span>📥 點擊或拖曳安排活動</span>
+        `;
+        slotElem.appendChild(placeholderDiv);
+      }
+
+      // 綁定拖曳吸附（HTML5 Drag & Drop）事件
+      if (!slot.isFixed) {
+        slotElem.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          slotElem.classList.add('slot-dragover');
+        });
+
+        slotElem.addEventListener('dragleave', () => {
+          slotElem.classList.remove('slot-dragover');
+        });
+
+        slotElem.addEventListener('drop', (e) => {
+          e.preventDefault();
+          slotElem.classList.remove('slot-dragover');
+          const cardId = e.dataTransfer.getData('text/plain');
+          if (cardId) {
+            this.placeCardInSlot(cardId, slot.id);
+          }
+        });
+
+        // 支援「點擊卡片 ➔ 點擊槽位」放置
+        slotElem.addEventListener('click', () => {
+          if (this.selectedCard) {
+            this.placeCardInSlot(this.selectedCard.id, slot.id);
+          } else if (this.playerSchedule[slot.id]) {
+            // 若槽位已有卡片且無選中新卡片，點擊可直接移回托盤
+            this.removeActivityFromSlot(slot.id);
+          }
+        });
+      }
+
+      this.slotsGrid.appendChild(slotElem);
+    });
+
+    // 更新槽位計數
+    const totalSlots = level.slots.length;
+    const placedCount = Object.keys(this.playerSchedule).length;
+    this.placedSlotsCount.textContent = placedCount;
+    this.totalSlotsCount.textContent = totalSlots;
+  }
+
+  // 4. 渲染卡片托盤（Cards Tray）
+  renderCardsTray() {
+    const level = LEVELS[this.currentLevelIndex];
+    this.cardsTray.innerHTML = '';
+
+    // 找出已排入槽位之活動 ID
+    const placedCardIds = Object.values(this.playerSchedule).map(act => act.id);
+
+    // 篩選尚未安排之可用卡片
+    const availableCards = level.cards.filter(c => !placedCardIds.includes(c.id));
+    this.trayCountBadge.textContent = `剩餘 ${availableCards.length} 張`;
+
+    availableCards.forEach(card => {
+      const cardElem = document.createElement('div');
+      cardElem.className = 'act-card';
+      cardElem.draggable = true;
+      cardElem.dataset.cardId = card.id;
+
+      if (this.selectedCard && this.selectedCard.id === card.id) {
+        cardElem.classList.add('card-selected');
+      }
+
+      cardElem.innerHTML = `
+        <span class="card-icon">${card.icon}</span>
+        <span class="card-name">${card.name}</span>
+        <span class="card-tag">${card.type}</span>
+      `;
+
+      // HTML5 Drag 監聽
+      cardElem.addEventListener('dragstart', (e) => {
+        cardElem.classList.add('card-dragging');
+        e.dataTransfer.setData('text/plain', card.id);
+        e.dataTransfer.effectAllowed = 'move';
+      });
+
+      cardElem.addEventListener('dragend', () => {
+        cardElem.classList.remove('card-dragging');
+      });
+
+      // 點擊選取模式
+      cardElem.addEventListener('click', () => {
+        this.sound.playClick();
+        if (this.selectedCard && this.selectedCard.id === card.id) {
+          // 取消選取
+          this.selectedCard = null;
+          this.clearSlotHighlights();
+        } else {
+          // 選中此卡片
+          this.selectedCard = card;
+          this.highlightEmptySlots();
+        }
+        this.renderCardsTray();
+      });
+
+      this.cardsTray.appendChild(cardElem);
+    });
+  }
+
+  highlightEmptySlots() {
+    const slotElems = this.slotsGrid.querySelectorAll('.time-slot.slot-empty');
+    slotElems.forEach(el => el.classList.add('slot-selected-target'));
+  }
+
+  clearSlotHighlights() {
+    const slotElems = this.slotsGrid.querySelectorAll('.time-slot');
+    slotElems.forEach(el => el.classList.remove('slot-selected-target'));
+  }
+
+  // 5. 放置卡片至槽位
+  placeCardInSlot(cardId, slotId) {
+    const level = LEVELS[this.currentLevelIndex];
+    const slot = level.slots.find(s => s.id === slotId);
+    if (!slot || slot.isFixed) {
+      this.showToast('這個時段是固定學校課程，無法更動喔！');
+      return;
+    }
+
+    const card = level.cards.find(c => c.id === cardId);
+    if (!card) return;
+
+    // 若原槽位已有活動，先退回原活動
+    this.playerSchedule[slotId] = card;
+    this.selectedCard = null;
+    this.clearSlotHighlights();
+
+    this.sound.playSnap();
+    this.renderSlots();
+    this.renderCardsTray();
+    this.updateStatsAndInsights();
+  }
+
+  // 6. 將卡片從槽位移回托盤
+  removeActivityFromSlot(slotId) {
+    const level = LEVELS[this.currentLevelIndex];
+    const slot = level.slots.find(s => s.id === slotId);
+    if (!slot || slot.isFixed) return;
+
+    if (this.playerSchedule[slotId]) {
+      delete this.playerSchedule[slotId];
+      this.sound.playClick();
+      this.renderSlots();
+      this.renderCardsTray();
+      this.updateStatsAndInsights();
+    }
+  }
+
+  // ===========================================================================
+  // 六、 睡眠時數計算與精神能量模擬引擎（Simulation Engine）
+  // ===========================================================================
+  calculateTotalSleepHours() {
+    const level = LEVELS[this.currentLevelIndex];
+    let sleepHours = 0;
+
+    level.slots.forEach(slot => {
+      const placed = this.playerSchedule[slot.id];
+      if (placed && (placed.type === '睡眠' || slot.isSleepSlot && placed.id.includes('sleep'))) {
+        sleepHours += slot.hours;
+      }
+    });
+
+    return sleepHours;
+  }
+
+  updateStatsAndInsights() {
+    const level = LEVELS[this.currentLevelIndex];
+    const sleepHours = this.calculateTotalSleepHours();
+
+    // 1. 更新睡眠時數 HUD
+    this.hudSleepHours.textContent = `${sleepHours.toFixed(1)} 小時`;
+    if (sleepHours === 0) {
+      this.hudSleepStatus.textContent = '未安排';
+      this.hudSleepStatus.className = 'stat-status-badge status-warn';
+    } else if (sleepHours >= 9.0 && sleepHours <= 11.5) {
+      this.hudSleepStatus.textContent = '充足良好 💤';
+      this.hudSleepStatus.className = 'stat-status-badge status-ok';
+    } else if (sleepHours >= 8.0) {
+      this.hudSleepStatus.textContent = '略嫌不足';
+      this.hudSleepStatus.className = 'stat-status-badge status-warn';
+    } else {
+      this.hudSleepStatus.textContent = '嚴重不足 ⚠️';
+      this.hudSleepStatus.className = 'stat-status-badge status-danger';
+    }
+
+    // 2. 計算即時精神能量值（0～100 遊戲化模擬）
+    let energyScore = 50;
+
+    // 睡眠時數影響
+    if (sleepHours >= 9.0 && sleepHours <= 11.5) {
+      energyScore += 25;
+    } else if (sleepHours >= 8.0) {
+      energyScore += 10;
+    } else if (sleepHours > 0) {
+      energyScore -= 15;
+    } else {
+      energyScore -= 20; // 沒排睡眠
+    }
+
+    // 早餐影響
+    const hasBreakfast = Object.values(this.playerSchedule).some(act => act.type === '飲食');
+    if (hasBreakfast) energyScore += 5;
+
+    // 休息/運動影響
+    const hasSport = Object.values(this.playerSchedule).some(act => act.type === '運動');
+    const hasRest = Object.values(this.playerSchedule).some(act => act.type === '休息');
+    if (hasSport) energyScore += 5;
+    if (hasRest) energyScore += 5;
+
+    // 時型特色加權
+    if (level.character === 'inu') {
+      // 晨型人早晨有安排讀書或運動，精神更旺盛
+      const morningSlot = this.playerSchedule['slot_exercise_afternoon'];
+      if (morningSlot && morningSlot.type === '運動') energyScore += 10;
+    } else if (level.character === 'neko') {
+      // 夜型人在夜間學習時段安排學習，精神旺盛
+      const nightStudySlot = this.playerSchedule['slot_study_night'];
+      if (nightStudySlot && nightStudySlot.type === '學習') energyScore += 10;
+    } else if (level.id === 3) {
+      // 第三關臥室環境優化項目加權
+      const envGoodCount = Object.values(this.roomItemsState).filter(Boolean).length;
+      energyScore += Math.min(10, envGoodCount * 2);
+    }
+
+    energyScore = Math.max(10, Math.min(100, energyScore));
+
+    // 更新精神能量條
+    this.hudEnergyBar.style.width = `${energyScore}%`;
+    this.hudEnergyVal.textContent = `${energyScore}%`;
+    this.energyGaugeFill.style.width = `${energyScore}%`;
+
+    // 表情與精神評語
+    if (energyScore >= 85) {
+      this.energyFaceEmoji.textContent = '😆';
+      this.energyGradeText.textContent = '活力充沛';
+      this.energyGradeText.style.color = '#10B981';
+      this.liveCompanionTip.textContent = '太棒了！睡眠時數與活動安排非常均衡，角色充滿精神！';
+    } else if (energyScore >= 70) {
+      this.energyFaceEmoji.textContent = '😊';
+      this.energyGradeText.textContent = '精神良好';
+      this.energyGradeText.style.color = '#059669';
+      this.liveCompanionTip.textContent = '作息很不錯喔！試著再安排足夠的睡眠或睡前放鬆，會更棒！';
+    } else if (energyScore >= 50) {
+      this.energyFaceEmoji.textContent = '😐';
+      this.energyGradeText.textContent = '普通狀態';
+      this.energyGradeText.style.color = '#D97706';
+      this.liveCompanionTip.textContent = '目前作息還可以，記得不要犧牲睡眠時間喔！';
+    } else if (energyScore >= 30) {
+      this.energyFaceEmoji.textContent = '🥱';
+      this.energyGradeText.textContent = '有點疲累';
+      this.energyGradeText.style.color = '#EA580C';
+      this.liveCompanionTip.textContent = '睡眠時間有點短喔！試著讓角色多休息一下吧。';
+    } else {
+      this.energyFaceEmoji.textContent = '😵';
+      this.energyGradeText.textContent = '極度疲倦';
+      this.energyGradeText.style.color = '#DC2626';
+      this.liveCompanionTip.textContent = '糟糕！作息嚴重失衡或缺少充足睡眠，快排入睡眠卡片！';
+    }
+  }
+
+  // ===========================================================================
+  // 七、 第三關臥室環境互動面板（Bedroom Environment System）
+  // ===========================================================================
+  toggleRoomItem(itemKey) {
+    if (!BEDROOM_ITEMS[itemKey]) return;
+    const item = BEDROOM_ITEMS[itemKey];
+
+    // 切換狀態
+    this.roomItemsState[itemKey] = !this.roomItemsState[itemKey];
+    const isGood = this.roomItemsState[itemKey];
+
+    this.sound.playClick();
+    this.updateRoomItemsUI();
+
+    // 更新 Usagi 對話引導
+    if (isGood) {
+      this.sound.playSnap();
+      this.roomDialogText.textContent = `${item.goodReason}`;
+    } else {
+      this.roomDialogText.textContent = `${item.badReason}`;
+    }
+
+    this.updateStatsAndInsights();
+  }
+
+  updateRoomItemsUI() {
+    let completedCount = 0;
+    Object.keys(BEDROOM_ITEMS).forEach(key => {
+      const isGood = this.roomItemsState[key];
+      const itemConfig = BEDROOM_ITEMS[key];
+      const btn = document.getElementById(`room-item-${key}`);
+      const statusSpan = document.getElementById(`${key}-status`);
+
+      if (isGood) {
+        completedCount++;
+        btn.className = 'room-item-btn item-good';
+        statusSpan.textContent = itemConfig.goodState;
+      } else {
+        btn.className = 'room-item-btn item-bad';
+        statusSpan.textContent = itemConfig.badState;
+      }
+    });
+
+    this.envCompletedCount.textContent = completedCount;
+    if (completedCount >= 2) {
+      this.envRequirementTag.textContent = '已達標 ✅';
+      this.envRequirementTag.className = 'req-tag ready';
+    } else {
+      this.envRequirementTag.textContent = `尚未達標（還需 ${2 - completedCount} 項）`;
+      this.envRequirementTag.className = 'req-tag';
+    }
+  }
+
+  // ===========================================================================
+  // 八、 結算評分與回饋系統（Schedule Evaluation Engine）
+  // ===========================================================================
+  evaluateSchedule() {
+    const level = LEVELS[this.currentLevelIndex];
+    const sleepHours = this.calculateTotalSleepHours();
+
+    // 檢查是否有未安排的槽位
+    const unplacedSlots = level.slots.filter(s => !this.playerSchedule[s.id]);
+    if (unplacedSlots.length > 0) {
+      this.showToast(`還有 ${unplacedSlots.length} 個時段尚未安排活動喔！`);
+    }
+
+    // 1. 睡眠安排評分 (40 分)
+    let sleepScore = 0;
+    let sleepComment = '';
+    if (sleepHours >= 9.0 && sleepHours <= 11.5) {
+      sleepScore = 40;
+      sleepComment = `安排了 ${sleepHours.toFixed(1)} 小時充足睡眠，完全符合 10～13 歲學生每日 9～12 小時的健康需求！`;
+    } else if (sleepHours >= 8.0 && sleepHours < 9.0) {
+      sleepScore = 28;
+      sleepComment = `安排了 ${sleepHours.toFixed(1)} 小時睡眠。雖然能勉強應付上學，但對成長中學生偏低，長期易累積睡眠債！`;
+    } else if (sleepHours >= 7.0 && sleepHours < 8.0) {
+      sleepScore = 15;
+      sleepComment = `僅安排 ${sleepHours.toFixed(1)} 小時睡眠，睡眠嚴重不足，容易造成白天專注力下降與生長發育不良！`;
+    } else if (sleepHours > 0 && sleepHours < 7.0) {
+      sleepScore = 5;
+      sleepComment = `睡眠時數大幅不足（僅 ${sleepHours.toFixed(1)} 小時）！請提早就寢或延後起床。`;
+    } else if (sleepHours > 11.5) {
+      sleepScore = 25;
+      sleepComment = `睡眠時間過長（超過 12 小時），可能導致白天生活節奏紊亂與精神昏沉。`;
+    } else {
+      sleepScore = 0;
+      sleepComment = '尚未安排任何睡眠時間！充足睡眠是所有學習與健康的基石喔！';
+    }
+
+    // 2. 時間規劃合理性 (30 分)
+    let scheduleScore = 30;
+    let scheduleIssues = [];
+
+    // 順序檢查 A：起床是否在早餐前？
+    let wakeSlotIndex = -1;
+    let breakfastSlotIndex = -1;
+    level.slots.forEach((s, idx) => {
+      const act = this.playerSchedule[s.id];
+      if (act && act.type === '起床') wakeSlotIndex = idx;
+      if (act && act.type === '飲食') breakfastSlotIndex = idx;
+    });
+
+    if (wakeSlotIndex !== -1 && breakfastSlotIndex !== -1) {
+      if (wakeSlotIndex > breakfastSlotIndex) {
+        scheduleScore -= 10;
+        scheduleIssues.push('順序不合理：尚未起床就先吃了早餐！');
+      }
+    } else if (wakeSlotIndex === -1) {
+      scheduleScore -= 8;
+      scheduleIssues.push('未安排起床活動');
+    } else if (breakfastSlotIndex === -1) {
+      scheduleScore -= 5;
+      scheduleIssues.push('未安排早餐時間');
+    }
+
+    // 順序檢查 B：第三關上學前是否有起床
+    if (level.id === 3) {
+      const schoolSlot = this.playerSchedule['slot_school_fixed'];
+      const wakeSlot = this.playerSchedule['slot_wake_morning'];
+      if (!wakeSlot || wakeSlot.type !== '起床') {
+        scheduleScore -= 10;
+        scheduleIssues.push('上學前未安排及時起床與準備！');
       }
     }
 
-    // 擊球火花
-    sparkHit(x, y, count = 20) {
-      for (let i = 0; i < count; i++) {
-        const angle = Math.random() * Math.PI * 2;
-        const speed = 1.5 + Math.random() * 5;
-        this.particles.push({
-          x: x,
-          y: y,
-          vx: Math.cos(angle) * speed,
-          vy: Math.sin(angle) * speed,
-          color: "#fff59d",
-          size: 3 + Math.random() * 4,
-          rotation: 0,
-          rotSpeed: 0,
-          alpha: 1,
-          gravity: 0.05,
-          life: 25,
-          type: "spark",
-        });
+    // 未填滿槽位扣分
+    if (unplacedSlots.length > 0) {
+      const penalty = Math.min(10, unplacedSlots.length * 3);
+      scheduleScore -= penalty;
+      scheduleIssues.push(`尚有 ${unplacedSlots.length} 個空白時段`);
+    }
+
+    scheduleScore = Math.max(5, scheduleScore);
+    const scheduleComment = scheduleIssues.length === 0
+      ? '時間安排條理分明，起居飲食順序合乎生活邏輯且無時間衝突！'
+      : `時間規劃可再改善：${scheduleIssues.join('、')}。`;
+
+    // 3. 符合作息需求 (20 分)
+    let chronotypeScore = 20;
+    let chronotypeComment = '';
+
+    if (level.character === 'inu') {
+      // 晨型人：白天的活動與學習適應
+      const sleepSlot = this.playerSchedule['slot_sleep_night'];
+      if (sleepSlot && sleepSlot.type === '睡眠') {
+        chronotypeScore = 20;
+        chronotypeComment = '完美契合晨型人規律早起、提早就寢的健康節奏！';
+      } else {
+        chronotypeScore = 12;
+        chronotypeComment = '晨型人早晨容易清醒，但仍需要提早入睡以保障充足睡眠喔！';
+      }
+    } else if (level.character === 'neko') {
+      // 夜型人：假日時段靈活安排
+      const nightStudySlot = this.playerSchedule['slot_study_night'];
+      if (nightStudySlot && nightStudySlot.type === '學習') {
+        chronotypeScore = 20;
+        chronotypeComment = '發揮了夜型人在傍晚與夜間的高效專注特質，學習時段安排得宜！';
+      } else {
+        chronotypeScore = 14;
+        chronotypeComment = '夜型人在下午到晚間專注力較佳，可試著把動腦自學排在夜間時段。';
+      }
+    } else if (level.id === 3) {
+      // 第三關：夜型人面對上學日的調整
+      const prebedRelax = this.playerSchedule['slot_relax_prebed'];
+      if (prebedRelax && prebedRelax.type === '休息') {
+        chronotypeScore = 20;
+        chronotypeComment = '成功引導夜型人在睡前安排放鬆活動，逐步適應提早上床！';
+      } else {
+        chronotypeScore = 12;
+        chronotypeComment = '面對固定上學時間，建議夜型人在睡前安排靜態放鬆，幫助大腦平穩入睡。';
       }
     }
 
-    update() {
-      for (let i = this.particles.length - 1; i >= 0; i--) {
-        const p = this.particles[i];
+    // 4. 健康生活習慣 (10 分)
+    let habitsScore = 10;
+    let habitsComment = '';
+
+    if (level.id === 3) {
+      // 第三關考量臥室睡前環境
+      const envGoodCount = Object.values(this.roomItemsState).filter(Boolean).length;
+      if (envGoodCount >= 4) {
+        habitsScore = 10;
+        habitsComment = `臥室環境優化達成 ${envGoodCount} 項（減光、不滑手機、收納整齊），入睡條件極佳！`;
+      } else if (envGoodCount >= 2) {
+        habitsScore = 8;
+        habitsComment = `臥室環境優化達成 ${envGoodCount} 項，達到基本健康入睡門檻！`;
+      } else {
+        habitsScore = 3;
+        habitsComment = `臥室環境僅優化 ${envGoodCount} 項（至少需 2 項），強光與手機藍光會大幅阻礙入眠！`;
+      }
+    } else {
+      // 第一、二關考量休閒與運動平衡
+      const hasSport = Object.values(this.playerSchedule).some(act => act.type === '運動');
+      const hasRest = Object.values(this.playerSchedule).some(act => act.type === '休息');
+      if (hasSport && hasRest) {
+        habitsScore = 10;
+        habitsComment = '運動與休息兼備，身心調節非常平衡！';
+      } else if (hasSport || hasRest) {
+        habitsScore = 7;
+        habitsComment = '有安排適當活動，若能兼顧運動與沉澱放鬆會更完美！';
+      } else {
+        habitsScore = 4;
+        habitsComment = '缺少運動或放鬆活動，生活節奏稍嫌緊繃。';
+      }
+    }
+
+    // 總分計算
+    const totalScore = sleepScore + scheduleScore + chronotypeScore + habitsScore;
+
+    // 評價等級判定
+    let tierText = '';
+    let stampClass = '';
+    if (totalScore >= 90) {
+      tierText = '👑 生理時鐘管理大師！';
+      stampClass = 'tier-stamp stamp-gold';
+    } else if (totalScore >= 70) {
+      tierText = '🌟 作息安排高手！';
+      stampClass = 'tier-stamp stamp-silver';
+    } else if (totalScore >= 50) {
+      tierText = '🌱 很棒的時間規劃員！';
+      stampClass = 'tier-stamp stamp-bronze';
+    } else {
+      tierText = '💡 再調整一下，時間表會更理想！';
+      stampClass = 'tier-stamp stamp-adjust';
+    }
+
+    // 渲染評分彈窗
+    this.evalTierStamp.textContent = tierText;
+    this.evalTierStamp.className = stampClass;
+    this.evalLevelName.textContent = `${level.name} ． 作息審查報告`;
+    this.evalTotalScore.textContent = totalScore;
+
+    // 細項進度條與文字
+    this.rubricScoreSleep.textContent = `${sleepScore}／40 分`;
+    this.rubricBarSleep.style.width = `${(sleepScore / 40) * 100}%`;
+    this.rubricDescSleep.textContent = sleepComment;
+
+    this.rubricScoreSchedule.textContent = `${scheduleScore}／30 分`;
+    this.rubricBarSchedule.style.width = `${(scheduleScore / 30) * 100}%`;
+    this.rubricDescSchedule.textContent = scheduleComment;
+
+    this.rubricScoreChronotype.textContent = `${chronotypeScore}／20 分`;
+    this.rubricBarChronotype.style.width = `${(chronotypeScore / 20) * 100}%`;
+    this.rubricDescChronotype.textContent = chronotypeComment;
+
+    this.rubricScoreHabits.textContent = `${habitsScore}／10 分`;
+    this.rubricBarHabits.style.width = `${(habitsScore / 10) * 100}%`;
+    this.rubricDescHabits.textContent = habitsComment;
+
+    // Usagi 綜合建議
+    let advice = '';
+    if (totalScore >= 85) {
+      advice = level.id === 1
+        ? '太棒了！你幫 Inu 安排了一份兼具活力與充足睡眠的日程！記住，早起的前提永遠是有充足的睡眠喔！'
+        : level.id === 2
+          ? '做得好！原來只要確保充足睡眠，夜型人也能在週末找到屬於自己的高效生活節奏，晨型與夜型並無優劣之分！'
+          : '太精彩了！透過優化睡前臥室環境與提早放鬆，Neko 也能在固定上學時間下睡飽 9.5 小時，健康與學業雙贏！';
+      this.sound.playSuccess();
+    } else {
+      advice = '作息還差一點點就更完美了！建議檢查睡眠時數是否有達到 9 小時以上，並確保起居順序合乎生活常理，試著再微調一次吧！';
+      this.sound.playScore();
+    }
+    this.evalDetailedFeedback.textContent = advice;
+
+    // 下一關按鈕文案
+    if (this.currentLevelIndex < LEVELS.length - 1) {
+      this.btnEvalNextText.textContent = '進入下一關 ➔';
+    } else {
+      this.btnEvalNextText.textContent = '領取通關獎章 🏆';
+    }
+
+    // 彈出 Modal
+    this.modalEval.classList.add('active');
+  }
+
+  closeModal() {
+    this.modalEval.classList.remove('active');
+  }
+
+  // ===========================================================================
+  // 九、 最終通關畫面與彩帶動畫（Victory Screen & Confetti）
+  // ===========================================================================
+  showVictoryScreen() {
+    this.screenStart.classList.remove('active');
+    this.screenLevel.classList.remove('active');
+    this.modalEval.classList.remove('active');
+    this.screenVictory.classList.add('active');
+
+    this.sound.playFanfare();
+    this.startConfetti();
+  }
+
+  startConfetti() {
+    this.confettiCanvas = document.getElementById('victory-confetti-canvas');
+    if (!this.confettiCanvas) return;
+
+    this.confettiCtx = this.confettiCanvas.getContext('2d');
+    this.confettiCanvas.width = this.screenVictory.clientWidth || 1280;
+    this.confettiCanvas.height = this.screenVictory.clientHeight || 720;
+
+    const colors = ['#F59E0B', '#10B981', '#3B82F6', '#EC4899', '#8B5CF6', '#FCD34D'];
+    this.confettiParticles = [];
+
+    for (let i = 0; i < 90; i++) {
+      this.confettiParticles.push({
+        x: Math.random() * this.confettiCanvas.width,
+        y: Math.random() * -this.confettiCanvas.height,
+        size: Math.random() * 8 + 5,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        vx: (Math.random() - 0.5) * 3,
+        vy: Math.random() * 3 + 2,
+        rot: Math.random() * 360,
+        vrot: (Math.random() - 0.5) * 8
+      });
+    }
+
+    const render = () => {
+      if (!this.confettiCtx) return;
+      this.confettiCtx.clearRect(0, 0, this.confettiCanvas.width, this.confettiCanvas.height);
+
+      this.confettiParticles.forEach(p => {
         p.x += p.vx;
         p.y += p.vy;
-        p.vy += p.gravity;
-        p.rotation += p.rotSpeed;
-        p.life--;
-        p.alpha = Math.max(0, p.life / 60);
+        p.rot += p.vrot;
 
-        if (p.life <= 0 || p.y > 750) {
-          this.particles.splice(i, 1);
+        if (p.y > this.confettiCanvas.height) {
+          p.y = -10;
+          p.x = Math.random() * this.confettiCanvas.width;
         }
-      }
-    }
 
-    draw(ctx) {
-      this.particles.forEach((p) => {
-        ctx.save();
-        ctx.globalAlpha = p.alpha;
-        ctx.translate(p.x, p.y);
-        ctx.rotate((p.rotation * Math.PI) / 180);
-        ctx.fillStyle = p.color;
-
-        if (p.type === "rect") {
-          ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
-        } else if (p.type === "star") {
-          ctx.beginPath();
-          for (let s = 0; s < 5; s++) {
-            ctx.lineTo(
-              Math.cos(((18 + s * 72) * Math.PI) / 180) * p.size,
-              -Math.sin(((18 + s * 72) * Math.PI) / 180) * p.size
-            );
-            ctx.lineTo(
-              Math.cos(((54 + s * 72) * Math.PI) / 180) * (p.size / 2),
-              -Math.sin(((54 + s * 72) * Math.PI) / 180) * (p.size / 2)
-            );
-          }
-          ctx.closePath();
-          ctx.fill();
-        } else {
-          // spark
-          ctx.beginPath();
-          ctx.arc(0, 0, p.size / 2, 0, Math.PI * 2);
-          ctx.fill();
-        }
-        ctx.restore();
+        this.confettiCtx.save();
+        this.confettiCtx.translate(p.x, p.y);
+        this.confettiCtx.rotate((p.rot * Math.PI) / 180);
+        this.confettiCtx.fillStyle = p.color;
+        this.confettiCtx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 1.4);
+        this.confettiCtx.restore();
       });
-    }
 
-    clear() {
-      this.particles = [];
-    }
+      this.confettiAnimId = requestAnimationFrame(render);
+    };
+
+    if (this.confettiAnimId) cancelAnimationFrame(this.confettiAnimId);
+    this.confettiAnimId = requestAnimationFrame(render);
   }
 
-  /* ==========================================================================
-     四、 主遊戲控制類別
-     ========================================================================== */
-  class HomeRunGame {
-    constructor() {
-      this.sound = new SoundManager();
-      this.particles = new ParticleSystem();
-
-      // 遊戲狀態與關卡進度
-      this.currentLevelIndex = 0; // 0, 1, 2
-      this.pendingLevelIndex = 0;
-      this.chancesLeft = 3;
-      this.angle = 45; // 擊球角度 15° ~ 75°
-      this.power = 75; // 擊球力道 40% ~ 100%
-
-      // 揮棒與球飛行狀態
-      this.isSwinging = false;
-      this.swingPhase = 0; // 0: 準備, 1: 揮擊中, 2: 慶祝, 3: 失敗懊惱
-      this.batterAnimTimer = 0;
-      this.flightActive = false;
-      this.flightStartTime = 0;
-      this.ballPath = []; // 歷史軌跡紀錄
-      this.ball = {
-        x: 0,
-        y: PHYSICS.y0,
-        vx: 0,
-        vy: 0,
-        landed: false,
-        hitWall: false,
-        isHomeRun: false,
-      };
-
-      // 判定結果暫存
-      this.lastResult = null; // { type: 'HOMERUN' | 'SHORT' | 'LOW' | 'HIGH_SHORT', msg: '' }
-
-      // 畫面元素綁定
-      this.canvas = document.getElementById("game-canvas");
-      this.ctx = this.canvas.getContext("2d");
-
-      // UI 元素
-      this.levelNumEl = document.getElementById("hud-level-num");
-      this.levelNameEl = document.getElementById("hud-level-name");
-      this.chancesContainerEl = document.getElementById("hud-chances");
-      this.soundToggleBtn = document.getElementById("sound-toggle-btn");
-      this.soundIconEl = document.getElementById("sound-icon");
-      this.levelBannerEl = document.getElementById("level-banner");
-
-      this.angleSlider = document.getElementById("angle-slider");
-      this.angleValEl = document.getElementById("angle-val");
-      this.powerSlider = document.getElementById("power-slider");
-      this.powerValEl = document.getElementById("power-val");
-      this.swingBtn = document.getElementById("swing-btn");
-
-      this.toastEl = document.getElementById("toast-notice");
-      this.toastMsgEl = document.getElementById("toast-message");
-      this.homerunBannerEl = document.getElementById("homerun-banner");
-
-      // 遮罩彈窗
-      this.startScreen = document.getElementById("start-screen");
-      this.startBtn = document.getElementById("start-btn");
-
-      // 知識決策彈窗相關
-      this.decisionScreen = document.getElementById("decision-screen");
-      this.decisionBadge = document.getElementById("decision-badge");
-      this.decisionTitle = document.getElementById("decision-title");
-      this.decisionContext = document.getElementById("decision-context");
-      this.optBtnA = document.getElementById("opt-btn-a");
-      this.optBtnB = document.getElementById("opt-btn-b");
-      this.optTextA = document.getElementById("opt-text-a");
-      this.optTextB = document.getElementById("opt-text-b");
-      this.decisionFeedback = document.getElementById("decision-feedback");
-      this.feedbackResultTitle = document.getElementById("feedback-result-title");
-      this.feedbackKnowledgeText = document.getElementById("feedback-knowledge-text");
-      this.decisionStartActionBtn = document.getElementById("decision-start-action-btn");
-
-      // 過關與失敗彈窗
-      this.levelClearScreen = document.getElementById("level-clear-screen");
-      this.levelClearTitle = document.getElementById("level-clear-title");
-      this.levelClearMsg = document.getElementById("level-clear-msg");
-      this.levelClearKnowledge = document.getElementById("level-clear-knowledge");
-      this.nextLevelBtn = document.getElementById("next-level-btn");
-
-      this.levelFailScreen = document.getElementById("level-fail-screen");
-      this.levelFailHint = document.getElementById("level-fail-hint");
-      this.retryBtn = document.getElementById("retry-btn");
-      this.failHomeBtn = document.getElementById("fail-home-btn");
-
-      this.championScreen = document.getElementById("champion-screen");
-      this.championRestartBtn = document.getElementById("champion-restart-btn");
-      this.championHomeBtn = document.getElementById("champion-home-btn");
-
-      // 雲朵裝飾
-      this.clouds = [
-        { x: 120, y: 70, s: 0.9, spd: 0.2 },
-        { x: 480, y: 110, s: 1.2, spd: 0.25 },
-        { x: 890, y: 60, s: 0.8, spd: 0.18 },
-        { x: 1180, y: 130, s: 1.0, spd: 0.22 },
-      ];
-
-      // 觀眾小人隨機擺動相位
-      this.audienceCount = 38;
-      this.audienceOffsets = Array.from({ length: this.audienceCount }, () => Math.random() * Math.PI * 2);
-
-      this.initEvents();
-      this.resizeCanvas();
-      window.addEventListener("resize", () => this.resizeCanvas());
-
-      // 啟動主繪圖迴圈
-      this.lastFrameTime = performance.now();
-      requestAnimationFrame((t) => this.loop(t));
+  stopConfetti() {
+    if (this.confettiAnimId) {
+      cancelAnimationFrame(this.confettiAnimId);
+      this.confettiAnimId = null;
     }
-
-    // 事件監聽與綁定
-    initEvents() {
-      // 點擊開始挑戰：先進入第一關的「球團總管決策室」
-      this.startBtn.addEventListener("click", () => {
-        this.sound.init();
-        this.sound.playClick();
-        this.hideAllOverlays();
-        this.showDecisionModal(0);
-      });
-
-      // 知識決策選項點擊（A 或 B）
-      this.optBtnA.addEventListener("click", () => this.handleDecisionChoice("A"));
-      this.optBtnB.addEventListener("click", () => this.handleDecisionChoice("B"));
-
-      // 決策完成後「上場揮棒！印證改建成果」按鈕
-      this.decisionStartActionBtn.addEventListener("click", () => {
-        this.sound.playClick();
-        this.hideAllOverlays();
-        this.startLevel(this.pendingLevelIndex);
-      });
-
-      // 角度滑桿即時連動
-      this.angleSlider.addEventListener("input", (e) => {
-        this.angle = parseInt(e.target.value, 10);
-        this.angleValEl.textContent = `${this.angle}°`;
-      });
-
-      // 力道滑桿即時連動
-      this.powerSlider.addEventListener("input", (e) => {
-        this.power = parseInt(e.target.value, 10);
-        this.powerValEl.textContent = `${this.power}%`;
-        this.updatePowerTrackStyle();
-      });
-
-      // 揮棒按鈕
-      this.swingBtn.addEventListener("click", () => {
-        this.handleSwingAction();
-      });
-
-      // 音效切換按鈕
-      this.soundToggleBtn.addEventListener("click", () => {
-        this.sound.init();
-        const enabled = this.sound.toggle();
-        this.soundIconEl.textContent = enabled ? "🔊" : "🔇";
-        if (enabled) this.sound.playClick();
-      });
-
-      // 關卡過關「進入下一座球場」按鈕
-      this.nextLevelBtn.addEventListener("click", () => {
-        this.sound.playClick();
-        this.hideAllOverlays();
-        if (this.currentLevelIndex + 1 < LEVELS.length) {
-          // 進入下一關的知識決策
-          this.showDecisionModal(this.currentLevelIndex + 1);
-        } else {
-          this.showChampionScreen();
-        }
-      });
-
-      // 挑戰失敗「重新挑戰本關」按鈕（直接重試，不重做題目）
-      this.retryBtn.addEventListener("click", () => {
-        this.sound.playClick();
-        this.hideAllOverlays();
-        this.startLevel(this.currentLevelIndex);
-      });
-
-      // 挑戰失敗「返回首頁」按鈕
-      this.failHomeBtn.addEventListener("click", () => {
-        this.sound.playClick();
-        this.hideAllOverlays();
-        this.showStartScreen();
-      });
-
-      // 冠軍「再次挑戰」按鈕（重頭開始）
-      this.championRestartBtn.addEventListener("click", () => {
-        this.sound.playClick();
-        this.hideAllOverlays();
-        this.showDecisionModal(0);
-      });
-
-      // 冠軍「返回首頁」按鈕
-      this.championHomeBtn.addEventListener("click", () => {
-        this.sound.playClick();
-        this.hideAllOverlays();
-        this.showStartScreen();
-      });
-
-      // 預設更新一次力道顏色條
-      this.updatePowerTrackStyle();
-    }
-
-    // 顯示知識決策室彈窗
-    showDecisionModal(levelIndex) {
-      this.pendingLevelIndex = levelIndex;
-      const level = LEVELS[levelIndex];
-      const d = level.decision;
-
-      this.decisionBadge.textContent = d.badge;
-      this.decisionTitle.textContent = d.title;
-      this.decisionContext.textContent = d.context;
-      this.optTextA.textContent = d.optA;
-      this.optTextB.textContent = d.optB;
-
-      // 重設按鈕樣式
-      this.optBtnA.className = "decision-opt-btn";
-      this.optBtnB.className = "decision-opt-btn";
-      this.optBtnA.disabled = false;
-      this.optBtnB.disabled = false;
-      this.decisionFeedback.style.display = "none";
-
-      this.decisionScreen.classList.add("active");
-    }
-
-    // 處理總管決策選擇
-    handleDecisionChoice(choice) {
-      this.sound.playClick();
-      const level = LEVELS[this.pendingLevelIndex];
-      const d = level.decision;
-
-      // 停用按鈕防止重複點選
-      this.optBtnA.disabled = true;
-      this.optBtnB.disabled = true;
-
-      const isCorrect = choice === d.correctChoice;
-
-      if (choice === "A") {
-        this.optBtnA.classList.add(isCorrect ? "correct-choice" : "wrong-choice");
-      } else {
-        this.optBtnB.classList.add(isCorrect ? "correct-choice" : "wrong-choice");
-      }
-
-      // 展開決策解析
-      this.feedbackResultTitle.textContent = isCorrect ? d.correctFeedback : d.wrongFeedback;
-      this.feedbackKnowledgeText.textContent = d.knowledgeText;
-      this.decisionFeedback.style.display = "block";
-    }
-
-    // 更新力道滑桿背景漸層色彩
-    updatePowerTrackStyle() {
-      this.powerSlider.style.background = `linear-gradient(to right, #4caf50 0%, #fbc02d 50%, #f44336 100%)`;
-    }
-
-    // Canvas 邏輯解析度維持 1280x720，高 DPI 銳利繪製
-    resizeCanvas() {
-      const dpr = window.devicePixelRatio || 1;
-      this.canvas.width = 1280 * dpr;
-      this.canvas.height = 720 * dpr;
-      this.ctx.resetTransform();
-      this.ctx.scale(dpr, dpr);
-    }
-
-    // 關卡實戰初始化
-    startLevel(index) {
-      this.currentLevelIndex = index;
-      this.chancesLeft = 3;
-      this.isSwinging = false;
-      this.swingPhase = 0;
-      this.flightActive = false;
-      this.ballPath = [];
-      this.particles.clear();
-      this.hideToast();
-      this.homerunBannerEl.classList.remove("active");
-
-      const level = LEVELS[this.currentLevelIndex];
-      this.levelNumEl.textContent = `${level.id}／${LEVELS.length}`;
-      this.levelNameEl.textContent = `${level.team} ${level.name}`;
-      this.levelBannerEl.textContent = `第 ${level.id} 關：${level.team} ${level.name}（圍牆高：${level.height}，距：${level.distance}）- ${level.tip}`;
-
-      this.updateChancesHUD();
-      this.enableControls(true);
-
-      // 重設球位置到擊球點
-      this.ball.x = 0;
-      this.ball.y = PHYSICS.y0;
-      this.ball.vx = 0;
-      this.ball.vy = 0;
-      this.ball.landed = false;
-      this.ball.hitWall = false;
-      this.ball.isHomeRun = false;
-    }
-
-    // 更新剩餘揮棒次數圖示
-    updateChancesHUD() {
-      this.chancesContainerEl.innerHTML = "";
-      for (let i = 0; i < 3; i++) {
-        const ball = document.createElement("div");
-        ball.className = "ball-chance" + (i >= this.chancesLeft ? " used" : "");
-        this.chancesContainerEl.appendChild(ball);
-      }
-    }
-
-    // 啟用或鎖定控制元件（避免揮棒動畫中重複點擊）
-    enableControls(enable) {
-      this.swingBtn.disabled = !enable;
-      this.angleSlider.disabled = !enable;
-      this.powerSlider.disabled = !enable;
-    }
-
-    // 執行揮棒動作
-    handleSwingAction() {
-      if (this.isSwinging || this.chancesLeft <= 0) return;
-      this.sound.init();
-
-      // 1. 扣除揮棒次數
-      this.chancesLeft--;
-      this.updateChancesHUD();
-
-      // 2. 停用操作控制項
-      this.enableControls(false);
-      this.isSwinging = true;
-      this.swingPhase = 1; // 揮棒中
-      this.batterAnimTimer = 0;
-      this.ballPath = [];
-      this.hideToast();
-
-      // 3. 播放揮棒音效
-      this.sound.playSwing();
-
-      // 4. 計算初速度與物理軌跡
-      const v = (this.power / 100.0) * PHYSICS.vScale;
-      const rad = (this.angle * Math.PI) / 180.0;
-      const vx = v * Math.cos(rad);
-      const vy = v * Math.sin(rad);
-
-      // 模擬整個飛行過程並事先算出判定結果
-      this.lastResult = this.calculatePhysicsResult(vx, vy);
-
-      // 揮棒延遲約 180ms 後正中球心擊出
-      setTimeout(() => {
-        this.sound.playHit();
-        const pX = PHYSICS.originX;
-        const pY = PHYSICS.groundY - PHYSICS.y0 * PHYSICS.scale;
-        this.particles.sparkHit(pX, pY, 25);
-
-        // 啟動球的飛行動畫
-        this.flightActive = true;
-        this.flightStartTime = performance.now();
-        this.ball.x = 0;
-        this.ball.y = PHYSICS.y0;
-        this.ball.vx = vx;
-        this.ball.vy = vy;
-        this.ball.landed = false;
-        this.ball.hitWall = false;
-      }, 180);
-    }
-
-    // 依據物理公式精確計算挑戰結果與提示訊息
-    calculatePhysicsResult(vx, vy) {
-      const level = LEVELS[this.currentLevelIndex];
-      const D = level.distance;
-      const H = level.height;
-      const g = PHYSICS.g;
-      const y0 = PHYSICS.y0;
-      const r = PHYSICS.ballRadius;
-
-      // 落地時間：y(t) = y0 + vy*t - 0.5*g*t^2 = 0
-      const disc = vy * vy + 2 * g * y0;
-      const tLand = (vy + Math.sqrt(disc)) / g;
-      const xLand = vx * tLand;
-
-      // 頂點高度與頂點時間
-      const yApex = y0 + (vy * vy) / (2 * g);
-
-      // 判斷是否能達到牆面
-      if (xLand < D) {
-        // 尚未抵達牆面即落地
-        if (this.angle >= 55) {
-          return {
-            type: "HIGH_SHORT",
-            tLand: tLand,
-            xLand: xLand,
-            msg: "這顆球飛得很高！試著降低一點角度，看看會不會飛得更遠！",
-          };
-        } else {
-          return {
-            type: "SHORT",
-            tLand: tLand,
-            xLand: xLand,
-            msg: "差一點就到圍牆了！試著增加力道，或調整角度！",
-          };
-        }
-      }
-
-      // 能抵達全壘打牆水平位置 x = D
-      const tWall = D / vx;
-      const yWall = y0 + vy * tWall - 0.5 * g * tWall * tWall;
-
-      if (yWall - r > H) {
-        // 成功飛越全壘打牆
-        return {
-          type: "HOMERUN",
-          tLand: tLand,
-          xLand: xLand,
-          tWall: tWall,
-          yWall: yWall,
-          msg: level.successMsg,
-        };
-      } else {
-        // 抵達牆面時高度不足，撞在牆上
-        return {
-          type: "LOW",
-          tWall: tWall,
-          yWall: Math.max(0, yWall),
-          msg: "球飛得很遠，但高度不夠！試試調高擊球角度！",
-        };
-      }
-    }
-
-    // 棒球飛行結束後的結算處理
-    onFlightCompleted() {
-      this.flightActive = false;
-
-      if (this.lastResult.type === "HOMERUN") {
-        // 成功擊出全壘打！
-        this.swingPhase = 2; // 慶祝姿勢
-        this.sound.playHomeRun();
-        this.homerunBannerEl.classList.add("active");
-
-        // 全螢幕爆發彩帶
-        this.particles.explodeConfetti(640, 260, 160);
-
-        setTimeout(() => {
-          this.showLevelClearScreen();
-        }, 1800);
-      } else {
-        // 挑戰未成功
-        this.swingPhase = 3; // 懊惱姿勢
-
-        if (this.chancesLeft > 0) {
-          // 仍有機會：顯示氣泡提示，並重新啟用按鈕
-          this.sound.playFail();
-          this.showToast(this.lastResult.msg);
-          setTimeout(() => {
-            this.isSwinging = false;
-            this.swingPhase = 0;
-            this.enableControls(true);
-          }, 1200);
-        } else {
-          // 3 次機會用盡：判定關卡挑戰失敗
-          this.sound.playFail();
-          setTimeout(() => {
-            this.showLevelFailScreen(this.lastResult.msg);
-          }, 1000);
-        }
-      }
-    }
-
-    // 彈出短暫非阻塞提示
-    showToast(msg) {
-      this.toastMsgEl.textContent = msg;
-      this.toastEl.classList.add("show");
-    }
-
-    hideToast() {
-      this.toastEl.classList.remove("show");
-    }
-
-    // 顯示關卡成功結算畫面
-    showLevelClearScreen() {
-      const level = LEVELS[this.currentLevelIndex];
-      this.levelClearTitle.textContent = `第 ${level.id} 關挑戰成功！`;
-      this.levelClearMsg.textContent = level.successMsg;
-      this.levelClearKnowledge.textContent = level.summaryKnowledge;
-      this.levelClearScreen.classList.add("active");
-    }
-
-    // 顯示關卡失敗結算畫面
-    showLevelFailScreen(hint) {
-      this.levelFailHint.textContent = `💡 提示：${hint}`;
-      this.levelFailScreen.classList.add("active");
-    }
-
-    // 顯示最終冠軍畫面
-    showChampionScreen() {
-      this.sound.playChampion();
-      this.particles.explodeConfetti(640, 200, 200);
-      this.championScreen.classList.add("active");
-    }
-
-    // 顯示首頁
-    showStartScreen() {
-      this.startScreen.classList.add("active");
-    }
-
-    // 隱藏所有彈窗
-    hideAllOverlays() {
-      const overlays = document.querySelectorAll(".overlay-screen");
-      overlays.forEach((el) => el.classList.remove("active"));
-    }
-
-    /* ==========================================================================
-       五、 主循環動畫更新與繪製
-       ========================================================================== */
-    loop(currentTime) {
-      const dt = Math.min(0.05, (currentTime - this.lastFrameTime) / 1000.0);
-      this.lastFrameTime = currentTime;
-
-      this.update(dt, currentTime);
-      this.draw();
-
-      requestAnimationFrame((t) => this.loop(t));
-    }
-
-    update(dt, currentTime) {
-      // 1. 雲朵移動
-      this.clouds.forEach((c) => {
-        c.x += c.spd;
-        if (c.x > 1350) c.x = -150;
-      });
-
-      // 2. 揮棒計時更新
-      if (this.swingPhase === 1) {
-        this.batterAnimTimer += dt;
-      }
-
-      // 3. 棒球飛行更新
-      if (this.flightActive) {
-        const elapsed = (currentTime - this.flightStartTime) / 1000.0;
-        const res = this.lastResult;
-        const level = LEVELS[this.currentLevelIndex];
-        const g = PHYSICS.g;
-
-        if (res.type === "HOMERUN") {
-          // 全壘打：越過牆面，飛行時間至 tLand 後落地
-          if (elapsed >= res.tLand) {
-            this.ball.x = res.xLand;
-            this.ball.y = 0;
-            this.ball.landed = true;
-            this.onFlightCompleted();
-          } else {
-            this.ball.x = this.ball.vx * elapsed;
-            this.ball.y = PHYSICS.y0 + this.ball.vy * elapsed - 0.5 * g * elapsed * elapsed;
-          }
-        } else if (res.type === "LOW") {
-          // 高度不足：抵達牆面時撞牆
-          if (elapsed >= res.tWall) {
-            if (!this.ball.hitWall) {
-              this.ball.hitWall = true;
-              this.sound.playWallHit();
-              const pX = PHYSICS.originX + level.distance * PHYSICS.scale;
-              const pY = PHYSICS.groundY - res.yWall * PHYSICS.scale;
-              this.particles.sparkHit(pX, pY, 18);
-            }
-            // 撞牆後沿著牆面下落
-            const dropTime = elapsed - res.tWall;
-            this.ball.x = level.distance;
-            this.ball.y = Math.max(0, res.yWall - 0.5 * g * dropTime * dropTime * 4);
-            if (this.ball.y <= 0) {
-              this.ball.landed = true;
-              this.onFlightCompleted();
-            }
-          } else {
-            this.ball.x = this.ball.vx * elapsed;
-            this.ball.y = PHYSICS.y0 + this.ball.vy * elapsed - 0.5 * g * elapsed * elapsed;
-          }
-        } else {
-          // 距離不足 (SHORT / HIGH_SHORT)：在牆前落地
-          if (elapsed >= res.tLand) {
-            this.ball.x = res.xLand;
-            this.ball.y = 0;
-            this.ball.landed = true;
-            this.onFlightCompleted();
-          } else {
-            this.ball.x = this.ball.vx * elapsed;
-            this.ball.y = PHYSICS.y0 + this.ball.vy * elapsed - 0.5 * g * elapsed * elapsed;
-          }
-        }
-
-        // 記錄軌跡點
-        this.ballPath.push({
-          px: PHYSICS.originX + this.ball.x * PHYSICS.scale,
-          py: PHYSICS.groundY - this.ball.y * PHYSICS.scale,
-        });
-      }
-
-      // 4. 粒子更新
-      this.particles.update();
-    }
-
-    /* ==========================================================================
-       六、 Canvas 畫面繪製細節（日系精緻 Q 版棒球風格）
-       ========================================================================== */
-    draw() {
-      const ctx = this.ctx;
-      const level = LEVELS[this.currentLevelIndex];
-
-      // 1. 天空漸層背景
-      const skyGrad = ctx.createLinearGradient(0, 0, 0, PHYSICS.groundY);
-      skyGrad.addColorStop(0, level.skyColor[0]);
-      skyGrad.addColorStop(1, level.skyColor[1]);
-      ctx.fillStyle = skyGrad;
-      ctx.fillRect(0, 0, 1280, 720);
-
-      // 2. 若是第 3 關（高原庫爾斯球場），背景繪製落磯山脈雪山群峰
-      if (level.id === 3) {
-        this.drawMountainRange(ctx);
-      }
-
-      // 3. 雲朵繪製
-      this.drawClouds(ctx);
-
-      // 4. 觀眾看台與觀眾小人
-      this.drawAudienceStand(ctx);
-
-      // 5. 球場草皮與內野打擊區紅土
-      this.drawField(ctx);
-
-      // 6. 外野全壘打牆（視覺比例精準呈現三關差異）
-      this.drawOutfieldWall(ctx, level);
-
-      // 7. 瞄準方向指示虛線（未揮棒時）
-      if (!this.isSwinging) {
-        this.drawAimGuide(ctx);
-      }
-
-      // 8. Q 版可愛棒球小選手
-      this.drawBatter(ctx);
-
-      // 9. 棒球飛行軌跡
-      this.drawBallPath(ctx);
-
-      // 10. 棒球本體與立體投影
-      this.drawBall(ctx);
-
-      // 11. 粒子特效（彩帶、火花）
-      this.particles.draw(ctx);
-    }
-
-    // 繪製落磯山脈遠景群峰（第 3 關專屬高山氛圍）
-    drawMountainRange(ctx) {
-      ctx.save();
-      // 遠山山脊
-      ctx.fillStyle = "rgba(120, 80, 160, 0.4)";
-      ctx.beginPath();
-      ctx.moveTo(0, 360);
-      ctx.lineTo(160, 240);
-      ctx.lineTo(340, 310);
-      ctx.lineTo(580, 210);
-      ctx.lineTo(820, 290);
-      ctx.lineTo(1080, 190);
-      ctx.lineTo(1280, 280);
-      ctx.lineTo(1280, 440);
-      ctx.lineTo(0, 440);
-      ctx.closePath();
-      ctx.fill();
-
-      // 近山山脊
-      ctx.fillStyle = "rgba(90, 50, 130, 0.5)";
-      ctx.beginPath();
-      ctx.moveTo(0, 380);
-      ctx.lineTo(240, 270);
-      ctx.lineTo(460, 340);
-      ctx.lineTo(720, 250);
-      ctx.lineTo(960, 330);
-      ctx.lineTo(1200, 260);
-      ctx.lineTo(1280, 340);
-      ctx.lineTo(1280, 440);
-      ctx.lineTo(0, 440);
-      ctx.closePath();
-      ctx.fill();
-
-      // 雪白山頭
-      ctx.fillStyle = "#ffffff";
-      const peaks = [
-        [580, 210, 50],
-        [1080, 190, 45],
-        [720, 250, 40],
-      ];
-      peaks.forEach(([px, py, sz]) => {
-        ctx.beginPath();
-        ctx.moveTo(px, py);
-        ctx.lineTo(px - sz, py + sz);
-        ctx.lineTo(px + sz, py + sz);
-        ctx.closePath();
-        ctx.fill();
-      });
-
-      ctx.restore();
-    }
-
-    // 繪製多層次立體蓬鬆白雲
-    drawClouds(ctx) {
-      ctx.save();
-      this.clouds.forEach((c) => {
-        ctx.fillStyle = "rgba(255, 255, 255, 0.85)";
-        ctx.beginPath();
-        ctx.arc(c.x, c.y, 30 * c.s, 0, Math.PI * 2);
-        ctx.arc(c.x + 25 * c.s, c.y - 12 * c.s, 38 * c.s, 0, Math.PI * 2);
-        ctx.arc(c.x + 55 * c.s, c.y, 28 * c.s, 0, Math.PI * 2);
-        ctx.arc(c.x + 20 * c.s, c.y + 10 * c.s, 24 * c.s, 0, Math.PI * 2);
-        ctx.fill();
-      });
-      ctx.restore();
-    }
-
-    // 繪製遠景觀眾看台與熱情觀眾
-    drawAudienceStand(ctx) {
-      ctx.save();
-      const standTopY = 320;
-      const standBottomY = 440;
-
-      // 看台斜坡本體
-      const standGrad = ctx.createLinearGradient(0, standTopY, 0, standBottomY);
-      standGrad.addColorStop(0, "#78909c");
-      standGrad.addColorStop(1, "#cfd8dc");
-      ctx.fillStyle = standGrad;
-      ctx.fillRect(0, standTopY, 1280, standBottomY - standTopY);
-
-      // 看台橫條階梯
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.4)";
-      ctx.lineWidth = 3;
-      for (let y = standTopY + 25; y < standBottomY; y += 30) {
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(1280, y);
-        ctx.stroke();
-      }
-
-      // 觀眾小人（彩色小頭與擺動加油棒）
-      const colors = ["#e53935", "#1e88e5", "#fdd835", "#43a047", "#8e24aa", "#fb8c00"];
-      for (let i = 0; i < this.audienceCount; i++) {
-        const x = 30 + i * 33;
-        const row = i % 3;
-        const baseY = standTopY + 20 + row * 32;
-        const bob = Math.sin(performance.now() * 0.004 + this.audienceOffsets[i]) * 3;
-        const col = colors[i % colors.length];
-
-        // 身體
-        ctx.fillStyle = col;
-        ctx.beginPath();
-        ctx.arc(x, baseY + bob, 8, 0, Math.PI * 2);
-        ctx.fill();
-
-        // 頭盔或帽子
-        ctx.fillStyle = "#ffffff";
-        ctx.beginPath();
-        ctx.arc(x, baseY + bob - 3, 5, 0, Math.PI, true);
-        ctx.fill();
-
-        // 揮舞的小加油旗
-        if (i % 4 === 0) {
-          ctx.strokeStyle = "#ffeb3b";
-          ctx.lineWidth = 2;
-          ctx.beginPath();
-          ctx.moveTo(x + 6, baseY + bob);
-          ctx.lineTo(x + 12, baseY + bob - 14);
-          ctx.stroke();
-
-          ctx.fillStyle = "#e53935";
-          ctx.beginPath();
-          ctx.moveTo(x + 12, baseY + bob - 14);
-          ctx.lineTo(x + 22, baseY + bob - 10);
-          ctx.lineTo(x + 12, baseY + bob - 6);
-          ctx.closePath();
-          ctx.fill();
-        }
-      }
-      ctx.restore();
-    }
-
-    // 繪製草坪與內野打擊紅土
-    drawField(ctx) {
-      ctx.save();
-      const groundY = PHYSICS.groundY;
-
-      // 1. 草皮條紋（深淺綠交替）
-      ctx.fillStyle = "#43a047";
-      ctx.fillRect(0, 440, 1280, 280);
-
-      ctx.fillStyle = "rgba(76, 175, 80, 0.4)";
-      for (let x = 0; x < 1280; x += 90) {
-        ctx.fillRect(x, 440, 45, 280);
-      }
-
-      // 2. 本壘板打擊區紅土橢圓
-      ctx.fillStyle = "#bcaaa4";
-      ctx.beginPath();
-      ctx.ellipse(PHYSICS.originX - 10, groundY + 10, 80, 36, 0, 0, Math.PI * 2);
-      ctx.fill();
-
-      // 打擊白線方框
-      ctx.strokeStyle = "#ffffff";
-      ctx.lineWidth = 3;
-      ctx.strokeRect(PHYSICS.originX - 60, groundY - 14, 50, 44);
-
-      // 本壘板五邊形
-      ctx.fillStyle = "#ffffff";
-      ctx.beginPath();
-      const hx = PHYSICS.originX + 8;
-      const hy = groundY;
-      ctx.moveTo(hx, hy);
-      ctx.lineTo(hx + 14, hy);
-      ctx.lineTo(hx + 14, hy + 10);
-      ctx.lineTo(hx + 7, hy + 18);
-      ctx.lineTo(hx, hy + 10);
-      ctx.closePath();
-      ctx.fill();
-
-      // 草地邊界線
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.8)";
-      ctx.lineWidth = 4;
-      ctx.beginPath();
-      ctx.moveTo(hx + 7, hy);
-      ctx.lineTo(1280, hy - 40);
-      ctx.stroke();
-
-      ctx.restore();
-    }
-
-    // 繪製全壘打牆（視覺比例鮮明、包含全壘打黃線與真實球場標記）
-    drawOutfieldWall(ctx, level) {
-      ctx.save();
-      const wallPixelX = PHYSICS.originX + level.distance * PHYSICS.scale;
-      const wallPixelH = level.height * PHYSICS.scale;
-      const wallTopPixelY = PHYSICS.groundY - wallPixelH;
-      const wallWidth = 26;
-
-      // 牆本體
-      ctx.fillStyle = level.wallColor;
-      ctx.fillRect(wallPixelX, wallTopPixelY, wallWidth, wallPixelH);
-
-      // 牆面立體邊線
-      ctx.strokeStyle = "rgba(0, 0, 0, 0.35)";
-      ctx.lineWidth = 2;
-      ctx.strokeRect(wallPixelX, wallTopPixelY, wallWidth, wallPixelH);
-
-      // 牆頂亮黃色全壘打頂線（Home Run Line）
-      ctx.fillStyle = level.wallTopColor;
-      ctx.fillRect(wallPixelX - 2, wallTopPixelY - 5, wallWidth + 4, 7);
-
-      // 距離標誌牌（例如：75M 或 105M）
-      ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
-      ctx.fillRect(wallPixelX - 22, PHYSICS.groundY - 36, 70, 24);
-      ctx.fillStyle = "#ffeb3b";
-      ctx.font = "bold 13px system-ui";
-      ctx.textAlign = "center";
-      ctx.fillText(`${level.distance} M`, wallPixelX + 13, PHYSICS.groundY - 20);
-
-      // 特殊球場標牌
-      if (level.id === 2) {
-        // 紅襪隊綠色怪物 Green Monster 招牌標籤
-        ctx.fillStyle = "rgba(27, 94, 32, 0.95)";
-        ctx.fillRect(wallPixelX - 32, wallTopPixelY + 12, 90, 42);
-        ctx.fillStyle = "#ffeb3b";
-        ctx.font = "bold 11px system-ui";
-        ctx.fillText("GREEN", wallPixelX + 13, wallTopPixelY + 28);
-        ctx.fillText("MONSTER 11M", wallPixelX + 13, wallTopPixelY + 44);
-      } else if (level.id === 1) {
-        // 大都會隊 Citi Field 標牌
-        ctx.fillStyle = "rgba(0, 45, 114, 0.9)";
-        ctx.fillRect(wallPixelX - 28, wallTopPixelY - 32, 82, 22);
-        ctx.fillStyle = "#ff9800";
-        ctx.font = "bold 11px system-ui";
-        ctx.fillText("CITI FIELD", wallPixelX + 13, wallTopPixelY - 17);
-      } else if (level.id === 3) {
-        // 落磯隊 Coors Field 標牌
-        ctx.fillStyle = "rgba(51, 0, 102, 0.9)";
-        ctx.fillRect(wallPixelX - 28, wallTopPixelY - 32, 82, 22);
-        ctx.fillStyle = "#ffffff";
-        ctx.font = "bold 11px system-ui";
-        ctx.fillText("COORS FIELD", wallPixelX + 13, wallTopPixelY - 17);
-      }
-
-      ctx.restore();
-    }
-
-    // 繪製擊球瞄準輔助虛線
-    drawAimGuide(ctx) {
-      ctx.save();
-      const rad = (this.angle * Math.PI) / 180.0;
-      const len = 90;
-      const startX = PHYSICS.originX - 10;
-      const startY = PHYSICS.groundY - PHYSICS.y0 * PHYSICS.scale - 12;
-      const endX = startX + Math.cos(rad) * len;
-      const endY = startY - Math.sin(rad) * len;
-
-      ctx.setLineDash([6, 4]);
-      ctx.strokeStyle = "rgba(255, 235, 59, 0.9)";
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.moveTo(startX, startY);
-      ctx.lineTo(endX, endY);
-      ctx.stroke();
-
-      // 瞄準箭頭頭部
-      ctx.setLineDash([]);
-      ctx.fillStyle = "#ffca28";
-      ctx.beginPath();
-      ctx.arc(endX, endY, 6, 0, Math.PI * 2);
-      ctx.fill();
-
-      // 顯示角度文字浮水印
-      ctx.font = "bold 13px system-ui";
-      ctx.fillStyle = "#fff8e1";
-      ctx.fillText(`${this.angle}°`, endX + 10, endY - 4);
-
-      ctx.restore();
-    }
-
-    // 繪製 Q 版棒球選手（頭戴帽子、球衣、持棒、多狀態切換）
-    drawBatter(ctx) {
-      ctx.save();
-      const bx = PHYSICS.originX - 35;
-      const by = PHYSICS.groundY - 14;
-
-      // 呼吸律動浮動
-      const idleBob = Math.sin(performance.now() * 0.005) * 2;
-
-      // 1. 雙腳與鞋子
-      ctx.fillStyle = "#ffffff";
-      ctx.strokeStyle = "#37474f";
-      ctx.lineWidth = 2;
-
-      // 左腳
-      ctx.fillRect(bx - 12, by - 12, 10, 16);
-      ctx.fillStyle = "#e53935";
-      ctx.fillRect(bx - 14, by + 4, 14, 6); // 球鞋
-
-      // 右腳
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(bx + 8, by - 12, 10, 16);
-      ctx.fillStyle = "#e53935";
-      ctx.fillRect(bx + 6, by + 4, 14, 6);
-
-      // 2. 身體（球衣）
-      ctx.fillStyle = "#ffffff";
-      ctx.beginPath();
-      ctx.roundRect(bx - 16, by - 44 + idleBob, 36, 34, 8);
-      ctx.fill();
-      ctx.stroke();
-
-      // 球衣號碼條紋
-      ctx.strokeStyle = "#1e88e5";
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.moveTo(bx + 2, by - 40 + idleBob);
-      ctx.lineTo(bx + 2, by - 14 + idleBob);
-      ctx.stroke();
-
-      // 3. 頭部（Q 版大頭圓形）
-      ctx.fillStyle = "#ffe0b2"; // 膚色
-      ctx.beginPath();
-      ctx.arc(bx + 2, by - 60 + idleBob, 18, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = "#37474f";
-      ctx.lineWidth = 2;
-      ctx.stroke();
-
-      // 臉部表情
-      ctx.fillStyle = "#37474f";
-      if (this.swingPhase === 2) {
-        // 慶祝大笑 ^_^
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(bx - 3, by - 60 + idleBob, 4, Math.PI, 0);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.arc(bx + 7, by - 60 + idleBob, 4, Math.PI, 0);
-        ctx.stroke();
-        // 微笑大嘴
-        ctx.fillStyle = "#d32f2f";
-        ctx.beginPath();
-        ctx.arc(bx + 2, by - 54 + idleBob, 5, 0, Math.PI);
-        ctx.fill();
-      } else if (this.swingPhase === 3) {
-        // 懊惱 >_<
-        ctx.fillText(">", bx - 7, by - 58 + idleBob);
-        ctx.fillText("<", bx + 3, by - 58 + idleBob);
-      } else {
-        // 專注眼神
-        ctx.beginPath();
-        ctx.arc(bx - 2, by - 60 + idleBob, 3, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(bx + 8, by - 60 + idleBob, 3, 0, Math.PI * 2);
-        ctx.fill();
-        // 腮紅
-        ctx.fillStyle = "rgba(255, 138, 128, 0.6)";
-        ctx.beginPath();
-        ctx.arc(bx - 6, by - 54 + idleBob, 3, 0, Math.PI * 2);
-        ctx.arc(bx + 12, by - 54 + idleBob, 3, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      // 4. 棒球帽
-      ctx.fillStyle = "#1565c0";
-      ctx.beginPath();
-      ctx.arc(bx + 2, by - 64 + idleBob, 18, Math.PI, 0);
-      ctx.fill();
-
-      // 帽簷
-      ctx.fillStyle = "#0d47a1";
-      ctx.beginPath();
-      ctx.ellipse(bx + 12, by - 64 + idleBob, 14, 5, 0.1, 0, Math.PI * 2);
-      ctx.fill();
-
-      // 5. 木質球棒與雙手揮動
-      ctx.save();
-      ctx.translate(bx + 6, by - 36 + idleBob);
-
-      let batAngle = -0.6; // 預設斜後舉起
-      if (this.swingPhase === 1) {
-        // 揮棒中：0.35 秒內快速劃出一道圓弧
-        const prog = Math.min(1.0, this.batterAnimTimer / 0.35);
-        batAngle = -0.8 + prog * 2.2;
-      } else if (this.swingPhase === 2) {
-        // 慶祝時高舉球棒！
-        batAngle = -1.9;
-      }
-
-      ctx.rotate(batAngle);
-
-      // 球棒本體
-      ctx.fillStyle = "#d7ccc8";
-      ctx.fillRect(-3, -48, 7, 44);
-      ctx.fillStyle = "#8d6e63"; // 棒頭加粗
-      ctx.fillRect(-4, -48, 9, 20);
-      // 球棒握把布
-      ctx.fillStyle = "#3e2723";
-      ctx.fillRect(-2, -14, 5, 12);
-
-      ctx.restore();
-
-      ctx.restore();
-    }
-
-    // 繪製棒球飛行軌跡（淡藍色光芒軌跡帶）
-    drawBallPath(ctx) {
-      if (this.ballPath.length < 2) return;
-      ctx.save();
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.85)";
-      ctx.lineWidth = 3;
-      ctx.setLineDash([4, 4]);
-
-      ctx.beginPath();
-      ctx.moveTo(this.ballPath[0].px, this.ballPath[0].py);
-      for (let i = 1; i < this.ballPath.length; i++) {
-        ctx.lineTo(this.ballPath[i].px, this.ballPath[i].py);
-      }
-      ctx.stroke();
-      ctx.restore();
-    }
-
-    // 繪製棒球本體與地面陰影
-    drawBall(ctx) {
-      ctx.save();
-      const px = PHYSICS.originX + this.ball.x * PHYSICS.scale;
-      const py = PHYSICS.groundY - this.ball.y * PHYSICS.scale;
-      const groundShadowY = PHYSICS.groundY;
-
-      // 1. 地面投射陰影（高度越高陰影越淡越小）
-      const heightAboveGround = Math.max(0, this.ball.y);
-      const shadowAlpha = Math.max(0.08, 0.35 - heightAboveGround * 0.015);
-      const shadowSize = Math.max(3, 8 - heightAboveGround * 0.2);
-
-      ctx.fillStyle = `rgba(0, 0, 0, ${shadowAlpha})`;
-      ctx.beginPath();
-      ctx.ellipse(px, groundShadowY + 2, shadowSize * 1.5, shadowSize * 0.6, 0, 0, Math.PI * 2);
-      ctx.fill();
-
-      // 2. 棒球球體
-      const r = 7;
-      ctx.fillStyle = "#ffffff";
-      ctx.beginPath();
-      ctx.arc(px, py, r, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = "#e53935";
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-
-      // 棒球紅色縫線弧度
-      ctx.beginPath();
-      ctx.arc(px - 2, py, 4, -Math.PI / 2, Math.PI / 2);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.arc(px + 2, py, 4, Math.PI / 2, -Math.PI / 2);
-      ctx.stroke();
-
-      ctx.restore();
+    if (this.confettiCtx && this.confettiCanvas) {
+      this.confettiCtx.clearRect(0, 0, this.confettiCanvas.width, this.confettiCanvas.height);
     }
   }
+}
 
-  // 視窗載入完成後啟動遊戲
-  window.addEventListener("DOMContentLoaded", () => {
-    window.gameInstance = new HomeRunGame();
-  });
-})();
+// 啟動遊戲控制器
+window.addEventListener('DOMContentLoaded', () => {
+  window.chronotypeGame = new ChronotypeGame();
+});

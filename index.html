@@ -3,205 +3,431 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>《全壘打大作戰》（Home Run Adventure）</title>
-  <meta name="description" content="結合棒球知識、物理概念與策略闖關的教育遊戲 - 全壘打大作戰">
-  <link rel="icon" type="image/svg+xml" href="assets/images/baseball.svg">
+  <title>《生理時鐘大冒險》（Chronotype Adventure）</title>
+  <meta name="description" content="根據《晨型人 vs. 夜型人》設計的 2D 互動式時間規劃教育遊戲">
+  <link rel="icon" type="image/svg+xml" href="assets/icons/clock.svg">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <!-- 遊戲主容器（16:9 比例） -->
-  <div id="game-wrapper">
+  <!-- 遊戲主容器（橫向 16:9 最佳化自適應） -->
+  <div id="game-container">
 
-    <!-- 頂部資訊 HUD -->
+    <!-- 頂部資訊 HUD 導航列 -->
     <header id="top-hud">
-      <div class="hud-group">
-        <div class="hud-badge">
-          <span>關卡：</span>
-          <span id="hud-level-num" class="level-number">1／3</span>
-          <span id="hud-level-name">大都會隊 Citi Field</span>
+      <div class="hud-left">
+        <div class="hud-chip" id="hud-level-chip">
+          <span class="chip-icon">🧭</span>
+          <span id="hud-level-tag">關卡 1／3</span>
+          <span id="hud-level-title" class="hud-title-text">晨光活力計畫</span>
+        </div>
+        <div class="hud-chip character-chip" id="hud-char-chip">
+          <img id="hud-char-avatar" src="assets/characters/inu.svg" alt="角色頭像" class="mini-avatar">
+          <span id="hud-char-name">Inu（晨型人）</span>
         </div>
       </div>
 
-      <div class="hud-group">
-        <div class="hud-badge">
-          <span>剩餘機會：</span>
-          <div id="hud-chances" class="chances-container">
-            <!-- 棒球機會由 JS 動態渲染 -->
-          </div>
+      <div class="hud-center">
+        <!-- 睡眠時數即時統計膠囊 -->
+        <div class="hud-chip stat-chip" id="hud-sleep-chip" title="每日累計睡眠時數">
+          <span class="stat-icon">💤</span>
+          <span class="stat-label">睡眠：</span>
+          <span id="hud-sleep-hours" class="stat-value">0.0 小時</span>
+          <span id="hud-sleep-status" class="stat-status-badge status-warn">未安排</span>
         </div>
-        <button id="sound-toggle-btn" class="icon-btn" title="開關音效" aria-label="開關音效">
+        <!-- 精神能量即時模擬膠囊 -->
+        <div class="hud-chip stat-chip" id="hud-energy-chip" title="作息模擬精神值（非醫學測量）">
+          <span class="stat-icon" id="hud-energy-icon">⚡</span>
+          <span class="stat-label">精神值：</span>
+          <div class="energy-mini-track">
+            <div id="hud-energy-bar" class="energy-mini-fill" style="width: 50%;"></div>
+          </div>
+          <span id="hud-energy-val" class="stat-value">50%</span>
+        </div>
+      </div>
+
+      <div class="hud-right">
+        <button id="btn-sound-toggle" class="hud-icon-btn" title="開關音效" aria-label="開關音效">
           <span id="sound-icon">🔊</span>
+        </button>
+        <button id="btn-reset-level" class="hud-icon-btn reset-btn" title="重新安排此關時間表" aria-label="重新安排此關時間表">
+          <span>🔄</span>
+          <span class="btn-text">重設</span>
         </button>
       </div>
     </header>
 
-    <!-- 關卡提示橫幅浮條 -->
-    <div id="level-banner">大都會隊主場改建：圍牆距離已縮短至 75 單位，試著調整角度與力道，轟出全壘打吧！</div>
-
-    <!-- 揮棒失敗非阻塞短暫提示浮動氣泡 -->
-    <div id="toast-notice">
-      <span>💡</span>
-      <span id="toast-message">差一點就到圍牆了！試著增加力道，或調整角度！</span>
+    <!-- 浮動提示氣泡（非阻塞提示，如時間衝突警告） -->
+    <div id="toast-toast" class="toast-hidden" role="alert" aria-live="polite">
+      <span class="toast-icon">💡</span>
+      <span id="toast-text">這個時間已經安排其他活動囉！</span>
     </div>
 
-    <!-- 全壘打巨幅文字動畫 -->
-    <div id="homerun-banner">HOME RUN!</div>
+    <!-- 遊戲主體視窗區 -->
+    <main id="game-main">
 
-    <!-- Canvas 遊戲主畫面（1280x720 邏輯畫布） -->
-    <canvas id="game-canvas"></canvas>
-
-    <!-- 底部操作控制面板 -->
-    <footer id="bottom-controls">
-      <div class="sliders-container">
-        <!-- 擊球角度滑桿 -->
-        <div class="slider-group">
-          <div class="slider-header">
-            <span class="slider-title">⚾ 擊球角度</span>
-            <span id="angle-val" class="slider-val-badge">45°</span>
+      <!-- ============================================== -->
+      <!-- 首頁畫面（Start Screen） -->
+      <!-- ============================================== -->
+      <section id="screen-start" class="game-screen active">
+        <div class="start-card">
+          <!-- 頂部裝飾元素 -->
+          <div class="start-header-decor">
+            <span class="decor-sun">☀️</span>
+            <span class="decor-cloud">☁️</span>
+            <span class="decor-clock">⏰</span>
+            <span class="decor-star">⭐</span>
+            <span class="decor-moon">🌙</span>
           </div>
-          <div class="slider-row">
-            <span class="slider-label">低角度</span>
-            <input type="range" id="angle-slider" min="15" max="75" step="5" value="45" aria-label="調整擊球角度">
-            <span class="slider-label">高角度</span>
+
+          <h1 class="main-game-title">《生理時鐘大冒險》</h1>
+          <div class="game-subtitle">Chronotype Adventure ． 探索晨型與夜型的生活節奏</div>
+
+          <div class="start-hero-image">
+            <img src="assets/characters/trio.svg" alt="Inu, Usagi, Neko" class="hero-trio-img">
           </div>
-        </div>
 
-        <!-- 擊球力道滑桿 -->
-        <div class="slider-group">
-          <div class="slider-header">
-            <span class="slider-title">⚡ 擊球力道</span>
-            <span id="power-val" class="slider-val-badge">75%</span>
+          <div class="start-story-box">
+            <p class="story-lead">
+              「太陽升起，有人精神百倍！<br>
+              月亮出現，有人卻才剛充滿活力！<br>
+              每個人的生理時鐘都不一樣。<br>
+              你能幫助三位好朋友，找到適合自己的生活節奏嗎？」
+            </p>
+            <div class="story-subtext">
+              ✨ 擔任「生理時鐘管理師」，透過拖曳活動卡片，兼顧睡眠與學習效率！
+            </div>
           </div>
-          <div class="slider-row">
-            <span class="slider-label">40%</span>
-            <input type="range" id="power-slider" min="40" max="100" step="5" value="75" aria-label="調整擊球力道">
-            <span class="slider-label">100%</span>
-          </div>
-        </div>
-      </div>
 
-      <!-- 大型揮棒按鈕 -->
-      <button id="swing-btn" class="swing-btn">
-        <span>⚾ 揮棒！</span>
-      </button>
-    </footer>
-
-    <!-- 首頁畫面（預設顯示） -->
-    <div id="start-screen" class="overlay-screen active">
-      <div class="modal-card">
-        <div class="modal-header-decor">⚾ 🏆 🌟</div>
-        <h1 class="game-title">《全壘打大作戰》</h1>
-        <div class="game-subtitle">Home Run Adventure ． 棒球科學與球場決策</div>
-        <p class="modal-description">
-          <strong>歡迎來到大聯盟！</strong><br><br>
-          你將同時身兼<strong>「球團總管」</strong>與<strong>「球隊王牌打者」</strong>！<br>
-          每一座球場的全壘打牆距離與高度，都暗藏著決定比賽勝負的策略。<br>
-          面對大都會隊的打擊低潮、紅襪隊的市區地形限制、落磯隊的高山稀薄空氣，<br>
-          你能做出最佳改建決策，並親自上場轟出勝利全壘打嗎？
-        </p>
-        <button id="start-btn" class="primary-btn">進入總管決策室 ➔</button>
-      </div>
-    </div>
-
-    <!-- 知識決策彈窗（引起動機的有趣提問與球場策略改建） -->
-    <div id="decision-screen" class="overlay-screen">
-      <div class="modal-card decision-card">
-        <div class="decision-badge" id="decision-badge">⚾ 球團總管決策室 ． 第 1 關</div>
-        <h2 id="decision-title" class="modal-title">大都會隊的困境</h2>
-        <div id="decision-context" class="decision-context-box">
-          隊上打者最近手感冰冷，全壘打遲遲打不出來，球迷直呼比賽沉悶！身為球團總管，休賽季該如何改建主場，幫助自家打者更容易轟出全壘打？
-        </div>
-
-        <!-- 選項按鈕區 -->
-        <div id="decision-options" class="decision-options-grid">
-          <button class="decision-opt-btn" id="opt-btn-a" data-choice="A">
-            <span class="opt-tag">A</span>
-            <span class="opt-text" id="opt-text-a">把全壘打牆距離向前縮短</span>
-          </button>
-          <button class="decision-opt-btn" id="opt-btn-b" data-choice="B">
-            <span class="opt-tag">B</span>
-            <span class="opt-text" id="opt-text-b">把全壘打牆往後退（拉長距離）</span>
-          </button>
-        </div>
-
-        <!-- 決策回饋與知識小卡（點選後展開） -->
-        <div id="decision-feedback" class="decision-feedback-box" style="display: none;">
-          <div id="feedback-result-title" class="feedback-title">🎯 決策正確！球場改建中...</div>
-          <p id="feedback-knowledge-text" class="feedback-text">
-            2013 年紐約大都會隊球場（Citi Field）就曾因應球員打擊能力不佳而縮短全壘打牆距離，結果有效提升了隊上球員的全壘打數量！
-          </p>
-          <div class="modal-btn-row">
-            <button id="decision-start-action-btn" class="primary-btn">上場揮棒！印證改建成果 ➔</button>
+          <div class="start-actions">
+            <button id="btn-start-adventure" class="action-btn primary-start-btn">
+              <span>🚀 開始冒險！</span>
+            </button>
           </div>
         </div>
-      </div>
-    </div>
+      </section>
 
-    <!-- 關卡通關成功彈窗 -->
-    <div id="level-clear-screen" class="overlay-screen">
-      <div class="modal-card">
-        <div class="modal-header-decor">🎉 ⚾ 🎆</div>
-        <h2 id="level-clear-title" class="modal-title">挑戰成功！</h2>
-        <p id="level-clear-msg" class="modal-description">
-          全壘打！漂亮的一擊！你成功越過第一座球場的圍牆！
-        </p>
-        <div id="level-clear-knowledge" class="modal-hint-box" style="margin-top: 10px;">
-          💡 知識小結：圍牆縮短後，打者不需要打得特別遠就能越過圍牆，大大提升了全壘打的成功率！
-        </div>
-        <div class="modal-btn-row">
-          <button id="next-level-btn" class="success-btn">進入下一座球場 ➔</button>
-        </div>
-      </div>
-    </div>
+      <!-- ============================================== -->
+      <!-- 關卡主要遊戲畫面（Level Play Screen） -->
+      <!-- ============================================== -->
+      <section id="screen-level" class="game-screen">
 
-    <!-- 關卡挑戰失敗彈窗（3 次機會用盡） -->
-    <div id="level-fail-screen" class="overlay-screen">
-      <div class="modal-card">
-        <div class="modal-header-decor">⚾ 💦 💭</div>
-        <h2 class="modal-title">挑戰失敗！再試一次！</h2>
-        <p class="modal-description">
-          別灰心！觀察剛才棒球飛行的方向，調整角度與力道，再挑戰一次吧！
-        </p>
-        <div id="level-fail-hint" class="modal-hint-box">
-          💡 提示：差一點就到圍牆了！試著增加力道，或調整角度！
-        </div>
-        <div class="modal-btn-row">
-          <button id="retry-btn" class="primary-btn">重新挑戰本關</button>
-          <button id="fail-home-btn" class="secondary-btn">返回首頁</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- 最終冠軍通關畫面 -->
-    <div id="champion-screen" class="overlay-screen">
-      <div class="modal-card" style="max-width: 680px;">
-        <div class="modal-header-decor">🏆 👑 🌟</div>
-        <h1 class="modal-title">大聯盟傳奇總管 ＆ 全壘打王！</h1>
-        <p class="modal-description">
-          太精彩了！你成功征服了三座大聯盟傳奇球場！<br>
-          你不僅用科學眼光做出了最佳球場決策，更親自揮棒驗證了物理規律！
-        </p>
-        <div class="champion-summary-box">
-          <div class="summary-item">
-            <span class="summary-icon">🏟️</span>
-            <div><strong>大都會隊 Citi Field</strong>：縮短圍牆距離，能讓打擊陷入低潮的打者更容易擊出全壘打。</div>
+        <!-- 關卡情境引導條 -->
+        <div class="level-story-banner">
+          <div class="banner-avatar-wrap">
+            <img id="level-story-avatar" src="assets/characters/inu.svg" alt="引導角色" class="story-avatar">
           </div>
-          <div class="summary-item">
-            <span class="summary-icon">🧱</span>
-            <div><strong>紅襪隊綠色怪物</strong>：面對腹地受限的短外野，加高圍牆能防堵全壘打，考驗打者的高仰角打擊技巧。</div>
-          </div>
-          <div class="summary-item">
-            <span class="summary-icon">🏔️</span>
-            <div><strong>落磯隊庫爾斯球場</strong>：高山海拔 1,600 公尺空氣稀薄阻力小，球能飛超遠，需超深遠圍牆平衡比賽！</div>
+          <div class="banner-content">
+            <div class="banner-title-row">
+              <span id="level-tag-badge" class="level-badge">第一關：晨光活力計畫</span>
+              <span id="character-type-badge" class="type-badge morning">🌅 晨型人代表</span>
+            </div>
+            <p id="level-story-text" class="banner-desc">
+              「Inu 喜歡早起，早上總是精神滿滿！可是今天他的時間表被打亂了。你能幫他重新安排一天的生活，確保充足睡眠嗎？」
+            </p>
           </div>
         </div>
-        <div class="modal-btn-row">
-          <button id="champion-restart-btn" class="primary-btn">再次挑戰</button>
-          <button id="champion-home-btn" class="secondary-btn">返回首頁</button>
+
+        <!-- 第三關專屬：任務 A 睡前環境調整面板（預設隱藏，僅第 3 關顯示） -->
+        <div id="level3-environment-panel" class="room-panel-hidden">
+          <div class="room-panel-header">
+            <div class="room-title">
+              <span class="room-icon">🛏️</span>
+              <strong>任務 A：調整 Neko 的睡前臥室環境</strong>
+              <span class="sub-rule">（點擊房間物件調整環境，至少需達成 2 項健康調整）</span>
+            </div>
+            <div class="room-progress-badge">
+              <span>優化進度：</span>
+              <strong id="env-completed-count">0</strong>／6
+              <span id="env-requirement-tag" class="req-tag">尚未達標</span>
+            </div>
+          </div>
+
+          <!-- 互動臥室場景 -->
+          <div class="bedroom-interactive-scene">
+            <!-- 1. 手機 -->
+            <button class="room-item-btn item-bad" id="room-item-phone" data-item="phone" title="點擊調整睡前手機使用習慣">
+              <span class="item-icon">📱</span>
+              <span class="item-title">手機使用</span>
+              <span class="item-status" id="phone-status">睡前滑手機中</span>
+            </button>
+
+            <!-- 2. 檯燈 -->
+            <button class="room-item-btn item-bad" id="room-item-lamp" data-item="lamp" title="點擊切換臥室燈光">
+              <span class="item-icon">💡</span>
+              <span class="item-title">臥室燈光</span>
+              <span class="item-status" id="lamp-status">刺眼強光 (100%)</span>
+            </button>
+
+            <!-- 3. 書桌 -->
+            <button class="room-item-btn item-bad" id="room-item-desk" data-item="desk" title="點擊收拾書桌與書包">
+              <span class="item-icon">📚</span>
+              <span class="item-title">書桌狀態</span>
+              <span class="item-status" id="desk-status">散落考卷雜物</span>
+            </button>
+
+            <!-- 4. 窗簾 -->
+            <button class="room-item-btn item-bad" id="room-item-curtain" data-item="curtain" title="點擊拉上遮光窗簾">
+              <span class="item-icon">🪟</span>
+              <span class="item-title">臥室窗簾</span>
+              <span class="item-status" id="curtain-status">大開（路燈直射）</span>
+            </button>
+
+            <!-- 5. 鬧鐘 -->
+            <button class="room-item-btn item-bad" id="room-item-alarm" data-item="alarm" title="點擊設定合理起床鬧鐘">
+              <span class="item-icon">⏰</span>
+              <span class="item-title">起床鬧鐘</span>
+              <span class="item-status" id="alarm-status">未定鬧鐘</span>
+            </button>
+
+            <!-- 6. 床鋪 -->
+            <button class="room-item-btn item-bad" id="room-item-bed" data-item="bed" title="點擊整理舒適床鋪">
+              <span class="item-icon">🛏️</span>
+              <span class="item-title">床鋪整潔</span>
+              <span class="item-status" id="bed-status">堆滿雜物</span>
+            </button>
+          </div>
+
+          <!-- 臥室互動即時回饋小卡 -->
+          <div id="room-feedback-bubble" class="room-dialog">
+            <span class="usagi-speaker">🐰 Usagi 提醒：</span>
+            <span id="room-dialog-text">點擊上方房間裡的物品，幫助 Neko 營造適合分泌褪黑激素的放鬆入睡環境吧！</span>
+          </div>
         </div>
-      </div>
-    </div>
+
+        <!-- 時間排程主工作區（上下分割或左右自適應） -->
+        <div class="schedule-workspace">
+
+          <!-- 左側／上方：每日行程時間軸槽位 -->
+          <div class="timeline-container">
+            <div class="timeline-header">
+              <div class="timeline-title-row">
+                <span class="sec-icon">📅</span>
+                <h2 class="sec-title">一日作息時間表</h2>
+                <span class="sec-hint">（支援滑鼠拖曳或「點擊卡片 ➔ 點擊時間格」放置）</span>
+              </div>
+              <div class="timeline-summary-pill" id="schedule-counter-pill">
+                已安排：<span id="placed-slots-count">0</span>／<span id="total-slots-count">7</span> 項
+              </div>
+            </div>
+
+            <!-- 時間軸槽位列表（由 JS 動態生成） -->
+            <div id="slots-grid" class="slots-grid">
+              <!-- 槽位由 JS 根據關卡設定渲染 -->
+            </div>
+          </div>
+
+          <!-- 右側／下方：可用活動卡片托盤與即時分析狀態 -->
+          <div class="side-panel">
+
+            <!-- 卡片托盤 -->
+            <div class="tray-container">
+              <div class="tray-header">
+                <span class="sec-icon">🗂️</span>
+                <h3 class="sec-title">待安排活動卡片</h3>
+                <span id="tray-count-badge" class="badge-pill">剩餘 7 張</span>
+              </div>
+              <div id="cards-tray" class="cards-tray">
+                <!-- 活動卡片由 JS 動態生成 -->
+              </div>
+            </div>
+
+            <!-- 精神狀態與即時回饋盒 -->
+            <div class="insight-box">
+              <div class="energy-panel-header">
+                <div class="energy-label-wrap">
+                  <span class="energy-title">⚡ 精神狀態評估</span>
+                  <span id="energy-face-emoji" class="face-emoji">😊</span>
+                </div>
+                <span id="energy-grade-text" class="energy-grade">良好</span>
+              </div>
+
+              <!-- 精神能量進度條 -->
+              <div class="energy-gauge-track">
+                <div id="energy-gauge-fill" class="energy-gauge-bar" style="width: 50%;"></div>
+              </div>
+
+              <div class="energy-scale-labels">
+                <span>0 疲憊</span>
+                <span>50 普通</span>
+                <span>100 活力充沛</span>
+              </div>
+
+              <p class="energy-disclaimer">※ 本精神值為遊戲化作息模擬，非醫學測量結果。</p>
+
+              <!-- 即時小夥伴對話框 -->
+              <div class="companion-bubble">
+                <div class="companion-avatar-wrap">
+                  <img src="assets/characters/usagi.svg" alt="Usagi" class="companion-avatar">
+                </div>
+                <div class="companion-text-box">
+                  <div class="companion-name">Usagi 的小叮嚀</div>
+                  <p id="live-companion-tip">把活動卡片拖曳到左側時間格中，觀察角色的精神變化與睡眠時數吧！</p>
+                </div>
+              </div>
+
+              <!-- 檢查時間表主按鈕 -->
+              <button id="btn-check-schedule" class="action-btn check-schedule-btn">
+                <span>📋 檢查我的時間表！</span>
+              </button>
+            </div>
+
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ============================================== -->
+      <!-- 關卡結算評分彈窗（Evaluation Modal） -->
+      <!-- ============================================== -->
+      <section id="modal-eval" class="modal-overlay">
+        <div class="modal-card eval-card">
+          <div class="eval-header">
+            <div class="eval-stamp-wrap">
+              <span id="eval-tier-stamp" class="tier-stamp stamp-gold">👑 生理時鐘管理大師！</span>
+            </div>
+            <h2 id="eval-level-name" class="eval-title">第一關：晨光活力計畫 ． 作息審查報告</h2>
+            <div class="total-score-badge">
+              <span class="score-num" id="eval-total-score">95</span>
+              <span class="score-unit">分</span>
+            </div>
+          </div>
+
+          <!-- 四大評分規準細項 -->
+          <div class="eval-rubric-grid">
+            <!-- 1. 睡眠安排 (40分) -->
+            <div class="rubric-item">
+              <div class="rubric-header">
+                <span class="rubric-name">💤 睡眠安排</span>
+                <span id="rubric-score-sleep" class="rubric-points">40／40 分</span>
+              </div>
+              <div class="rubric-bar-bg">
+                <div id="rubric-bar-sleep" class="rubric-bar-fill" style="width: 100%;"></div>
+              </div>
+              <p id="rubric-desc-sleep" class="rubric-comment">安排了 9.5 小時充足睡眠，完全符合 12 歲兒童發展需求！</p>
+            </div>
+
+            <!-- 2. 時間規劃 (30分) -->
+            <div class="rubric-item">
+              <div class="rubric-header">
+                <span class="rubric-name">⏰ 時間規劃合理性</span>
+                <span id="rubric-score-schedule" class="rubric-points">30／30 分</span>
+              </div>
+              <div class="rubric-bar-bg">
+                <div id="rubric-bar-schedule" class="rubric-bar-fill" style="width: 100%;"></div>
+              </div>
+              <p id="rubric-desc-schedule" class="rubric-comment">無時間衝突，起床、用餐與上學順序完全合乎生活邏輯！</p>
+            </div>
+
+            <!-- 3. 符合作息需求 (20分) -->
+            <div class="rubric-item">
+              <div class="rubric-header">
+                <span class="rubric-name">🎯 符合作息需求</span>
+                <span id="rubric-score-chronotype" class="rubric-points">20／20 分</span>
+              </div>
+              <div class="rubric-bar-bg">
+                <div id="rubric-bar-chronotype" class="rubric-bar-fill" style="width: 100%;"></div>
+              </div>
+              <p id="rubric-desc-chronotype" class="rubric-comment">完美把握晨型人的晨間活力高峰，高專注活動安排得宜！</p>
+            </div>
+
+            <!-- 4. 健康生活習慣 (10分) -->
+            <div class="rubric-item">
+              <div class="rubric-header">
+                <span class="rubric-name">🌱 健康生活習慣</span>
+                <span id="rubric-score-habits" class="rubric-points">10／10 分</span>
+              </div>
+              <div class="rubric-bar-bg">
+                <div id="rubric-bar-habits" class="rubric-bar-fill" style="width: 100%;"></div>
+              </div>
+              <p id="rubric-desc-habits" class="rubric-comment">有適度安排休息與放鬆時間，兼顧生活節奏與身心健康！</p>
+            </div>
+          </div>
+
+          <!-- Usagi 專業回饋與具體改善建議 -->
+          <div class="eval-feedback-box">
+            <div class="feedback-badge">🐰 專業回饋與建議</div>
+            <p id="eval-detailed-feedback" class="feedback-text">
+              太棒了！你幫 Inu 安排了一個充滿活力的一天！不過別忘記，早起的前提是要有充足的睡眠喔！
+            </p>
+          </div>
+
+          <!-- 彈窗按鈕列 -->
+          <div class="modal-actions-row">
+            <button id="btn-eval-tweak" class="action-btn secondary-btn">
+              <span>🔄 繼續微調時間表</span>
+            </button>
+            <button id="btn-eval-next" class="action-btn primary-btn">
+              <span id="btn-eval-next-text">前往下一關 ➔</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================== -->
+      <!-- 最終通關慶祝畫面（Grand Victory Screen） -->
+      <!-- ============================================== -->
+      <section id="screen-victory" class="game-screen">
+        <!-- 彩帶彩屑 Canvas 動畫背景 -->
+        <canvas id="victory-confetti-canvas"></canvas>
+
+        <div class="victory-card">
+          <div class="medal-wrap">
+            <img src="assets/icons/medal.svg" alt="金色獎章" class="victory-medal-icon">
+          </div>
+
+          <h1 class="victory-title">👑 生理時鐘管理大師！</h1>
+          <div class="victory-subtitle">恭喜你全破三大挑戰 ． 守護生理時鐘王國</div>
+
+          <div class="victory-trio-wrap">
+            <img src="assets/characters/trio.svg" alt="三位好友一起慶祝" class="victory-trio-img">
+          </div>
+
+          <div class="victory-summary-box">
+            <p class="summary-paragraph">
+              「恭喜你成功幫助三位好朋友！<br>
+              原來每個人的生理時鐘都不太一樣。<br>
+              有人早上精神好，有人晚上比較有活力。<br>
+              不論是晨型人還是夜型人，<strong>充足睡眠（9～12 小時）</strong>與<strong>健康作息</strong>都很重要！」
+            </p>
+
+            <div class="victory-takeaways">
+              <div class="takeaway-item">
+                <span class="takeaway-icon">🌅</span>
+                <div>
+                  <strong>Inu 的收穫：</strong>
+                  <span>晨型人喜歡早起，但早起的前提是提早就寢，充足睡眠才能維持整天活力。</span>
+                </div>
+              </div>
+              <div class="takeaway-item">
+                <span class="takeaway-icon">🌙</span>
+                <div>
+                  <strong>Neko 的收穫：</strong>
+                  <span>夜型人晚上較有精神不是懶惰！面對固定上學時間，睡前減光、少用手機就能漸進調整！</span>
+                </div>
+              </div>
+              <div class="takeaway-item">
+                <span class="takeaway-icon">🤝</span>
+                <div>
+                  <strong>核心理念：</strong>
+                  <span>沒有絕對優劣的時間表，學會傾聽自己的生理時鐘，兼顧上學與健康才是最重要的！</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="victory-actions">
+            <button id="btn-victory-replay" class="action-btn primary-btn">
+              <span>🔄 再玩一次</span>
+            </button>
+            <button id="btn-victory-home" class="action-btn secondary-btn">
+              <span>🏠 返回首頁</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+    </main>
 
   </div>
 
