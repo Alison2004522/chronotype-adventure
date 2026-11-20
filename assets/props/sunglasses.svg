@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 80" width="100%" height="100%">
+  <defs>
+    <linearGradient id="lensGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1E293B"/>
+      <stop offset="100%" stop-color="#0F172A"/>
+    </linearGradient>
+  </defs>
+  <g>
+    <path d="M 65,30 Q 80,24 95,30" fill="none" stroke="#F59E0B" stroke-width="4" stroke-linecap="round"/>
+    <rect x="20" y="22" width="48" height="38" rx="14" fill="url(#lensGrad)" stroke="#F59E0B" stroke-width="3.5"/>
+    <rect x="92" y="22" width="48" height="38" rx="14" fill="url(#lensGrad)" stroke="#F59E0B" stroke-width="3.5"/>
+    <path d="M 28,28 L 52,52" stroke="#38BDF8" stroke-width="3" stroke-linecap="round" opacity="0.8"/>
+    <path d="M 38,26 L 56,44" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" opacity="0.9"/>
+    <path d="M 100,28 L 124,52" stroke="#38BDF8" stroke-width="3" stroke-linecap="round" opacity="0.8"/>
+    <path d="M 110,26 L 128,44" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" opacity="0.9"/>
+  </g>
+</svg>

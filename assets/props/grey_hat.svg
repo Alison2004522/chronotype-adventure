@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 150" width="100%" height="100%">
+  <defs>
+    <linearGradient id="feltGrey" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#94A3B8"/>
+      <stop offset="60%" stop-color="#64748B"/>
+      <stop offset="100%" stop-color="#475569"/>
+    </linearGradient>
+  </defs>
+  <g>
+    <path d="M 52,95 C 48,35 68,20 100,20 C 132,20 152,35 148,95 Z"
+          fill="url(#feltGrey)" stroke="#334155" stroke-width="4" stroke-linejoin="round"/>
+    <path d="M 80,30 C 100,42 120,30 120,30" fill="none" stroke="#334155" stroke-width="3.5" stroke-linecap="round"/>
+    <path d="M 50,90 C 80,98 120,98 150,90 L 151,102 C 120,110 80,110 49,102 Z"
+          fill="#78350F" stroke="#451A03" stroke-width="2"/>
+    <path d="M 20,105 C 50,95 150,95 180,105 C 190,115 170,128 100,128 C 30,128 10,115 20,105 Z"
+          fill="#64748B" stroke="#334155" stroke-width="4" stroke-linejoin="round"/>
+    <line x1="75" y1="55" x2="85" y2="50" stroke="#F97316" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="110" y1="60" x2="120" y2="55" stroke="#38BDF8" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="90" y1="75" x2="105" y2="72" stroke="#FDE047" stroke-width="2" stroke-linecap="round"/>
+  </g>
+</svg>
