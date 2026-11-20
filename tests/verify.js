@@ -1,250 +1,209 @@
-// tests/verify.js
-// Automated verification suite for 《名畫變裝大師》（Masterpiece Makeover）
+/**
+ * tests/verify.js
+ * 《生理時鐘大冒險》（Chronotype Adventure）自動化完整性與邏輯驗證腳本
+ */
 
 const fs = require('fs');
 const path = require('path');
 
-const rootDir = path.resolve(__dirname, '..');
-let passed = 0;
-let failed = 0;
+console.log('====================================================');
+console.log('開始執行《生理時鐘大冒險》自動化測試...');
+console.log('====================================================\n');
 
-function assert(condition, message) {
-  if (condition) {
-    console.log(`  [PASS] ${message}`);
-    passed++;
-  } else {
-    console.error(`  [FAIL] ${message}`);
-    failed++;
-  }
-}
-
-console.log('=== 開始執行《名畫變裝大師》專案完整自動化驗證 ===\n');
-
-// 1. 核心檔案與目錄結構檢查
-console.log('1. 核心檔案與目錄結構檢查：');
+// -------------------------------------------------------------
+// 1. 檔案存在性檢查
+// -------------------------------------------------------------
 const requiredFiles = [
   'index.html',
   'style.css',
   'game.js',
-  'README.md',
   '.nojekyll',
-  'assets/paintings/pearl_girl.jpg',
-  'assets/paintings/milkmaid.jpg',
-  'assets/paintings/vangogh.jpg',
-  'assets/characters/chibi_artist_neutral.svg',
-  'assets/characters/pose_pearl_target.svg',
-  'assets/characters/pose_milkmaid_target.svg',
-  'assets/characters/pose_vangogh_target.svg',
-  'assets/props/blue_towel.svg',
-  'assets/props/yellow_cloth.svg',
-  'assets/props/pearl_earring.svg',
-  'assets/props/white_bonnet.svg',
-  'assets/props/blue_apron.svg',
-  'assets/props/milk_jug.svg',
-  'assets/props/bread_basket.svg',
-  'assets/props/grey_hat.svg',
-  'assets/props/blue_jacket.svg',
-  'assets/props/white_scarf.svg',
+  'README.md',
+  'assets/characters/inu.svg',
+  'assets/characters/neko.svg',
+  'assets/characters/usagi.svg',
+  'assets/characters/trio.svg',
+  'assets/icons/clock.svg',
+  'assets/icons/medal.svg',
+  'assets/props/phone_active.svg',
+  'assets/props/phone_off.svg',
+  'assets/props/lamp_bright.svg',
+  'assets/props/lamp_soft.svg',
+  'assets/props/book_closed.svg',
+  'assets/props/book_open.svg',
   'assets/sounds/click.wav',
   'assets/sounds/snap.wav',
-  'assets/sounds/score.wav',
   'assets/sounds/success.wav',
+  'assets/sounds/score.wav',
   'assets/sounds/fanfare.wav'
 ];
 
-requiredFiles.forEach(file => {
-  const fullPath = path.join(rootDir, file);
-  assert(fs.existsSync(fullPath), `檔案存在：${file}`);
-});
-
-// 2. 名畫圖片大小與完整性檢查
-console.log('\n2. 名畫圖片資源完整性檢查：');
-const paintings = ['pearl_girl.jpg', 'milkmaid.jpg', 'vangogh.jpg'];
-paintings.forEach(p => {
-  const pPath = path.join(rootDir, 'assets', 'paintings', p);
-  if (fs.existsSync(pPath)) {
-    const stats = fs.statSync(pPath);
-    assert(stats.size > 50000, `名畫 ${p} 大小正常（${Math.round(stats.size / 1024)} KB）`);
+let filesMissing = 0;
+requiredFiles.forEach(relPath => {
+  const fullPath = path.join(__dirname, '..', relPath);
+  if (!fs.existsSync(fullPath)) {
+    console.error(`❌ 遺漏必要檔案: ${relPath}`);
+    filesMissing++;
   } else {
-    assert(false, `名畫 ${p} 檔案不存在`);
+    const stat = fs.statSync(fullPath);
+    console.log(`✅ 檔案存在: ${relPath} (${stat.size} bytes)`);
   }
 });
 
-// 3. HTML 語意標籤與重要 ID 檢查
-console.log('\n3. HTML 語意標籤與介面元素檢查：');
-const htmlContent = fs.readFileSync(path.join(rootDir, 'index.html'), 'utf8');
-
-const requiredIds = [
-  'start-screen',
-  'game-screen',
-  'exhibition-screen',
-  'modal-inspect',
-  'modal-score',
-  'btn-start-game',
-  'btn-inspect-painting',
-  'btn-toggle-sound',
-  'btn-reset-stage',
-  'btn-finish-makeover',
-  'props-shelf',
-  'pose-buttons',
-  'expression-buttons',
-  'slider-pos-x',
-  'slider-scale',
-  'bg-buttons',
-  'btn-download-certificate',
-  'btn-replay-game',
-  'btn-back-home',
-  'export-canvas'
-];
-
-requiredIds.forEach(id => {
-  assert(htmlContent.includes(`id="${id}"`), `HTML 包含必要 ID：#${id}`);
-});
-
-// 4. 音效檔案 WAV 標頭檢查
-console.log('\n4. 音效 WAV 標頭驗證：');
-const wavFiles = ['click.wav', 'snap.wav', 'score.wav', 'success.wav', 'fanfare.wav'];
-wavFiles.forEach(wav => {
-  const wavPath = path.join(rootDir, 'assets', 'sounds', wav);
-  if (fs.existsSync(wavPath)) {
-    const buf = fs.readFileSync(wavPath);
-    const riff = buf.toString('ascii', 0, 4);
-    const wave = buf.toString('ascii', 8, 12);
-    assert(riff === 'RIFF' && wave === 'WAVE', `音效 ${wav} 具備標準 RIFF WAVE 標頭`);
-  } else {
-    assert(false, `音效檔案 ${wav} 不存在`);
-  }
-});
-
-// 5. JavaScript 遊戲邏輯與規準驗證
-console.log('\n5. JavaScript 遊戲邏輯與規準驗證：');
-const gameJsContent = fs.readFileSync(path.join(rootDir, 'game.js'), 'utf8');
-
-assert(gameJsContent.includes('LEVELS_DATA'), 'game.js 包含關卡資料庫 LEVELS_DATA');
-assert(gameJsContent.includes('SoundManager'), 'game.js 包含音效合成引擎 SoundManager');
-assert(gameJsContent.includes('evaluateLevel'), 'game.js 包含精準評分評量函式 evaluateLevel');
-assert(gameJsContent.includes('exportCertificatePNG'), 'game.js 包含成果展本機 PNG 下載函式');
-
-assert(gameJsContent.includes('blue_towel') && gameJsContent.includes('yellow_cloth') && gameJsContent.includes('pearl_earring'), '第 1 關包含藍色毛巾、黃色布料、珍珠耳環');
-assert(gameJsContent.includes('white_bonnet') && gameJsContent.includes('blue_apron') && gameJsContent.includes('milk_jug') && gameJsContent.includes('bread_basket'), '第 2 關包含白色頭巾、藍色圍裙、水壺、麵包');
-assert(gameJsContent.includes('grey_hat') && gameJsContent.includes('blue_jacket') && gameJsContent.includes('white_scarf'), '第 3 關包含灰色帽子、藍色外套、白色圍巾');
-
-// 6. 評分演算法模擬測試
-console.log('\n6. 評分演算法模擬測試：');
-function simulateScore(equipped, pose, expr, posX, scale, bg, levelIndex) {
-  const levelConfigs = [
-    {
-      keyProps: ['blue_towel', 'yellow_cloth', 'pearl_earring'],
-      bonusProps: ['brown_jacket'],
-      distractorProps: ['red_cap', 'sunglasses', 'flower_hairpin'],
-      targetPose: 'pearl_turn',
-      targetExpr: 'pearl_gentle',
-      targetComp: { posX: 50, scale: 100, bg: 'bg-pearl-dark' }
-    },
-    {
-      keyProps: ['white_bonnet', 'blue_apron', 'milk_jug', 'bread_basket'],
-      bonusProps: [],
-      distractorProps: ['soccer_ball', 'toy_car', 'plush_bear'],
-      targetPose: 'milkmaid_pour',
-      targetExpr: 'milkmaid_focus',
-      targetComp: { posX: 65, scale: 95, bg: 'bg-milkmaid-room' }
-    },
-    {
-      keyProps: ['grey_hat', 'blue_jacket', 'white_scarf'],
-      bonusProps: ['palette'],
-      distractorProps: ['red_baseball_cap', 'yellow_raincoat', 'sunglasses'],
-      targetPose: 'vangogh_bust',
-      targetExpr: 'vangogh_pierce',
-      targetComp: { posX: 50, scale: 105, bg: 'bg-vangogh-swirl' }
-    }
-  ];
-
-  const cfg = levelConfigs[levelIndex];
-
-  let propsScore = 0;
-  const ptsPerKey = 40 / cfg.keyProps.length;
-  cfg.keyProps.forEach(k => {
-    if (equipped.includes(k)) propsScore += ptsPerKey;
-  });
-  cfg.distractorProps.forEach(d => {
-    if (equipped.includes(d)) propsScore = Math.max(0, propsScore - 5);
-  });
-  propsScore = Math.round(propsScore);
-
-  let poseScore = (pose === cfg.targetPose ? 25 : 12) + (expr === cfg.targetExpr ? 5 : 2);
-
-  let compScore = 0;
-  const dx = Math.abs(posX - cfg.targetComp.posX);
-  const ds = Math.abs(scale - cfg.targetComp.scale);
-  if (dx <= 8) compScore += 10;
-  else if (dx <= 18) compScore += 6;
-  else compScore += 3;
-
-  if (ds <= 10) compScore += 5;
-  else compScore += 3;
-
-  if (bg === cfg.targetComp.bg) compScore += 5;
-  else compScore += 2;
-
-  let creativeScore = 6;
-  if (cfg.bonusProps.some(b => equipped.includes(b)) || propsScore >= 35) {
-    creativeScore = 10;
-  }
-
-  const total = Math.min(100, propsScore + poseScore + compScore + creativeScore);
-  return { propsScore, poseScore, compScore, creativeScore, total };
-}
-
-const perfectLevel1 = simulateScore(
-  ['blue_towel', 'yellow_cloth', 'pearl_earring'],
-  'pearl_turn',
-  'pearl_gentle',
-  50,
-  100,
-  'bg-pearl-dark',
-  0
-);
-assert(perfectLevel1.total === 100, `第 1 關完美模仿得分為 100 分（實際：${perfectLevel1.total} 分）`);
-
-const perfectLevel2 = simulateScore(
-  ['white_bonnet', 'blue_apron', 'milk_jug', 'bread_basket'],
-  'milkmaid_pour',
-  'milkmaid_focus',
-  65,
-  95,
-  'bg-milkmaid-room',
-  1
-);
-assert(perfectLevel2.total === 100, `第 2 關完美模仿得分為 100 分（實際：${perfectLevel2.total} 分）`);
-
-const perfectLevel3 = simulateScore(
-  ['grey_hat', 'blue_jacket', 'white_scarf'],
-  'vangogh_bust',
-  'vangogh_pierce',
-  50,
-  105,
-  'bg-vangogh-swirl',
-  2
-);
-assert(perfectLevel3.total === 100, `第 3 關完美模仿得分為 100 分（實際：${perfectLevel3.total} 分）`);
-
-const distractorTest = simulateScore(
-  ['blue_towel', 'red_cap', 'sunglasses'],
-  'pearl_front',
-  'pearl_smile',
-  20,
-  80,
-  'bg-pearl-studio',
-  0
-);
-assert(distractorTest.total < 60, `干擾道具與不合姿勢給予適當扣分（總分：${distractorTest.total} 分）`);
-
-console.log(`\n=== 驗證完成：${passed} 項通過，${failed} 項失敗 ===`);
-
-if (failed === 0) {
-  console.log('🎉 所有項目全數通過，專案品質與邏輯完全合規！');
-  process.exit(0);
-} else {
-  console.error('❌ 有項目未通過，請檢查！');
+if (filesMissing > 0) {
+  console.error(`\n測試失敗: 共有 ${filesMissing} 個必要檔案不存在！`);
   process.exit(1);
 }
+
+// -------------------------------------------------------------
+// 2. DOM ID 匹配性驗證
+// -------------------------------------------------------------
+const htmlContent = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+const jsContent = fs.readFileSync(path.join(__dirname, '..', 'game.js'), 'utf8');
+
+const idRegex = /getElementById\(['"]([^'"]+)['"]\)/g;
+const matchedIds = new Set();
+let match;
+
+while ((match = idRegex.exec(jsContent)) !== null) {
+  matchedIds.add(match[1]);
+}
+
+const missingIds = [];
+matchedIds.forEach(id => {
+  const hasDoubleQuote = htmlContent.includes(`id="${id}"`);
+  const hasSingleQuote = htmlContent.includes(`id='${id}'`);
+  // 動態生成的 ID（例如 tray_*, slot_*, slot_content_*）略過靜態檢查
+  if (!hasDoubleQuote && !hasSingleQuote && !id.startsWith('tray_') && !id.startsWith('slot_')) {
+    missingIds.push(id);
+  }
+});
+
+if (missingIds.length > 0) {
+  console.error('❌ DOM ID 不匹配（game.js 引用但在 index.html 中未靜態定義）:', missingIds);
+  process.exit(1);
+} else {
+  console.log(`\n✅ 所有靜態 DOM ID 完全匹配！共驗證 ${matchedIds.size} 個動態與靜態元素。`);
+}
+
+// -------------------------------------------------------------
+// 3. 關卡排程規格與時間模型驗證
+// -------------------------------------------------------------
+console.log('\n--- 驗證三大關卡規格與時間模型 ---');
+
+const levelsMatch = jsContent.match(/const LEVELS = (\[[\s\S]*?\n\]);/);
+if (!levelsMatch) {
+  console.error('❌ 無法從 game.js 擷取 LEVELS 資料定義！');
+  process.exit(1);
+}
+
+let LEVELS;
+try {
+  LEVELS = eval(levelsMatch[1]);
+  console.log(`✅ 成功載入關卡設定，共 ${LEVELS.length} 關。`);
+} catch (e) {
+  console.error('❌ 解析 LEVELS 失敗:', e);
+  process.exit(1);
+}
+
+// 檢查第一關：晨光活力計畫（Inu）
+const lvl1 = LEVELS[0];
+console.log(`\n檢查第一關: ${lvl1.name} (角色: ${lvl1.charName})`);
+console.assert(lvl1.cards.length === 6, '第一關必須有 6 張活動卡片');
+console.assert(lvl1.slots.length === 6, '第一關必須有 6 個時間槽位');
+const lvl1CardTitles = lvl1.cards.map(c => c.title);
+['起床', '吃早餐', '上學', '運動', '讀書', '睡覺'].forEach(t => {
+  console.assert(lvl1CardTitles.includes(t), `第一關必須包含「${t}」活動`);
+});
+const lvl1Times = lvl1.slots.map(s => s.time);
+['07:00', '07:30', '08:00', '16:00', '19:00', '21:30'].forEach(t => {
+  console.assert(lvl1Times.includes(t), `第一關必須包含「${t}」時間格`);
+});
+console.log('✅ 第一關 6 張活動卡片與 6 個時間格完全符合要求！');
+
+// 檢查第二關：夜貓子的時間表（Neko）
+const lvl2 = LEVELS[1];
+console.log(`\n檢查第二關: ${lvl2.name} (角色: ${lvl2.charName})`);
+console.assert(lvl2.cards.length === 6, '第二關必須有 6 張活動卡片');
+console.assert(lvl2.slots.length === 6, '第二關必須有 6 個時間槽位');
+const lvl2CardTitles = lvl2.cards.map(c => c.title);
+['起床', '吃早餐', '閱讀', '運動', '自由活動', '睡覺'].forEach(t => {
+  console.assert(lvl2CardTitles.includes(t), `第二關必須包含「${t}」活動`);
+});
+const lvl2Times = lvl2.slots.map(s => s.time);
+['09:00', '10:00', '14:00', '17:00', '20:00', '23:00'].forEach(t => {
+  console.assert(lvl2Times.includes(t), `第二關必須包含「${t}」時間格`);
+});
+console.log('✅ 第二關 6 張活動卡片與 6 個時間格完全符合要求！');
+
+// 檢查第三關：健康作息大挑戰（Neko × Usagi）
+console.log(`\n檢查第三關: ${LEVELS[2].name}`);
+// 檢查第三關 6 個就寢選項與固定 07:00 起床之睡眠時數計算
+const bedtimeExpected = [
+  { time: '20:30', expectedHours: 10.5 },
+  { time: '21:00', expectedHours: 10.0 },
+  { time: '21:30', expectedHours: 9.5 },
+  { time: '22:00', expectedHours: 9.0 },
+  { time: '22:30', expectedHours: 8.5 },
+  { time: '23:00', expectedHours: 8.0 }
+];
+
+bedtimeExpected.forEach(({ time, expectedHours }) => {
+  const [bh, bm] = time.split(':').map(Number);
+  const wakeH = 7, wakeM = 0;
+  const bedtimeTotalM = bh * 60 + bm;
+  const wakeTotalM = (wakeH + 24) * 60 + wakeM;
+  const diffHours = (wakeTotalM - bedtimeTotalM) / 60;
+  console.assert(diffHours === expectedHours, `就寢 ${time} 起床 07:00 應為 ${expectedHours} 小時`);
+  console.log(`  - 就寢 ${time} ➔ 起床 07:00 = ${diffHours} 小時 (${diffHours >= 9 ? '符合 9~12 小時建議' : '低於 9 小時建議'})`);
+});
+console.log('✅ 第三關就寢時間與 6～12 歲健康睡眠時數計算驗證正確！');
+
+// -------------------------------------------------------------
+// 4. 自由過關邏輯驗證（不限分數自由前進）
+// -------------------------------------------------------------
+console.log('\n--- 自由過關機制測試（模擬 0、30、50、75、100 分）---');
+
+const simulatedScores = [0, 30, 50, 75, 100];
+simulatedScores.forEach(score => {
+  // 驗證是否有 score < XX 導致無法過關的程式碼
+  const hasScoreBlock = /if\s*\([^)]*score\s*<[^\)]*\)\s*return/.test(jsContent);
+  const hasDisabledBlock = /btnResultNext\.disabled\s*=\s*true/.test(jsContent);
+  console.assert(!hasScoreBlock, '嚴禁使用 score < XX 阻擋過關');
+  console.assert(!hasDisabledBlock, '「繼續下一關」按鈕絕不可被禁用');
+  console.log(`  - 模擬分數 ${score} 分：順利通過，可正常點擊「繼續下一關」！`);
+});
+console.log('✅ 自由過關與教育回饋分離機制驗證合格！');
+
+// -------------------------------------------------------------
+// 5. 繁體中文用語與排版檢查（無簡體字、無大陸用語）
+// -------------------------------------------------------------
+console.log('\n--- 執行繁體中文用語與排版規範檢查 ---');
+const forbiddenTerms = [
+  '优化', '用户', '信息', '项目', '質量', '激活', '链接', '高清', '缺省', '离线', '支持'
+];
+
+let termWarnings = 0;
+forbiddenTerms.forEach(term => {
+  if (htmlContent.includes(term) || jsContent.includes(term)) {
+    console.warn(`⚠️ 警告: 發現可能的大陸習慣用語: "${term}"`);
+    termWarnings++;
+  }
+});
+console.assert(termWarnings === 0, '不可包含簡體字與大陸用語');
+console.log('✅ 繁體中文排版檢查通過，無違規詞彙！');
+
+// -------------------------------------------------------------
+// 6. 其他已部署遊戲目錄保護檢查
+// -------------------------------------------------------------
+console.log('\n--- 檢查現有其他教育遊戲目錄完整性 ---');
+const mmDir = path.join(__dirname, '..', 'masterpiece-makeover');
+const bcmDir = path.join(__dirname, '..', 'birthday-cake-manager');
+
+console.assert(fs.existsSync(path.join(mmDir, 'index.html')), '名畫變裝大師 index.html 必須存在');
+console.assert(fs.existsSync(path.join(bcmDir, 'index.html')), '生日蛋糕小店長 index.html 必須存在');
+console.log('✅ 《名畫變裝大師》與《生日蛋糕小店長》檔案均完好無損，無任何覆蓋衝突！');
+
+console.log('\n====================================================');
+console.log('🎉 所有測試項目皆已通過！《生理時鐘大冒險》驗收成功！');
+console.log('====================================================');

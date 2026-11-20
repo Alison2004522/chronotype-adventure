@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="100%" height="100%">
+  <defs>
+    <filter id="phoneGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="0" stdDeviation="6" flood-color="#38BDF8" flood-opacity="0.8"/>
+    </filter>
+  </defs>
+  <!-- Glow ring -->
+  <rect x="25" y="10" width="70" height="100" rx="14" fill="#38BDF8" opacity="0.3" filter="url(#phoneGlow)"/>
+  <!-- Phone body -->
+  <rect x="30" y="15" width="60" height="90" rx="12" fill="#0F172A" stroke="#38BDF8" stroke-width="3"/>
+  <!-- Screen lit -->
+  <rect x="35" y="24" width="50" height="72" rx="4" fill="#0284C7"/>
+  <!-- Chat bubbles on screen -->
+  <rect x="40" y="32" width="30" height="10" rx="4" fill="#E0F2FE"/>
+  <rect x="48" y="47" width="32" height="10" rx="4" fill="#38BDF8"/>
+  <rect x="38" y="62" width="28" height="10" rx="4" fill="#E0F2FE"/>
+  <!-- Alert notification dot -->
+  <circle cx="78" cy="22" r="7" fill="#EF4444"/>
+  <text x="78" y="26" font-size="10" font-weight="bold" fill="#FFF" text-anchor="middle">!</text>
+</svg>

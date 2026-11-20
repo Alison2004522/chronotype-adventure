@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="100%" height="100%">
+  <!-- Cozy soft amber cone -->
+  <polygon points="60,40 25,108 95,108" fill="#FDE68A" opacity="0.3"/>
+  <circle cx="60" cy="48" r="22" fill="#FDE68A" opacity="0.35"/>
+  <!-- Lamp shade -->
+  <path d="M 40,48 L 80,48 L 70,22 L 50,22 Z" fill="#F59E0B" stroke="#B45309" stroke-width="3"/>
+  <!-- Warm soft bulb -->
+  <circle cx="60" cy="48" r="8" fill="#FEF08A" stroke="#F59E0B" stroke-width="2"/>
+  <!-- Pole & base -->
+  <path d="M 60,48 L 60,95" stroke="#78350F" stroke-width="5" stroke-linecap="round"/>
+  <ellipse cx="60" cy="98" rx="22" ry="7" fill="#92400E" stroke="#78350F" stroke-width="3"/>
+  <!-- Green check badge -->
+  <circle cx="95" cy="25" r="14" fill="#10B981" stroke="#FFF" stroke-width="2.5"/>
+  <polyline points="89,25 93,30 102,20" fill="none" stroke="#FFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

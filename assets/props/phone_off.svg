@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="100%" height="100%">
+  <!-- Resting drawer / cloth -->
+  <rect x="15" y="65" width="90" height="45" rx="8" fill="#CBD5E1" stroke="#94A3B8" stroke-width="3"/>
+  <line x1="25" y1="85" x2="95" y2="85" stroke="#94A3B8" stroke-width="2"/>
+  <circle cx="60" cy="75" r="4" fill="#64748B"/>
+  <!-- Phone tucked away inside drawer, screen OFF -->
+  <g transform="translate(10, -5)">
+    <rect x="30" y="20" width="60" height="60" rx="10" fill="#1E293B" stroke="#475569" stroke-width="2.5"/>
+    <rect x="35" y="26" width="50" height="50" rx="4" fill="#334155"/>
+    <!-- Gentle Zzz -->
+    <text x="60" y="55" font-size="18" font-weight="bold" fill="#94A3B8" text-anchor="middle" font-family="sans-serif">💤</text>
+  </g>
+  <!-- Green check badge -->
+  <circle cx="95" cy="28" r="14" fill="#10B981" stroke="#FFF" stroke-width="2.5"/>
+  <polyline points="89,28 93,33 102,23" fill="none" stroke="#FFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

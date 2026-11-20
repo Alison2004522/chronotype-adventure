@@ -1,66 +1,81 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 220" width="100%" height="100%">
   <defs>
     <radialGradient id="nekoFur" cx="50%" cy="40%" r="60%">
-      <stop offset="0%" stop-color="#9FA8DA"/>
-      <stop offset="70%" stop-color="#5C6BC0"/>
-      <stop offset="100%" stop-color="#3F51B5"/>
+      <stop offset="0%" stop-color="#C7B8F3"/>
+      <stop offset="65%" stop-color="#808AB7"/>
+      <stop offset="100%" stop-color="#52669B"/>
     </radialGradient>
     <linearGradient id="nekoScarf" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#FFE082"/>
-      <stop offset="100%" stop-color="#FFB300"/>
+      <stop offset="0%" stop-color="#FFF0B5"/>
+      <stop offset="100%" stop-color="#FFD54F"/>
     </linearGradient>
     <filter id="nekoShadow" x="-20%" y="-20%" width="140%" height="140%">
       <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#283593" flood-opacity="0.25"/>
     </filter>
   </defs>
 
-  <ellipse cx="100" cy="208" rx="55" ry="10" fill="#C5CAE9" opacity="0.6"/>
+  <ellipse cx="100" cy="208" rx="55" ry="10" fill="#CFD8DC" opacity="0.6"/>
 
   <g filter="url(#nekoShadow)">
-    <path d="M 145,160 Q 185,150 180,120 Q 175,98 160,110 Q 155,125 142,145" 
-          fill="#5C6BC0" stroke="#3949AB" stroke-width="4" stroke-linecap="round"/>
-    <circle cx="180" cy="115" r="7" fill="#FFE082"/>
+    <!-- Cat Tail -->
+    <path d="M 140,160 C 180,175 190,130 175,115 C 165,105 160,125 145,140" 
+          fill="none" stroke="#52669B" stroke-width="12" stroke-linecap="round"/>
+    <path d="M 140,160 C 180,175 190,130 175,115 C 165,105 160,125 145,140" 
+          fill="none" stroke="#808AB7" stroke-width="7" stroke-linecap="round"/>
 
+    <!-- Body -->
     <ellipse cx="100" cy="155" rx="44" ry="40" fill="url(#nekoFur)" stroke="#3949AB" stroke-width="4"/>
-    <ellipse cx="100" cy="160" rx="20" ry="24" fill="#E8EAF6"/>
+    <ellipse cx="100" cy="160" rx="26" ry="24" fill="#E8EAF6"/>
 
-    <path d="M 50,68 Q 42,15 72,32 Q 85,42 80,72 Z" fill="#5C6BC0" stroke="#3949AB" stroke-width="4"/>
-    <path d="M 55,62 Q 50,28 68,38 Q 76,46 74,66 Z" fill="#FF80AB"/>
-    <path d="M 150,68 Q 158,15 128,32 Q 115,42 120,72 Z" fill="#5C6BC0" stroke="#3949AB" stroke-width="4"/>
-    <path d="M 145,62 Q 150,28 132,38 Q 124,46 126,66 Z" fill="#FF80AB"/>
+    <!-- Left Ear -->
+    <polygon points="55,80 40,25 80,48" fill="#808AB7" stroke="#3949AB" stroke-width="4" stroke-linejoin="round"/>
+    <polygon points="57,75 48,36 75,52" fill="#FF80AB"/>
+    <!-- Right Ear -->
+    <polygon points="145,80 160,25 120,48" fill="#808AB7" stroke="#3949AB" stroke-width="4" stroke-linejoin="round"/>
+    <polygon points="143,75 152,36 125,52" fill="#FF80AB"/>
 
+    <!-- Head -->
     <circle cx="100" cy="94" r="52" fill="url(#nekoFur)" stroke="#3949AB" stroke-width="4"/>
 
-    <polygon points="100,56 103,63 110,64 105,68 107,75 100,71 93,75 95,68 90,64 97,63" fill="#FFE082"/>
+    <!-- Cat Cheeks -->
+    <ellipse cx="78" cy="108" rx="18" ry="14" fill="#E8EAF6"/>
+    <ellipse cx="122" cy="108" rx="18" ry="14" fill="#E8EAF6"/>
 
-    <line x1="50" y1="102" x2="30" y2="99" stroke="#E8EAF6" stroke-width="2.5" stroke-linecap="round"/>
-    <line x1="50" y1="108" x2="32" y2="114" stroke="#E8EAF6" stroke-width="2.5" stroke-linecap="round"/>
-    <line x1="150" y1="102" x2="170" y2="99" stroke="#E8EAF6" stroke-width="2.5" stroke-linecap="round"/>
-    <line x1="150" y1="108" x2="168" y2="114" stroke="#E8EAF6" stroke-width="2.5" stroke-linecap="round"/>
+    <!-- Cheeks blush -->
+    <ellipse cx="68" cy="106" rx="8" ry="4" fill="#FF80AB" opacity="0.5"/>
+    <ellipse cx="132" cy="106" rx="8" ry="4" fill="#FF80AB" opacity="0.5"/>
 
-    <ellipse cx="70" cy="108" rx="8" ry="4" fill="#FF80AB" opacity="0.5"/>
-    <ellipse cx="130" cy="108" rx="8" ry="4" fill="#FF80AB" opacity="0.5"/>
+    <!-- Whiskers -->
+    <line x1="55" y1="102" x2="35" y2="98" stroke="#3949AB" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="55" y1="108" x2="33" y2="110" stroke="#3949AB" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="145" y1="102" x2="165" y2="98" stroke="#3949AB" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="145" y1="108" x2="167" y2="110" stroke="#3949AB" stroke-width="2.5" stroke-linecap="round"/>
 
-    <ellipse cx="80" cy="92" rx="9" ry="11" fill="#00BFA5"/>
-    <ellipse cx="80" cy="92" rx="5" ry="10" fill="#1A237E"/>
-    <circle cx="77" cy="87" r="3" fill="#FFFFFF"/>
-    <circle cx="83" cy="95" r="1.5" fill="#FFFFFF"/>
+    <!-- Big Eyes (Teal/Emerald night-cat eyes) -->
+    <ellipse cx="80" cy="90" rx="9" ry="11" fill="#4DB6AC"/>
+    <ellipse cx="80" cy="90" rx="5" ry="10" fill="#1A237E"/>
+    <circle cx="77" cy="85" r="3" fill="#FFF"/>
+    <circle cx="82" cy="93" r="1.5" fill="#FFF"/>
 
-    <ellipse cx="120" cy="92" rx="9" ry="11" fill="#00BFA5"/>
-    <ellipse cx="120" cy="92" rx="5" ry="10" fill="#1A237E"/>
-    <circle cx="117" cy="87" r="3" fill="#FFFFFF"/>
-    <circle cx="123" cy="95" r="1.5" fill="#FFFFFF"/>
+    <ellipse cx="120" cy="90" rx="9" ry="11" fill="#4DB6AC"/>
+    <ellipse cx="120" cy="90" rx="5" ry="10" fill="#1A237E"/>
+    <circle cx="117" cy="85" r="3" fill="#FFF"/>
+    <circle cx="122" cy="93" r="1.5" fill="#FFF"/>
 
-    <polygon points="100,101 96,97 104,97" fill="#FF80AB"/>
+    <!-- Nose -->
+    <polygon points="100,99 96,95 104,95" fill="#FF80AB"/>
 
-    <path d="M 94,103 Q 97,106 100,103 Q 103,106 106,103" fill="none" stroke="#1A237E" stroke-width="2.5" stroke-linecap="round"/>
+    <!-- Mouth -->
+    <path d="M 94,101 Q 97,105 100,102 Q 103,105 106,101" fill="none" stroke="#1A237E" stroke-width="2.5" stroke-linecap="round"/>
 
-    <path d="M 68,132 C 85,142 115,142 132,132 C 136,138 132,148 118,150 C 95,152 75,145 68,132 Z" 
-          fill="url(#nekoScarf)" stroke="#E65100" stroke-width="2"/>
-    <path d="M 112,146 L 118,172 L 132,168 L 126,146 Z" fill="url(#nekoScarf)" stroke="#E65100" stroke-width="2"/>
-    <path d="M 85,138 A 6 6 0 1 0 91 144 A 4.5 4.5 0 0 1 85 138 Z" fill="#FFF" stroke="#FFB300" stroke-width="1"/>
+    <!-- Warm Scarf with Moon Pin -->
+    <path d="M 68,130 C 85,142 115,142 132,130 C 138,138 132,150 118,150 C 95,152 75,145 68,130 Z" 
+          fill="url(#nekoScarf)" stroke="#E65100" stroke-width="2.5"/>
+    <!-- Moon Pin -->
+    <path d="M 120,138 A 6 6 0 0 0 125 146 A 8 8 0 1 1 120 138 Z" fill="#9C27B0"/>
 
-    <ellipse cx="85" cy="182" rx="10" ry="8" fill="#E8EAF6" stroke="#3949AB" stroke-width="3"/>
-    <ellipse cx="115" cy="182" rx="10" ry="8" fill="#E8EAF6" stroke="#3949AB" stroke-width="3"/>
+    <!-- Paws -->
+    <ellipse cx="84" cy="184" rx="10" ry="8" fill="#E8EAF6" stroke="#3949AB" stroke-width="3"/>
+    <ellipse cx="116" cy="184" rx="10" ry="8" fill="#E8EAF6" stroke="#3949AB" stroke-width="3"/>
   </g>
 </svg>

@@ -1,1382 +1,1144 @@
 /**
- * 《名畫變裝大師》（Masterpiece Makeover）
- * 2D 互動式藝術教育遊戲
- * 技術：HTML5, CSS3, 原生 JavaScript, Web Audio API, Canvas 離線海報匯出
+ * 《生理時鐘大冒險》（Chronotype Adventure）
+ * 核心遊戲邏輯：關卡管理、生活時間排程、睡眠時數計算、睡前環境互動、精神值模擬、評分與自由過關
  */
 
-(function () {
-  'use strict';
-
-  // =========================================================================
-  // 一、 音效引擎（Web Audio API 零延遲合成器 + 本機音訊相容）
-  // =========================================================================
-
-  class SoundManager {
-    constructor() {
-      this.enabled = true;
-      this.audioCtx = null;
-      this.initContext();
+// =============================================================================
+// 一、 音效管理器（Web Audio API 原生合成音效 ＋ WAV 相容，100% 離線可用）
+// =============================================================================
+class SoundManager {
+  constructor() {
+    this.muted = false;
+    this.audioCtx = null;
+    try {
+      this.muted = localStorage.getItem('chronotype_sound_muted') === 'true';
+    } catch (e) {
+      this.muted = false;
     }
+  }
 
-    initContext() {
-      try {
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        if (AudioContext) {
-          this.audioCtx = new AudioContext();
-        }
-      } catch (e) {
-        console.warn('AudioContext 不支援：', e);
+  initAudio() {
+    if (!this.audioCtx) {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (AudioContextClass) {
+        this.audioCtx = new AudioContextClass();
       }
     }
-
-    resume() {
-      if (this.audioCtx && this.audioCtx.state === 'suspended') {
-        this.audioCtx.resume();
-      }
+    if (this.audioCtx && this.audioCtx.state === 'suspended') {
+      this.audioCtx.resume();
     }
+  }
 
-    toggle() {
-      this.enabled = !this.enabled;
-      return this.enabled;
-    }
+  toggleMute() {
+    this.muted = !this.muted;
+    try {
+      localStorage.setItem('chronotype_sound_muted', this.muted);
+    } catch (e) {}
+    return this.muted;
+  }
 
-    playClick() {
-      if (!this.enabled || !this.audioCtx) return;
-      this.resume();
+  playClick() {
+    if (this.muted) return;
+    this.initAudio();
+    if (!this.audioCtx) return;
+    const t = this.audioCtx.currentTime;
+    const osc = this.audioCtx.createOscillator();
+    const gain = this.audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(650, t);
+    osc.frequency.exponentialRampToValueAtTime(320, t + 0.08);
+    gain.gain.setValueAtTime(0.2, t);
+    gain.gain.exponentialRampToValueAtTime(0.01, t + 0.08);
+    osc.connect(gain);
+    gain.connect(this.audioCtx.destination);
+    osc.start(t);
+    osc.stop(t + 0.08);
+  }
+
+  playSnap() {
+    if (this.muted) return;
+    this.initAudio();
+    if (!this.audioCtx) return;
+    const t = this.audioCtx.currentTime;
+    const osc = this.audioCtx.createOscillator();
+    const gain = this.audioCtx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(523.25, t);
+    osc.frequency.setValueAtTime(783.99, t + 0.05);
+    gain.gain.setValueAtTime(0.25, t);
+    gain.gain.exponentialRampToValueAtTime(0.01, t + 0.14);
+    osc.connect(gain);
+    gain.connect(this.audioCtx.destination);
+    osc.start(t);
+    osc.stop(t + 0.14);
+  }
+
+  playCheck() {
+    if (this.muted) return;
+    this.initAudio();
+    if (!this.audioCtx) return;
+    const t = this.audioCtx.currentTime;
+    const osc = this.audioCtx.createOscillator();
+    const gain = this.audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(440, t);
+    osc.frequency.exponentialRampToValueAtTime(880, t + 0.25);
+    gain.gain.setValueAtTime(0.2, t);
+    gain.gain.exponentialRampToValueAtTime(0.01, t + 0.25);
+    osc.connect(gain);
+    gain.connect(this.audioCtx.destination);
+    osc.start(t);
+    osc.stop(t + 0.25);
+  }
+
+  playSuccess() {
+    if (this.muted) return;
+    this.initAudio();
+    if (!this.audioCtx) return;
+    const notes = [523.25, 659.25, 783.99, 1046.50];
+    notes.forEach((freq, idx) => {
+      const t = this.audioCtx.currentTime + idx * 0.1;
       const osc = this.audioCtx.createOscillator();
       const gain = this.audioCtx.createGain();
-      const t = this.audioCtx.currentTime;
-
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(800, t);
-      osc.frequency.exponentialRampToValueAtTime(300, t + 0.05);
-
-      gain.gain.setValueAtTime(0.3, t);
-      gain.gain.exponentialRampToValueAtTime(0.01, t + 0.05);
-
-      osc.connect(gain);
-      gain.connect(this.audioCtx.destination);
-      osc.start(t);
-      osc.stop(t + 0.05);
-    }
-
-    playSnap() {
-      if (!this.enabled || !this.audioCtx) return;
-      this.resume();
-      const osc = this.audioCtx.createOscillator();
-      const gain = this.audioCtx.createGain();
-      const t = this.audioCtx.currentTime;
-
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(450, t);
-      osc.frequency.exponentialRampToValueAtTime(900, t + 0.09);
-
-      gain.gain.setValueAtTime(0.4, t);
-      gain.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
-
+      osc.frequency.setValueAtTime(freq, t);
+      gain.gain.setValueAtTime(0.2, t);
+      gain.gain.exponentialRampToValueAtTime(0.01, t + 0.2);
       osc.connect(gain);
       gain.connect(this.audioCtx.destination);
       osc.start(t);
-      osc.stop(t + 0.1);
-    }
+      osc.stop(t + 0.2);
+    });
+  }
 
-    playUnequip() {
-      if (!this.enabled || !this.audioCtx) return;
-      this.resume();
-      const osc = this.audioCtx.createOscillator();
-      const gain = this.audioCtx.createGain();
-      const t = this.audioCtx.currentTime;
-
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(600, t);
-      osc.frequency.exponentialRampToValueAtTime(300, t + 0.08);
-
-      gain.gain.setValueAtTime(0.25, t);
-      gain.gain.exponentialRampToValueAtTime(0.01, t + 0.08);
-
-      osc.connect(gain);
-      gain.connect(this.audioCtx.destination);
-      osc.start(t);
-      osc.stop(t + 0.08);
-    }
-
-    playScore() {
-      if (!this.enabled || !this.audioCtx) return;
-      this.resume();
-      const notes = [523.25, 659.25, 783.99, 1046.5]; // C5, E5, G5, C6
-      const t = this.audioCtx.currentTime;
-
-      notes.forEach((freq, idx) => {
+  playFanfare() {
+    if (this.muted) return;
+    this.initAudio();
+    if (!this.audioCtx) return;
+    const chords = [
+      { f: [523.25, 659.25, 783.99], dur: 0.3, offset: 0 },
+      { f: [587.33, 739.99, 880.00], dur: 0.3, offset: 0.35 },
+      { f: [659.25, 830.61, 1046.50], dur: 0.7, offset: 0.7 }
+    ];
+    chords.forEach(c => {
+      c.f.forEach(freq => {
+        const t = this.audioCtx.currentTime + c.offset;
         const osc = this.audioCtx.createOscillator();
         const gain = this.audioCtx.createGain();
-        const start = t + idx * 0.08;
-
         osc.type = 'triangle';
-        osc.frequency.setValueAtTime(freq, start);
-
-        gain.gain.setValueAtTime(0.25, start);
-        gain.gain.exponentialRampToValueAtTime(0.01, start + 0.15);
-
-        osc.connect(gain);
-        gain.connect(this.audioCtx.destination);
-        osc.start(start);
-        osc.stop(start + 0.15);
-      });
-    }
-
-    playFanfare() {
-      if (!this.enabled || !this.audioCtx) return;
-      this.resume();
-      const melody = [
-        { f: 523.25, d: 0.15 },
-        { f: 659.25, d: 0.15 },
-        { f: 783.99, d: 0.15 },
-        { f: 1046.5, d: 0.4 }
-      ];
-      let t = this.audioCtx.currentTime;
-
-      melody.forEach(item => {
-        const osc = this.audioCtx.createOscillator();
-        const gain = this.audioCtx.createGain();
-
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(item.f, t);
-
-        gain.gain.setValueAtTime(0.3, t);
-        gain.gain.exponentialRampToValueAtTime(0.01, t + item.d);
-
+        osc.frequency.setValueAtTime(freq, t);
+        gain.gain.setValueAtTime(0.15, t);
+        gain.gain.exponentialRampToValueAtTime(0.005, t + c.dur);
         osc.connect(gain);
         gain.connect(this.audioCtx.destination);
         osc.start(t);
-        osc.stop(t + item.d);
-        t += item.d + 0.05;
+        osc.stop(t + c.dur);
       });
+    });
+  }
+}
+
+// =============================================================================
+// 二、 關卡資料設定（三大關卡與教育主題）
+// =============================================================================
+const LEVELS = [
+  // -------------------------------------------------------------
+  // 第一關：晨光活力計畫（晨型小狗 Inu）
+  // -------------------------------------------------------------
+  {
+    id: 1,
+    name: '第一關：晨光活力計畫',
+    character: 'inu',
+    charName: 'Inu（晨型小狗）',
+    typeTag: '🌅 晨型小狗',
+    avatar: 'assets/characters/inu.svg',
+    story: '「Inu 是一隻喜歡早起的小狗！可是今天他的生活時間表被打亂了！你能幫他重新安排一天的生活嗎？」',
+    cards: [
+      { id: 'card_wake', title: '起床', icon: '⏰' },
+      { id: 'card_breakfast', title: '吃早餐', icon: '🍳' },
+      { id: 'card_school', title: '上學', icon: '🎒' },
+      { id: 'card_sports', title: '運動', icon: '⚽' },
+      { id: 'card_study', title: '讀書', icon: '📚' },
+      { id: 'card_sleep', title: '睡覺', icon: '💤' }
+    ],
+    slots: [
+      { id: 'slot_0700', time: '07:00', period: '早晨時光' },
+      { id: 'slot_0730', time: '07:30', period: '晨間用餐' },
+      { id: 'slot_0800', time: '08:00', period: '上午上學' },
+      { id: 'slot_1600', time: '16:00', period: '放學課外' },
+      { id: 'slot_1900', time: '19:00', period: '夜間專注' },
+      { id: 'slot_2130', time: '21:30', period: '就寢時分' }
+    ]
+  },
+
+  // -------------------------------------------------------------
+  // 第二關：夜貓子的時間表（夜型小貓 Neko）
+  // -------------------------------------------------------------
+  {
+    id: 2,
+    name: '第二關：夜貓子的時間表',
+    character: 'neko',
+    charName: 'Neko（夜型小貓）',
+    typeTag: '🌙 夜型小貓',
+    avatar: 'assets/characters/neko.svg',
+    story: '「Neko 是一隻偏向夜型的小貓！晚上總是比較有精神，早上卻常常想睡覺。今天是假日，你能幫他安排適合的生活時間表嗎？」',
+    cards: [
+      { id: 'card_wake', title: '起床', icon: '⏰' },
+      { id: 'card_breakfast', title: '吃早餐', icon: '🥐' },
+      { id: 'card_reading', title: '閱讀', icon: '📖' },
+      { id: 'card_sports', title: '運動', icon: '🏸' },
+      { id: 'card_freetime', title: '自由活動', icon: '🎨' },
+      { id: 'card_sleep', title: '睡覺', icon: '💤' }
+    ],
+    slots: [
+      { id: 'slot_0900', time: '09:00', period: '休閒晨間' },
+      { id: 'slot_1000', time: '10:00', period: '早午餐時光' },
+      { id: 'slot_1400', time: '14:00', period: '午後時光' },
+      { id: 'slot_1700', time: '17:00', period: '傍晚時分' },
+      { id: 'slot_2000', time: '20:00', period: '夜間專注' },
+      { id: 'slot_2300', time: '23:00', period: '就寢放鬆' }
+    ]
+  },
+
+  // -------------------------------------------------------------
+  // 第三關：健康作息大挑戰（Neko × Usagi）
+  // -------------------------------------------------------------
+  {
+    id: 3,
+    name: '第三關：健康作息大挑戰',
+    character: 'neko_usagi',
+    charName: 'Neko × Usagi',
+    typeTag: '✨ 健康作息挑戰',
+    avatar: 'assets/characters/trio.svg',
+    story: '「明天早上 8 點就要上學了！可是 Neko 平常比較晚睡，早上常常起不來。Usagi 決定陪他一起調整作息！你能幫助 Neko 找到比較健康的睡眠習慣嗎？」'
+  }
+];
+
+// =============================================================================
+// 三、 主遊戲類別（ChronotypeAdventure）
+// =============================================================================
+class ChronotypeAdventure {
+  constructor() {
+    this.sound = new SoundManager();
+    this.currentLevelIndex = 0; // 0, 1, 2
+    this.levelScores = [0, 0, 0];
+    this.playerSchedule = {}; // { [slotId]: cardObject }
+    this.selectedCard = null; // 支援「點擊選取 ➔ 點擊槽位放置」雙模式
+    this.draggedCard = null;
+
+    // 第三關專屬狀態
+    this.bedroomState = {
+      phone: 'active', // 'active' (使用中) 或 'off' (收起手機)
+      lamp: 'bright',  // 'bright' (燈光明亮) 或 'soft' (柔和)
+      book: 'closed'   // 'closed' (未翻開) 或 'reading' (安靜閱讀)
+    };
+    this.selectedBedtime = '21:00';
+    this.selectedSleepHours = 10.0;
+
+    // DOM 元素快取
+    this.cacheDom();
+    this.initEvents();
+    this.updateSoundIcon();
+  }
+
+  cacheDom() {
+    // HUD
+    this.hudLevelTag = document.getElementById('hud-level-tag');
+    this.hudLevelTitle = document.getElementById('hud-level-title');
+    this.hudCharAvatar = document.getElementById('hud-char-avatar');
+    this.hudCharName = document.getElementById('hud-char-name');
+    this.hudEnergyBar = document.getElementById('hud-energy-bar');
+    this.hudEnergyVal = document.getElementById('hud-energy-val');
+    this.hudEnergyIcon = document.getElementById('hud-energy-icon');
+    this.hudSleepChip = document.getElementById('hud-sleep-chip');
+    this.hudSleepHours = document.getElementById('hud-sleep-hours');
+    this.hudSleepStatus = document.getElementById('hud-sleep-status');
+    this.btnSoundToggle = document.getElementById('btn-sound-toggle');
+    this.soundIcon = document.getElementById('sound-icon');
+    this.btnResetLevel = document.getElementById('btn-reset-level');
+
+    // Toast
+    this.toastElem = document.getElementById('toast-toast');
+    this.toastText = document.getElementById('toast-text');
+
+    // 畫面容器
+    this.screenStart = document.getElementById('screen-start');
+    this.screenSchedule = document.getElementById('screen-schedule');
+    this.screenBedroom = document.getElementById('screen-bedroom');
+    this.screenVictory = document.getElementById('screen-victory');
+    this.modalResult = document.getElementById('modal-result');
+
+    // 首頁
+    this.btnStartGame = document.getElementById('btn-start-game');
+
+    // 生活時間表畫面（第一、二關）
+    this.levelCharPic = document.getElementById('level-char-pic');
+    this.levelTypeTag = document.getElementById('level-type-tag');
+    this.levelQuestTitle = document.getElementById('level-quest-title');
+    this.levelStoryDesc = document.getElementById('level-story-desc');
+    this.trayCountTag = document.getElementById('tray-count-tag');
+    this.cardsPool = document.getElementById('cards-pool');
+    this.scheduleFillTag = document.getElementById('schedule-fill-tag');
+    this.timeSlotsContainer = document.getElementById('time-slots-container');
+    this.scheduleCheckHint = document.getElementById('schedule-check-hint');
+    this.btnCheckSchedule = document.getElementById('btn-check-schedule');
+
+    // 第三關（臥室環境）
+    this.envCompletedCounter = document.getElementById('env-completed-counter');
+    this.itemPhone = document.getElementById('item-phone');
+    this.imgPhone = document.getElementById('img-phone');
+    this.badgePhone = document.getElementById('badge-phone');
+    this.feedbackPhone = document.getElementById('feedback-phone');
+    this.btnTogglePhone = document.getElementById('btn-toggle-phone');
+
+    this.itemLamp = document.getElementById('item-lamp');
+    this.imgLamp = document.getElementById('img-lamp');
+    this.badgeLamp = document.getElementById('badge-lamp');
+    this.feedbackLamp = document.getElementById('feedback-lamp');
+    this.btnToggleLamp = document.getElementById('btn-toggle-lamp');
+
+    this.itemBook = document.getElementById('item-book');
+    this.imgBook = document.getElementById('img-book');
+    this.badgeBook = document.getElementById('badge-book');
+    this.feedbackBook = document.getElementById('feedback-book');
+    this.btnToggleBook = document.getElementById('btn-toggle-book');
+
+    this.bedtimeOptions = document.getElementById('bedtime-options');
+    this.displayBedtime = document.getElementById('display-bedtime');
+    this.displaySleepHours = document.getElementById('display-sleephours');
+    this.guidelineStatusText = document.getElementById('guideline-status-text');
+    this.btnCompleteLevel3 = document.getElementById('btn-complete-level3');
+
+    // 評量結果彈窗
+    this.resultCharAvatar = document.getElementById('result-char-avatar');
+    this.resultTitle = document.getElementById('result-title');
+    this.resultSubtitle = document.getElementById('result-subtitle');
+    this.resultScoreVal = document.getElementById('result-score-val');
+    this.resultTierBadge = document.getElementById('result-tier-badge');
+    this.resultFeedbackPos = document.getElementById('result-feedback-pos');
+    this.resultFeedbackAdv = document.getElementById('result-feedback-adv');
+    this.btnResultAdjust = document.getElementById('btn-result-adjust');
+    this.btnResultNext = document.getElementById('btn-result-next');
+    this.btnResultNextText = document.getElementById('btn-result-next-text');
+
+    // 最終通關畫面
+    this.confettiCanvas = document.getElementById('confetti-canvas');
+    this.summaryScore1 = document.getElementById('summary-score-1');
+    this.summaryScore2 = document.getElementById('summary-score-2');
+    this.summaryScore3 = document.getElementById('summary-score-3');
+    this.btnPlayAgain = document.getElementById('btn-play-again');
+    this.btnReturnHome = document.getElementById('btn-return-home');
+  }
+
+  initEvents() {
+    // 音效開關
+    this.btnSoundToggle.addEventListener('click', () => {
+      const isMuted = this.sound.toggleMute();
+      this.updateSoundIcon();
+      this.showToast(isMuted ? '🔇 音效已關閉' : '🔊 音效已開啟');
+    });
+
+    // 重設按鈕
+    this.btnResetLevel.addEventListener('click', () => {
+      this.sound.playClick();
+      if (this.currentLevelIndex === 2) {
+        this.resetLevel3();
+      } else {
+        this.resetScheduleLevel();
+      }
+      this.showToast('時間表已重設！');
+    });
+
+    // 開始冒險按鈕
+    this.btnStartGame.addEventListener('click', () => {
+      this.sound.playClick();
+      this.startLevel(0);
+    });
+
+    // 檢查時間表按鈕（第一、二關）
+    this.btnCheckSchedule.addEventListener('click', () => {
+      this.sound.playCheck();
+      this.handleEvaluateSchedule();
+    });
+
+    // 完成第三關按鈕
+    this.btnCompleteLevel3.addEventListener('click', () => {
+      this.sound.playCheck();
+      this.handleEvaluateLevel3();
+    });
+
+    // 結果彈窗按鈕
+    this.btnResultAdjust.addEventListener('click', () => {
+      this.sound.playClick();
+      this.closeModalResult();
+    });
+
+    // 繼續下一關按鈕（絕不受分數限制！）
+    this.btnResultNext.addEventListener('click', () => {
+      this.sound.playClick();
+      this.closeModalResult();
+      this.goToNextLevel();
+    });
+
+    // 最終通關按鈕
+    this.btnPlayAgain.addEventListener('click', () => {
+      this.sound.playClick();
+      this.startLevel(0);
+    });
+
+    this.btnReturnHome.addEventListener('click', () => {
+      this.sound.playClick();
+      this.showScreen(this.screenStart);
+    });
+
+    // 第三關物品點擊事件
+    this.itemPhone.addEventListener('click', () => this.togglePhoneState());
+    this.btnTogglePhone.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.togglePhoneState();
+    });
+
+    this.itemLamp.addEventListener('click', () => this.toggleLampState());
+    this.btnToggleLamp.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.toggleLampState();
+    });
+
+    this.itemBook.addEventListener('click', () => this.toggleBookState());
+    this.btnToggleBook.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.toggleBookState();
+    });
+
+    // 就寢時間按鈕事件
+    const bedtimeBtns = this.bedtimeOptions.querySelectorAll('.btn-bedtime-choice');
+    bedtimeBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.sound.playClick();
+        bedtimeBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        this.selectedBedtime = btn.getAttribute('data-time');
+        this.selectedSleepHours = parseFloat(btn.getAttribute('data-hours'));
+        this.updateLevel3Calculation();
+      });
+    });
+  }
+
+  updateSoundIcon() {
+    this.soundIcon.textContent = this.sound.muted ? '🔇' : '🔊';
+  }
+
+  showToast(msg) {
+    this.toastText.textContent = msg;
+    this.toastElem.classList.remove('toast-hidden');
+    clearTimeout(this.toastTimeout);
+    this.toastTimeout = setTimeout(() => {
+      this.toastElem.classList.add('toast-hidden');
+    }, 2400);
+  }
+
+  showScreen(targetScreen) {
+    [this.screenStart, this.screenSchedule, this.screenBedroom, this.screenVictory].forEach(s => {
+      s.classList.remove('active');
+    });
+    targetScreen.classList.add('active');
+  }
+
+  // ===========================================================================
+  // 四、 關卡切換與核心邏輯
+  // ===========================================================================
+  startLevel(index) {
+    this.currentLevelIndex = index;
+    const level = LEVELS[index];
+
+    // 更新 HUD
+    this.hudLevelTag.textContent = `關卡 ${level.id}／3`;
+    this.hudLevelTitle.textContent = level.name.replace(/^第[一二三]關：/, '');
+    this.hudCharAvatar.src = level.avatar;
+    this.hudCharName.textContent = level.charName;
+
+    // 清除選取卡片
+    this.selectedCard = null;
+
+    if (index === 0 || index === 1) {
+      // 第一關或第二關：生活時間安排板
+      this.showScreen(this.screenSchedule);
+      this.setupScheduleLevel(level);
+    } else if (index === 2) {
+      // 第三關：健康作息大挑戰
+      this.showScreen(this.screenBedroom);
+      this.setupBedroomLevel(level);
     }
   }
 
-  // =========================================================================
-  // 二、 遊戲關卡資料庫（3 大經典名畫、道具、姿勢、構圖與評分規準）
-  // =========================================================================
+  // -------------------------------------------------------------
+  // 第一、二關生活時間表渲染與拖曳放置
+  // -------------------------------------------------------------
+  setupScheduleLevel(level) {
+    this.playerSchedule = {};
+    this.levelCharPic.src = level.avatar;
+    this.levelTypeTag.textContent = level.typeTag;
+    this.levelQuestTitle.textContent = level.name;
+    this.levelStoryDesc.textContent = level.story;
 
-  const LEVELS_DATA = [
-    {
-      id: 'pearl_girl',
-      number: 1,
-      title: '第一關：神祕的珍珠少女',
-      paintingName: '《戴珍珠耳環的少女》',
-      originalImg: 'assets/paintings/pearl_girl.jpg',
-      artistTag: '維梅爾 ． 約 1665 年',
-      museum: '荷蘭海牙毛里茨之家博物館館藏',
-      chibiBaseImg: 'assets/characters/pose_pearl_target.svg',
-      defaultBg: 'bg-pearl-dark',
-      bgOptions: [
-        { id: 'bg-pearl-dark', name: '深黑經典背景 [★推薦]' },
-        { id: 'bg-pearl-studio', name: '明亮工作室背景' }
-      ],
-      targetPose: 'pearl_turn',
-      poseOptions: [
-        { id: 'pearl_turn', name: '微微側身回眸 [★推薦]', isTarget: true },
-        { id: 'pearl_front', name: '正面端坐', isTarget: false },
-        { id: 'pearl_away', name: '轉身背對', isTarget: false }
-      ],
-      targetExpr: 'pearl_gentle',
-      exprOptions: [
-        { id: 'pearl_gentle', name: '溫柔微張雙唇凝視 [★推薦]', isTarget: true },
-        { id: 'pearl_smile', name: '燦爛大笑', isTarget: false },
-        { id: 'pearl_blink', name: '俏皮眨眼', isTarget: false }
-      ],
-      targetComp: {
-        posX: 50,
-        scale: 100,
-        bg: 'bg-pearl-dark'
-      },
-      hasTable: false,
-      keyProps: ['blue_towel', 'yellow_cloth', 'pearl_earring'],
-      bonusProps: ['brown_jacket'],
-      distractorProps: ['red_cap', 'sunglasses', 'flower_hairpin'],
-      propsPool: [
-        {
-          id: 'blue_towel',
-          name: '藍色毛巾',
-          tip: '折疊包覆頭頂（模仿頭巾）',
-          svg: 'assets/props/blue_towel.svg',
-          slot: 'head',
-          isKey: true
-        },
-        {
-          id: 'yellow_cloth',
-          name: '黃色布料',
-          tip: '垂於頭巾後方（模仿披巾）',
-          svg: 'assets/props/yellow_cloth.svg',
-          slot: 'hair-accent',
-          isKey: true
-        },
-        {
-          id: 'pearl_earring',
-          name: '珍珠造型耳環',
-          tip: '戴在耳朵閃耀微光',
-          svg: 'assets/props/pearl_earring.svg',
-          slot: 'ear',
-          isKey: true
-        },
-        {
-          id: 'brown_jacket',
-          name: '棕色大衣',
-          tip: '大地色系溫暖披肩',
-          svg: 'assets/props/brown_jacket.svg',
-          slot: 'body',
-          isKey: false,
-          isBonus: true
-        },
-        {
-          id: 'red_cap',
-          name: '紅色帽子',
-          tip: '現代運動棒球帽',
-          svg: 'assets/props/red_cap.svg',
-          slot: 'head',
-          isKey: false
-        },
-        {
-          id: 'sunglasses',
-          name: '太陽眼鏡',
-          tip: '酷炫黑色墨鏡',
-          svg: 'assets/props/sunglasses.svg',
-          slot: 'face',
-          isKey: false
-        },
-        {
-          id: 'flower_hairpin',
-          name: '花朵髮飾',
-          tip: '粉嫩櫻花造型髮夾',
-          svg: 'assets/props/flower_hairpin.svg',
-          slot: 'hair-accent',
-          isKey: false
-        }
-      ],
-      inspectGuide: {
-        clothes: '少女頭上包覆著鮮明的藍色頭巾，後方垂下金黃色的披巾，身穿樸實的棕色披風外套。',
-        pose: '身體微微側向左方，頭部轉向觀眾，眼睛專注地凝視前方，雙唇微張，帶著若有似無的微笑。',
-        props: '左耳上戴著一顆巨大的水滴形珍珠耳環，在深暗背景中反射出亮麗高光。',
-        composition: '極簡深黑的沉靜背景，烘托出藍黃對比的頭飾與珍珠光澤，人物端正位於中央偏前。',
-        lifeTip: '家中的普通「藍色毛巾」摺一摺就能當頭巾，「黃色布料」垂在腦後，再加上「珍珠耳環」，就能完美神還原！'
-      },
-      clearPrompt: '太棒了！你用生活中的毛巾和飾品，成功模仿了經典名畫！',
-      eduFocus: '學生能觀察到服裝配色、人物角度及背景對整體構圖的影響。'
-    },
-    {
-      id: 'milkmaid',
-      number: 2,
-      title: '第二關：牛奶魔法師',
-      paintingName: '《倒牛奶的女僕》',
-      originalImg: 'assets/paintings/milkmaid.jpg',
-      artistTag: '維梅爾 ． 約 1660 年',
-      museum: '荷蘭阿姆斯特丹國家博物館館藏',
-      chibiBaseImg: 'assets/characters/pose_milkmaid_target.svg',
-      defaultBg: 'bg-milkmaid-room',
-      bgOptions: [
-        { id: 'bg-milkmaid-room', name: '古樸灰白牆與窗光 [★推薦]' },
-        { id: 'bg-milkmaid-modern', name: '現代亮黃廚房' }
-      ],
-      targetPose: 'milkmaid_pour',
-      poseOptions: [
-        { id: 'milkmaid_pour', name: '站立雙手倒牛奶 [★推薦]', isTarget: true },
-        { id: 'milkmaid_wave', name: '單手比讚打招呼', isTarget: false },
-        { id: 'milkmaid_hips', name: '雙手叉腰站立', isTarget: false }
-      ],
-      targetExpr: 'milkmaid_focus',
-      exprOptions: [
-        { id: 'milkmaid_focus', name: '專注垂眸凝視 [★推薦]', isTarget: true },
-        { id: 'milkmaid_smile', name: '大笑歡呼', isTarget: false },
-        { id: 'milkmaid_confused', name: '疑惑抓頭', isTarget: false }
-      ],
-      targetComp: {
-        posX: 65,
-        scale: 95,
-        bg: 'bg-milkmaid-room'
-      },
-      hasTable: true,
-      keyProps: ['white_bonnet', 'blue_apron', 'milk_jug', 'bread_basket'],
-      bonusProps: [],
-      distractorProps: ['soccer_ball', 'toy_car', 'plush_bear'],
-      propsPool: [
-        {
-          id: 'white_bonnet',
-          name: '白色頭巾',
-          tip: '折疊端莊的亞麻女僕帽',
-          svg: 'assets/props/white_bonnet.svg',
-          slot: 'head',
-          isKey: true
-        },
-        {
-          id: 'blue_apron',
-          name: '藍色圍裙',
-          tip: '工作必備的台夫特藍圍裙',
-          svg: 'assets/props/blue_apron.svg',
-          slot: 'body',
-          isKey: true
-        },
-        {
-          id: 'milk_jug',
-          name: '水壺',
-          tip: '陶土壺傾斜倒出香醇牛奶',
-          svg: 'assets/props/milk_jug.svg',
-          slot: 'hand',
-          isKey: true
-        },
-        {
-          id: 'bread_basket',
-          name: '麵包',
-          tip: '放置在桌上的藤編麵包籃',
-          svg: 'assets/props/bread_basket.svg',
-          slot: 'table',
-          isKey: true
-        },
-        {
-          id: 'soccer_ball',
-          name: '足球',
-          tip: '黑白相間的現代足球',
-          svg: 'assets/props/soccer_ball.svg',
-          slot: 'table',
-          isKey: false
-        },
-        {
-          id: 'toy_car',
-          name: '玩具汽車',
-          tip: '鮮紅色的迷你玩具跑車',
-          svg: 'assets/props/toy_car.svg',
-          slot: 'table',
-          isKey: false
-        },
-        {
-          id: 'plush_bear',
-          name: '毛絨玩偶',
-          tip: '可愛棕色小熊布偶',
-          svg: 'assets/props/plush_bear.svg',
-          slot: 'hand',
-          isKey: false
-        }
-      ],
-      inspectGuide: {
-        clothes: '身穿鮮豔的黃色緊身上衣與長裙，腰間繫著經典的台夫特藍色圍裙，頭戴白色亞麻帽。',
-        pose: '專注地站立在桌前，雙手端著陶罐，神情平靜而沉著，目光落在倒出的涓涓牛奶上。',
-        props: '陶壺正倒出一道白色的細長牛奶，桌上有竹籃與碎麵包，形成生動的日常生活即景。',
-        composition: '人物位於畫面中偏右，前景有一張擺放麵包與陶罐的木桌，左側窗戶灑入柔和光線。',
-        lifeTip: '白色毛巾摺成頭巾、圍上藍色圍裙、拿起水壺做出倒水姿勢，桌上放顆麵包，就能重現經典！'
-      },
-      clearPrompt: '你成功還原倒牛奶的動作！原來物品的位置和前後關係，也會影響模仿的相似度！',
-      eduFocus: '讓學生觀察動作、構圖、前景與背景的關係。'
-    },
-    {
-      id: 'vangogh',
-      number: 3,
-      title: '第三關：畫家的神祕帽子',
-      paintingName: '《戴灰氈帽的自畫像》',
-      originalImg: 'assets/paintings/vangogh.jpg',
-      artistTag: '梵谷 ． 1887 年',
-      museum: '荷蘭阿姆斯特丹國家博物館館藏',
-      chibiBaseImg: 'assets/characters/pose_vangogh_target.svg',
-      defaultBg: 'bg-vangogh-swirl',
-      bgOptions: [
-        { id: 'bg-vangogh-swirl', name: '梵谷動感筆觸光環 [★推薦]' },
-        { id: 'bg-vangogh-plain', name: '素色灰藍暗牆' }
-      ],
-      targetPose: 'vangogh_bust',
-      poseOptions: [
-        { id: 'vangogh_bust', name: '半身胸像微側凝視 [★推薦]', isTarget: true },
-        { id: 'vangogh_side', name: '側面凝視遠方', isTarget: false },
-        { id: 'vangogh_cross', name: '雙手抱胸嚴肅', isTarget: false }
-      ],
-      targetExpr: 'vangogh_pierce',
-      exprOptions: [
-        { id: 'vangogh_pierce', name: '沉穩深邃畫家眼神 [★推薦]', isTarget: true },
-        { id: 'vangogh_happy', name: '開心露齒笑', isTarget: false },
-        { id: 'vangogh_wink', name: '滑稽鬥雞眼', isTarget: false }
-      ],
-      targetComp: {
-        posX: 50,
-        scale: 105,
-        bg: 'bg-vangogh-swirl'
-      },
-      hasTable: false,
-      keyProps: ['grey_hat', 'blue_jacket', 'white_scarf'],
-      bonusProps: ['palette'],
-      distractorProps: ['red_baseball_cap', 'yellow_raincoat', 'sunglasses'],
-      propsPool: [
-        {
-          id: 'grey_hat',
-          name: '灰色帽子',
-          tip: '帶有豐富筆觸質感的灰氈帽',
-          svg: 'assets/props/grey_hat.svg',
-          slot: 'head',
-          isKey: true
-        },
-        {
-          id: 'blue_jacket',
-          name: '藍色外套',
-          tip: '深邃群青色羊毛厚外套',
-          svg: 'assets/props/blue_jacket.svg',
-          slot: 'body',
-          isKey: true
-        },
-        {
-          id: 'white_scarf',
-          name: '白色圍巾',
-          tip: '塞入衣領內的整齊領巾',
-          svg: 'assets/props/white_scarf.svg',
-          slot: 'neck',
-          isKey: true
-        },
-        {
-          id: 'palette',
-          name: '調色盤',
-          tip: '五彩顏料與木質調色板',
-          svg: 'assets/props/palette.svg',
-          slot: 'hand',
-          isKey: false,
-          isBonus: true
-        },
-        {
-          id: 'red_baseball_cap',
-          name: '紅色棒球帽',
-          tip: '街頭平沿棒球帽',
-          svg: 'assets/props/red_baseball_cap.svg',
-          slot: 'head',
-          isKey: false
-        },
-        {
-          id: 'yellow_raincoat',
-          name: '黃色雨衣',
-          tip: '連帽防雨風衣',
-          svg: 'assets/props/yellow_raincoat.svg',
-          slot: 'body',
-          isKey: false
-        },
-        {
-          id: 'sunglasses',
-          name: '太陽眼鏡',
-          tip: '現代墨鏡',
-          svg: 'assets/props/sunglasses.svg',
-          slot: 'face',
-          isKey: false
-        }
-      ],
-      inspectGuide: {
-        clothes: '頭戴俐落的灰色毛氈軟帽，身穿深藍色厚外套，領口整齊地繫著白色圍巾。',
-        pose: '經典的半身肖像角度，微側的臉部與緊鎖的眼神直接凝視觀賞者，帶有強烈而深邃的意志。',
-        props: '灰色氈帽上有紅橙色與藍色短線條筆觸，象徵梵谷在巴黎時期探索點描與色彩節奏的突破。',
-        composition: '人物上半身充滿畫面中央，頭部周圍以同心圓放射狀的藍綠筆觸環繞，產生如光芒般的動態感。',
-        lifeTip: '家中的灰呢帽、藍色大衣與白圍巾，就能化身梵谷！別忘了眼神要專注深邃喔！'
-      },
-      clearPrompt: '畫家變裝成功！除了服裝與姿勢，色彩和筆觸也是名畫的重要特色！',
-      eduFocus: '讓學生理解不同藝術風格的特色，以及模仿名畫不只有服裝，也包含色彩與構圖。'
-    }
-  ];
+    // 渲染活動卡片池
+    this.renderCardsPool(level.cards);
 
-  // =========================================================================
-  // 三、 遊戲核心控制器 (MasterpieceMakeoverGame)
-  // =========================================================================
+    // 渲染時間槽位
+    this.renderTimeSlots(level.slots);
 
-  class MasterpieceMakeoverGame {
-    constructor() {
-      this.sound = new SoundManager();
-      this.currentLevelIndex = 0;
+    this.updateScheduleStatus();
+    this.updateEnergyBar(50);
+  }
 
-      // 玩家目前關卡狀態
-      this.state = {
-        equipped: {},
-        pose: '',
-        expression: '',
-        posX: 50,
-        scale: 100,
-        bg: ''
-      };
+  resetScheduleLevel() {
+    const level = LEVELS[this.currentLevelIndex];
+    this.setupScheduleLevel(level);
+  }
 
-      // 玩家完成三關的評分成果快照
-      this.levelResults = [];
+  renderCardsPool(cards) {
+    this.cardsPool.innerHTML = '';
+    cards.forEach(card => {
+      const cardEl = document.createElement('div');
+      cardEl.className = 'activity-card';
+      cardEl.id = `tray_${card.id}`;
+      cardEl.draggable = true;
+      cardEl.setAttribute('data-card-id', card.id);
 
-      // 互動暫存
-      this.selectedPropId = null;
-      this.draggingProp = null;
+      cardEl.innerHTML = `
+        <div class="card-icon-box">${card.icon}</div>
+        <div class="card-title">${card.title}</div>
+        <span class="card-drag-handle">⠿</span>
+      `;
 
-      // DOM 元件快取
-      this.cacheDom();
-      this.bindEvents();
-    }
-
-    cacheDom() {
-      this.screens = {
-        start: document.getElementById('start-screen'),
-        game: document.getElementById('game-screen'),
-        exhibition: document.getElementById('exhibition-screen')
-      };
-
-      this.modals = {
-        inspect: document.getElementById('modal-inspect'),
-        score: document.getElementById('modal-score')
-      };
-
-      this.hud = {
-        levelBadge: document.getElementById('hud-level-badge'),
-        paintingTitle: document.getElementById('hud-painting-title'),
-        soundBtn: document.getElementById('btn-toggle-sound'),
-        soundIcon: document.getElementById('sound-icon'),
-        inspectBtn: document.getElementById('btn-inspect-painting')
-      };
-
-      this.instructionText = document.getElementById('instruction-text');
-      this.paintingImg = document.getElementById('painting-img');
-      this.paintingArtistTag = document.getElementById('painting-artist-tag');
-      this.placardTitle = document.getElementById('placard-title');
-      this.placardMuseum = document.getElementById('placard-museum');
-      this.equippedCountTag = document.getElementById('equipped-count-tag');
-
-      this.makeoverStage = document.getElementById('makeover-stage');
-      this.stageBgLayer = document.getElementById('stage-bg-layer');
-      this.characterActorGroup = document.getElementById('character-actor-group');
-      this.chibiBaseImg = document.getElementById('chibi-base-img');
-      this.foregroundTable = document.getElementById('stage-foreground-table');
-      this.dragGhost = document.getElementById('drag-ghost');
-
-      this.slots = {
-        head: document.getElementById('slot-content-head'),
-        'hair-accent': document.getElementById('slot-content-hair-accent'),
-        ear: document.getElementById('slot-content-ear'),
-        face: document.getElementById('slot-content-face'),
-        body: document.getElementById('slot-content-body'),
-        neck: document.getElementById('slot-content-neck'),
-        hand: document.getElementById('slot-content-hand'),
-        table: document.getElementById('slot-content-table')
-      };
-
-      this.propsShelf = document.getElementById('props-shelf');
-      this.poseButtons = document.getElementById('pose-buttons');
-      this.expressionButtons = document.getElementById('expression-buttons');
-      this.sliderPosX = document.getElementById('slider-pos-x');
-      this.posXVal = document.getElementById('pos-x-val');
-      this.sliderScale = document.getElementById('slider-scale');
-      this.scaleVal = document.getElementById('scale-val');
-      this.bgButtons = document.getElementById('bg-buttons');
-      this.bgNameVal = document.getElementById('bg-name-val');
-
-      this.btnStartGame = document.getElementById('btn-start-game');
-      this.btnQuickZoom = document.getElementById('btn-quick-zoom');
-      this.btnResetStage = document.getElementById('btn-reset-stage');
-      this.btnFinishMakeover = document.getElementById('btn-finish-makeover');
-      this.btnCloseInspect = document.getElementById('btn-close-inspect');
-      this.btnInspectGotIt = document.getElementById('btn-inspect-got-it');
-      this.btnReadjust = document.getElementById('btn-readjust');
-      this.btnNextLevel = document.getElementById('btn-next-level');
-      this.btnDownloadCertificate = document.getElementById('btn-download-certificate');
-      this.btnReplayGame = document.getElementById('btn-replay-game');
-      this.btnBackHome = document.getElementById('btn-back-home');
-      this.exportCanvas = document.getElementById('export-canvas');
-    }
-
-    bindEvents() {
-      this.btnStartGame.addEventListener('click', () => {
+      // 拖曳事件
+      cardEl.addEventListener('dragstart', (e) => {
         this.sound.playClick();
-        this.startLevel(0);
+        this.draggedCard = card;
+        cardEl.classList.add('dragging');
+        e.dataTransfer.setData('text/plain', card.id);
       });
 
-      this.hud.soundBtn.addEventListener('click', () => {
-        const on = this.sound.toggle();
-        this.hud.soundIcon.textContent = on ? '🔊' : '🔇';
-        if (on) this.sound.playClick();
+      cardEl.addEventListener('dragend', () => {
+        cardEl.classList.remove('dragging');
+        this.draggedCard = null;
       });
 
-      const openInspect = () => {
+      // 點擊選取模式（適合平板、手機操作）
+      cardEl.addEventListener('click', () => {
         this.sound.playClick();
-        this.showInspectModal();
-      };
-      this.hud.inspectBtn.addEventListener('click', openInspect);
-      this.btnQuickZoom.addEventListener('click', openInspect);
-
-      const closeInspect = () => {
-        this.sound.playClick();
-        this.modals.inspect.classList.remove('active');
-      };
-      this.btnCloseInspect.addEventListener('click', closeInspect);
-      this.btnInspectGotIt.addEventListener('click', closeInspect);
-
-      const tabs = document.querySelectorAll('.dock-tab');
-      tabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-          this.sound.playClick();
-          tabs.forEach(t => t.classList.remove('active'));
-          document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-
-          tab.classList.add('active');
-          const panelId = `tab-${tab.dataset.tab}`;
-          const targetPanel = document.getElementById(panelId);
-          if (targetPanel) targetPanel.classList.add('active');
-        });
-      });
-
-      this.sliderPosX.addEventListener('input', (e) => {
-        this.state.posX = parseInt(e.target.value, 10);
-        this.applyComposition();
-      });
-
-      this.sliderScale.addEventListener('input', (e) => {
-        this.state.scale = parseInt(e.target.value, 10);
-        this.applyComposition();
-      });
-
-      this.btnResetStage.addEventListener('click', () => {
-        this.sound.playClick();
-        this.resetCurrentLevelState();
-      });
-
-      this.btnFinishMakeover.addEventListener('click', () => {
-        this.sound.playScore();
-        this.evaluateLevel();
-      });
-
-      this.btnReadjust.addEventListener('click', () => {
-        this.sound.playClick();
-        this.modals.score.classList.remove('active');
-      });
-
-      this.btnNextLevel.addEventListener('click', () => {
-        this.sound.playClick();
-        this.modals.score.classList.remove('active');
-        if (this.currentLevelIndex < LEVELS_DATA.length - 1) {
-          this.startLevel(this.currentLevelIndex + 1);
+        if (this.selectedCard && this.selectedCard.id === card.id) {
+          // 取消選取
+          this.selectedCard = null;
+          cardEl.classList.remove('selected');
         } else {
-          this.showExhibitionScreen();
+          // 選取新卡片
+          this.cardsPool.querySelectorAll('.activity-card').forEach(c => c.classList.remove('selected'));
+          this.selectedCard = card;
+          cardEl.classList.add('selected');
+          this.showToast(`已選取「${card.title}」，請點擊目標時間格放置！`);
         }
       });
 
-      this.btnDownloadCertificate.addEventListener('click', () => {
-        this.sound.playClick();
-        this.exportCertificatePNG();
-      });
-
-      this.btnReplayGame.addEventListener('click', () => {
-        this.sound.playClick();
-        this.levelResults = [];
-        this.startLevel(0);
-      });
-
-      this.btnBackHome.addEventListener('click', () => {
-        this.sound.playClick();
-        this.showScreen('start');
-      });
-
-      const slotDoms = document.querySelectorAll('.prop-slot');
-      slotDoms.forEach(slotEl => {
-        slotEl.addEventListener('click', (e) => {
-          e.stopPropagation();
-          const slotType = slotEl.dataset.slot;
-
-          if (this.selectedPropId) {
-            this.equipProp(this.selectedPropId, slotType);
-            this.clearSelection();
-          } else if (this.state.equipped[slotType]) {
-            this.sound.playUnequip();
-            this.unequipSlot(slotType);
-          }
-        });
-      });
-
-      document.addEventListener('click', (e) => {
-        if (!e.target.closest('.prop-card') && !e.target.closest('.prop-slot')) {
-          this.clearSelection();
-        }
-      });
-
-      this.bindDragDropEvents();
-    }
-
-    bindDragDropEvents() {
-      const onPointerMove = (e) => {
-        if (!this.draggingProp) return;
-        e.preventDefault();
-
-        this.dragGhost.style.left = `${e.clientX}px`;
-        this.dragGhost.style.top = `${e.clientY}px`;
-
-        const elemBelow = document.elementFromPoint(e.clientX, e.clientY);
-        const slotElem = elemBelow ? elemBelow.closest('.prop-slot') : null;
-
-        document.querySelectorAll('.prop-slot').forEach(s => s.classList.remove('drag-over'));
-        if (slotElem) {
-          slotElem.classList.add('drag-over');
-        }
-      };
-
-      const onPointerUp = (e) => {
-        if (!this.draggingProp) return;
-
-        this.dragGhost.style.display = 'none';
-        this.dragGhost.innerHTML = '';
-
-        const elemBelow = document.elementFromPoint(e.clientX, e.clientY);
-        const slotElem = elemBelow ? elemBelow.closest('.prop-slot') : null;
-
-        document.querySelectorAll('.prop-slot').forEach(s => s.classList.remove('drag-over'));
-
-        if (slotElem) {
-          const targetSlot = slotElem.dataset.slot;
-          this.equipProp(this.draggingProp.id, targetSlot);
-        } else {
-          this.sound.playClick();
-        }
-
-        this.draggingProp = null;
-        window.removeEventListener('pointermove', onPointerMove);
-        window.removeEventListener('pointerup', onPointerUp);
-        window.removeEventListener('pointercancel', onPointerUp);
-      };
-
-      this.startPropDrag = (prop, e) => {
-        this.draggingProp = prop;
-        this.sound.resume();
-
-        this.dragGhost.innerHTML = `<img src="${prop.svg}" alt="${prop.name}">`;
-        this.dragGhost.style.display = 'block';
-        this.dragGhost.style.left = `${e.clientX}px`;
-        this.dragGhost.style.top = `${e.clientY}px`;
-
-        window.addEventListener('pointermove', onPointerMove, { passive: false });
-        window.addEventListener('pointerup', onPointerUp);
-        window.addEventListener('pointercancel', onPointerUp);
-      };
-    }
-
-    showScreen(name) {
-      Object.keys(this.screens).forEach(key => {
-        this.screens[key].classList.toggle('active', key === name);
-      });
-    }
-
-    startLevel(index) {
-      this.currentLevelIndex = index;
-      const level = LEVELS_DATA[index];
-
-      this.state = {
-        equipped: {},
-        pose: level.targetPose,
-        expression: level.targetExpr,
-        posX: 50,
-        scale: 100,
-        bg: level.defaultBg
-      };
-
-      this.hud.levelBadge.textContent = `第 ${level.number}／3 關`;
-      this.hud.paintingTitle.textContent = `${level.title} ． ${level.paintingName}`;
-
-      this.paintingImg.src = level.originalImg;
-      this.paintingArtistTag.textContent = level.artistTag;
-      this.placardTitle.textContent = level.paintingName;
-      this.placardMuseum.textContent = level.museum;
-
-      this.chibiBaseImg.src = level.chibiBaseImg;
-      this.foregroundTable.style.display = level.hasTable ? 'block' : 'none';
-
-      this.renderPropsShelf();
-      this.renderPoseControls();
-      this.renderCompControls();
-      this.applyComposition();
-      this.updateEquippedDisplay();
-
-      this.showScreen('game');
-    }
-
-    resetCurrentLevelState() {
-      const level = LEVELS_DATA[this.currentLevelIndex];
-      this.state.equipped = {};
-      this.state.pose = level.targetPose;
-      this.state.expression = level.targetExpr;
-      this.state.posX = 50;
-      this.state.scale = 100;
-      this.state.bg = level.defaultBg;
-
-      this.sliderPosX.value = 50;
-      this.sliderScale.value = 100;
-
-      this.renderPropsShelf();
-      this.renderPoseControls();
-      this.renderCompControls();
-      this.applyComposition();
-      this.updateEquippedDisplay();
-    }
-
-    equipProp(propId, targetSlot) {
-      const level = LEVELS_DATA[this.currentLevelIndex];
-      const prop = level.propsPool.find(p => p.id === propId);
-      if (!prop) return;
-
-      const slot = targetSlot || prop.slot;
-
-      Object.keys(this.state.equipped).forEach(s => {
-        if (this.state.equipped[s] === propId) {
-          delete this.state.equipped[s];
-        }
-      });
-
-      this.state.equipped[slot] = propId;
-      this.sound.playSnap();
-      this.updateEquippedDisplay();
-      this.renderPropsShelf();
-    }
-
-    unequipSlot(slot) {
-      if (this.state.equipped[slot]) {
-        delete this.state.equipped[slot];
-        this.updateEquippedDisplay();
-        this.renderPropsShelf();
-      }
-    }
-
-    clearSelection() {
-      this.selectedPropId = null;
-      document.querySelectorAll('.prop-card').forEach(c => c.classList.remove('selected'));
-    }
-
-    updateEquippedDisplay() {
-      const level = LEVELS_DATA[this.currentLevelIndex];
-
-      Object.keys(this.slots).forEach(slotKey => {
-        const slotEl = this.slots[slotKey];
-        const propId = this.state.equipped[slotKey];
-        const parentSlot = slotEl.parentElement;
-
-        if (propId) {
-          const prop = level.propsPool.find(p => p.id === propId);
-          slotEl.innerHTML = prop ? `<img src="${prop.svg}" alt="${prop.name}" title="點擊卸除 ${prop.name}">` : '';
-          parentSlot.classList.add('occupied');
-        } else {
-          slotEl.innerHTML = '';
-          parentSlot.classList.remove('occupied');
-        }
-      });
-
-      const count = Object.keys(this.state.equipped).length;
-      this.equippedCountTag.textContent = `已搭配 ${count} 個道具`;
-    }
-
-    renderPropsShelf() {
-      const level = LEVELS_DATA[this.currentLevelIndex];
-      this.propsShelf.innerHTML = '';
-
-      level.propsPool.forEach(prop => {
-        const isEquipped = Object.values(this.state.equipped).includes(prop.id);
-        const card = document.createElement('div');
-        card.className = `prop-card ${isEquipped ? 'equipped' : ''}`;
-        card.dataset.propId = prop.id;
-
-        card.innerHTML = `
-          <div class="prop-card-icon">
-            <img src="${prop.svg}" alt="${prop.name}">
-          </div>
-          <div class="prop-card-name">${prop.name}</div>
-          <div class="prop-card-tip">${prop.tip}</div>
-        `;
-
-        card.addEventListener('pointerdown', (e) => {
-          if (isEquipped) {
-            const slotToUnequip = Object.keys(this.state.equipped).find(s => this.state.equipped[s] === prop.id);
-            if (slotToUnequip) {
-              this.sound.playUnequip();
-              this.unequipSlot(slotToUnequip);
-              return;
-            }
-          }
-          this.startPropDrag(prop, e);
-        });
-
-        card.addEventListener('click', (e) => {
-          e.stopPropagation();
-          this.sound.playClick();
-          if (this.selectedPropId === prop.id) {
-            this.clearSelection();
-          } else {
-            this.clearSelection();
-            this.selectedPropId = prop.id;
-            card.classList.add('selected');
-          }
-        });
-
-        card.addEventListener('dblclick', () => {
-          this.equipProp(prop.id);
-          this.clearSelection();
-        });
-
-        this.propsShelf.appendChild(card);
-      });
-    }
-
-    renderPoseControls() {
-      const level = LEVELS_DATA[this.currentLevelIndex];
-
-      this.poseButtons.innerHTML = '';
-      level.poseOptions.forEach(opt => {
-        const btn = document.createElement('button');
-        btn.className = `opt-btn ${this.state.pose === opt.id ? 'active' : ''}`;
-        btn.textContent = opt.name;
-        btn.addEventListener('click', () => {
-          this.sound.playClick();
-          this.state.pose = opt.id;
-          this.renderPoseControls();
-        });
-        this.poseButtons.appendChild(btn);
-      });
-
-      this.expressionButtons.innerHTML = '';
-      level.exprOptions.forEach(opt => {
-        const btn = document.createElement('button');
-        btn.className = `opt-btn ${this.state.expression === opt.id ? 'active' : ''}`;
-        btn.textContent = opt.name;
-        btn.addEventListener('click', () => {
-          this.sound.playClick();
-          this.state.expression = opt.id;
-          this.renderPoseControls();
-        });
-        this.expressionButtons.appendChild(btn);
-      });
-    }
-
-    renderCompControls() {
-      const level = LEVELS_DATA[this.currentLevelIndex];
-
-      this.bgButtons.innerHTML = '';
-      level.bgOptions.forEach(opt => {
-        const btn = document.createElement('button');
-        btn.className = `opt-btn ${this.state.bg === opt.id ? 'active' : ''}`;
-        btn.textContent = opt.name;
-        btn.addEventListener('click', () => {
-          this.sound.playClick();
-          this.state.bg = opt.id;
-          this.applyComposition();
-          this.renderCompControls();
-        });
-        this.bgButtons.appendChild(btn);
-      });
-    }
-
-    applyComposition() {
-      const x = this.state.posX;
-      const s = this.state.scale / 100;
-      this.characterActorGroup.style.left = `${x}%`;
-      this.characterActorGroup.style.transform = `translateX(-50%) scale(${s})`;
-
-      this.posXVal.textContent = x === 50 ? '置中 (50%)' : x < 50 ? `偏左 (${x}%)` : `偏右 (${x}%)`;
-      this.scaleVal.textContent = `${this.state.scale}% (${s >= 1.05 ? '特寫' : s <= 0.95 ? '遠景' : '標準'})`;
-
-      const level = LEVELS_DATA[this.currentLevelIndex];
-      this.stageBgLayer.className = `stage-bg-layer ${this.state.bg || level.defaultBg}`;
-      const bgMatch = level.bgOptions.find(b => b.id === this.state.bg);
-      this.bgNameVal.textContent = bgMatch ? bgMatch.name.replace('[★推薦]', '').trim() : '經典背景';
-    }
-
-    showInspectModal() {
-      const level = LEVELS_DATA[this.currentLevelIndex];
-      const g = level.inspectGuide;
-
-      document.getElementById('inspect-painting-title').textContent = `${level.paintingName} 細節觀察`;
-      document.getElementById('inspect-painting-meta').textContent = `${level.artistTag} ｜ ${level.museum}`;
-      document.getElementById('inspect-img').src = level.originalImg;
-
-      document.getElementById('guide-clothes').textContent = g.clothes;
-      document.getElementById('guide-pose').textContent = g.pose;
-      document.getElementById('guide-props').textContent = g.props;
-      document.getElementById('guide-composition').textContent = g.composition;
-      document.getElementById('guide-life-tip').textContent = g.lifeTip;
-
-      this.modals.inspect.classList.add('active');
-    }
-
-    evaluateLevel() {
-      const level = LEVELS_DATA[this.currentLevelIndex];
-      const equippedProps = Object.values(this.state.equipped);
-
-      // 1. 道具搭配 (滿分 40 分)
-      let propsScore = 0;
-      const keyCount = level.keyProps.length;
-      const pointsPerKey = 40 / keyCount;
-
-      level.keyProps.forEach(keyId => {
-        if (equippedProps.includes(keyId)) {
-          propsScore += pointsPerKey;
-        }
-      });
-
-      let distractorCount = 0;
-      level.distractorProps.forEach(dId => {
-        if (equippedProps.includes(dId)) {
-          distractorCount++;
-          propsScore = Math.max(0, propsScore - 5);
-        }
-      });
-      propsScore = Math.round(propsScore);
-
-      // 2. 姿勢模仿 (滿分 30 分)
-      let poseScore = 0;
-      if (this.state.pose === level.targetPose) {
-        poseScore += 25;
-      } else {
-        poseScore += 12;
-      }
-      if (this.state.expression === level.targetExpr) {
-        poseScore += 5;
-      } else {
-        poseScore += 2;
-      }
-
-      // 3. 構圖還原 (滿分 20 分)
-      let compScore = 0;
-      const deltaX = Math.abs(this.state.posX - level.targetComp.posX);
-      const deltaScale = Math.abs(this.state.scale - level.targetComp.scale);
-
-      if (deltaX <= 8) compScore += 10;
-      else if (deltaX <= 18) compScore += 6;
-      else compScore += 3;
-
-      if (deltaScale <= 10) compScore += 5;
-      else compScore += 3;
-
-      if (this.state.bg === level.targetComp.bg) compScore += 5;
-      else compScore += 2;
-
-      // 4. 創意運用 (滿分 10 分)
-      let creativeScore = 6;
-      if (level.bonusProps.some(b => equippedProps.includes(b))) {
-        creativeScore += 4;
-      } else if (propsScore >= 35) {
-        creativeScore += 3;
-      }
-      creativeScore = Math.min(10, creativeScore);
-
-      const totalScore = Math.min(100, propsScore + poseScore + compScore + creativeScore);
-
-      let grade = '';
-      if (totalScore >= 90) grade = '傳說級變裝大師！';
-      else if (totalScore >= 70) grade = '超有創意的模仿高手！';
-      else if (totalScore >= 50) grade = '很棒的藝術挑戰者！';
-      else grade = '再觀察一下，作品會更接近喔！';
-
-      let feedback = '';
-      const missingKeys = level.keyProps.filter(k => !equippedProps.includes(k));
-
-      if (missingKeys.length === 0 && distractorCount === 0 && this.state.pose === level.targetPose) {
-        feedback = `神還原！${level.clearPrompt}`;
-      } else if (missingKeys.length > 0) {
-        const missingNames = missingKeys.map(k => {
-          const p = level.propsPool.find(x => x.id === k);
-          return p ? p.name : '';
-        }).filter(Boolean).join('、');
-        feedback = `整體造型很有模有樣！如果再加上關鍵的「${missingNames}」，作品會更神似原畫喔！`;
-      } else if (distractorCount > 0) {
-        feedback = `很有創意的搭配！不過原畫的時代好像還沒有現代玩具／足球喔，試著卸下干擾物品看看！`;
-      } else if (this.state.pose !== level.targetPose) {
-        const targetPoseObj = level.poseOptions.find(o => o.isTarget);
-        feedback = `服裝搭配非常到位！如果將人物面向調整為「${targetPoseObj.name.replace('[★推薦]', '').trim()}」，神韻就完美了！`;
-      } else {
-        feedback = `非常棒的藝術嘗試！微調一下人物左右位置或縮放比例，構圖就會跟原畫一模一樣！`;
-      }
-
-      this.levelResults[this.currentLevelIndex] = {
-        levelNumber: level.number,
-        paintingName: level.paintingName,
-        totalScore,
-        propsScore,
-        poseScore,
-        compScore,
-        creativeScore,
-        grade,
-        feedback,
-        equipped: { ...this.state.equipped },
-        pose: this.state.pose,
-        expression: this.state.expression,
-        posX: this.state.posX,
-        scale: this.state.scale,
-        bg: this.state.bg
-      };
-
-      this.showScoreModal(this.levelResults[this.currentLevelIndex]);
-    }
-
-    showScoreModal(result) {
-      const level = LEVELS_DATA[this.currentLevelIndex];
-
-      document.getElementById('score-rank-title').textContent = result.grade;
-      document.getElementById('score-level-name').textContent = `${level.title} ． 成果評分`;
-      document.getElementById('score-original-thumb').src = level.originalImg;
-
-      const previewBox = document.getElementById('score-player-preview');
-      previewBox.innerHTML = '';
-      const cloneStage = this.createStageSnapshotClone();
-      previewBox.appendChild(cloneStage);
-
-      document.getElementById('score-val-props').textContent = `${result.propsScore} 分`;
-      document.getElementById('bar-props').style.width = `${(result.propsScore / 40) * 100}%`;
-
-      document.getElementById('score-val-pose').textContent = `${result.poseScore} 分`;
-      document.getElementById('bar-pose').style.width = `${(result.poseScore / 30) * 100}%`;
-
-      document.getElementById('score-val-comp').textContent = `${result.compScore} 分`;
-      document.getElementById('bar-comp').style.width = `${(result.compScore / 20) * 100}%`;
-
-      document.getElementById('score-val-creative').textContent = `${result.creativeScore} 分`;
-      document.getElementById('bar-creative').style.width = `${(result.creativeScore / 10) * 100}%`;
-
-      document.getElementById('score-total-val').textContent = `${result.totalScore} 分`;
-      document.getElementById('feedback-detail-text').textContent = result.feedback;
-      document.getElementById('education-summary-text').textContent = level.eduFocus;
-
-      const isLast = this.currentLevelIndex >= LEVELS_DATA.length - 1;
-      document.getElementById('next-level-btn-text').textContent = isLast ? '🏆 進入作品成果展！ ➔' : '前往下一關 ➔';
-
-      this.modals.score.classList.add('active');
-    }
-
-    createStageSnapshotClone() {
-      const wrapper = document.createElement('div');
-      wrapper.style.width = '100%';
-      wrapper.style.height = '100%';
-      wrapper.style.position = 'relative';
-      wrapper.style.overflow = 'hidden';
-      wrapper.className = `makeover-stage ${this.state.bg || 'bg-pearl-dark'}`;
-
-      const actor = document.createElement('div');
-      actor.className = 'character-actor-group';
-      actor.style.left = `${this.state.posX}%`;
-      actor.style.transform = `translateX(-50%) scale(${this.state.scale / 100 * 0.55})`;
-      actor.style.bottom = '0px';
-
-      const level = LEVELS_DATA[this.currentLevelIndex];
-      actor.innerHTML = `
-        <div class="chibi-character-container">
-          <img src="${level.chibiBaseImg}" class="chibi-body-img">
+      // 觸控拖曳支援（平板觸控相容）
+      cardEl.addEventListener('touchstart', (e) => {
+        this.selectedCard = card;
+        this.cardsPool.querySelectorAll('.activity-card').forEach(c => c.classList.remove('selected'));
+        cardEl.classList.add('selected');
+      }, { passive: true });
+
+      this.cardsPool.appendChild(cardEl);
+    });
+  }
+
+  renderTimeSlots(slots) {
+    this.timeSlotsContainer.innerHTML = '';
+    slots.forEach(slot => {
+      const slotEl = document.createElement('div');
+      slotEl.className = 'time-slot-card';
+      slotEl.id = `slot_${slot.id}`;
+      slotEl.setAttribute('data-slot-id', slot.id);
+
+      slotEl.innerHTML = `
+        <div class="slot-header">
+          <span class="slot-time-badge">⏰ ${slot.time}</span>
+          <span class="slot-period-name">${slot.period}</span>
+        </div>
+        <div class="slot-content-area" id="slot_content_${slot.id}">
+          <span class="slot-empty-placeholder">點擊或拖入活動</span>
         </div>
       `;
 
-      const slotsLayer = document.createElement('div');
-      slotsLayer.className = 'slots-overlay';
-      Object.keys(this.state.equipped).forEach(slotKey => {
-        const propId = this.state.equipped[slotKey];
-        const prop = level.propsPool.find(p => p.id === propId);
-        if (prop) {
-          const slotDiv = document.createElement('div');
-          slotDiv.className = `prop-slot slot-${slotKey} occupied`;
-          slotDiv.innerHTML = `<img src="${prop.svg}">`;
-          slotsLayer.appendChild(slotDiv);
+      // 拖曳放置目標事件
+      slotEl.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        slotEl.classList.add('drag-over');
+      });
+
+      slotEl.addEventListener('dragleave', () => {
+        slotEl.classList.remove('drag-over');
+      });
+
+      slotEl.addEventListener('drop', (e) => {
+        e.preventDefault();
+        slotEl.classList.remove('drag-over');
+        if (this.draggedCard) {
+          this.assignCardToSlot(this.draggedCard, slot.id);
         }
       });
-      actor.appendChild(slotsLayer);
 
-      if (level.hasTable) {
-        const table = document.createElement('div');
-        table.className = 'stage-foreground-table';
-        const tablePropId = this.state.equipped.table;
-        const prop = level.propsPool.find(p => p.id === tablePropId);
-        table.innerHTML = `
-          <div class="rustic-table">
-            ${prop ? `<div class="prop-slot slot-table occupied"><img src="${prop.svg}"></div>` : ''}
-          </div>
-        `;
-        actor.appendChild(table);
+      // 點擊時間格放置（支援選取模式與平板）
+      slotEl.addEventListener('click', () => {
+        if (this.selectedCard) {
+          this.assignCardToSlot(this.selectedCard, slot.id);
+          this.selectedCard = null;
+          this.cardsPool.querySelectorAll('.activity-card').forEach(c => c.classList.remove('selected'));
+        } else if (this.playerSchedule[slot.id]) {
+          // 若槽位已有活動且未選取新卡片，點擊可收回托盤
+          this.sound.playClick();
+          this.removeCardFromSlot(slot.id);
+        }
+      });
+
+      this.timeSlotsContainer.appendChild(slotEl);
+    });
+  }
+
+  assignCardToSlot(card, targetSlotId) {
+    this.sound.playSnap();
+
+    // 檢查該卡片是否已放置在其他槽位，若是則先清空舊槽位（避免重複）
+    for (const [slotId, existingCard] of Object.entries(this.playerSchedule)) {
+      if (existingCard && existingCard.id === card.id && slotId !== targetSlotId) {
+        delete this.playerSchedule[slotId];
+        this.renderSlotContent(slotId, null);
       }
-
-      wrapper.appendChild(actor);
-      return wrapper;
     }
 
-    showExhibitionScreen() {
-      this.sound.playFanfare();
-      this.showScreen('exhibition');
-
-      let grandTotal = 0;
-
-      [0, 1, 2].forEach(idx => {
-        const res = this.levelResults[idx] || {
-          totalScore: 80,
-          grade: '超有創意的模仿高手！'
-        };
-        grandTotal += res.totalScore;
-
-        const container = document.getElementById(`exhibit-work-${idx + 1}`);
-        container.innerHTML = '';
-
-        const level = LEVELS_DATA[idx];
-        const preview = document.createElement('div');
-        preview.className = `makeover-stage ${res.bg || level.defaultBg}`;
-        preview.style.width = '100%';
-        preview.style.height = '100%';
-        preview.style.position = 'relative';
-
-        const actor = document.createElement('div');
-        actor.className = 'character-actor-group';
-        actor.style.left = `${res.posX || 50}%`;
-        actor.style.transform = `translateX(-50%) scale(${(res.scale || 100) / 100 * 0.58})`;
-        actor.style.bottom = '5px';
-        actor.innerHTML = `
-          <div class="chibi-character-container">
-            <img src="${level.chibiBaseImg}" class="chibi-body-img">
-          </div>
-        `;
-
-        if (res.equipped) {
-          const slotsLayer = document.createElement('div');
-          slotsLayer.className = 'slots-overlay';
-          Object.keys(res.equipped).forEach(slotKey => {
-            const pId = res.equipped[slotKey];
-            const pObj = level.propsPool.find(p => p.id === pId);
-            if (pObj) {
-              const s = document.createElement('div');
-              s.className = `prop-slot slot-${slotKey} occupied`;
-              s.innerHTML = `<img src="${pObj.svg}">`;
-              slotsLayer.appendChild(s);
-            }
-          });
-          actor.appendChild(slotsLayer);
-
-          if (level.hasTable) {
-            const table = document.createElement('div');
-            table.className = 'stage-foreground-table';
-            const tablePropId = res.equipped.table;
-            const pObj = level.propsPool.find(p => p.id === tablePropId);
-            table.innerHTML = `
-              <div class="rustic-table">
-                ${pObj ? `<div class="prop-slot slot-table occupied"><img src="${pObj.svg}"></div>` : ''}
-              </div>
-            `;
-            actor.appendChild(table);
-          }
-        }
-
-        preview.appendChild(actor);
-        container.appendChild(preview);
-
-        document.getElementById(`exhibit-score-${idx + 1}`).textContent = `得分：${res.totalScore} 分`;
-        document.getElementById(`exhibit-grade-${idx + 1}`).textContent = res.grade;
-      });
-
-      document.getElementById('exhibit-total-score').textContent = `總得分：${grandTotal}／300 分`;
-      let grandTitle = '';
-      if (grandTotal >= 270) grandTitle = '🌟 羅浮宮特聘 ． 傳說級名畫變裝大師 🌟';
-      else if (grandTotal >= 210) grandTitle = '✨ 靈活運用生活道具 ． 天才藝術策展人 ✨';
-      else grandTitle = '🎨 潛力無窮 ． 觀察神探變裝助手 🎨';
-      document.getElementById('exhibit-grand-title').textContent = grandTitle;
+    // 若目標槽位原本已有其他卡片，將原卡片退回托盤或更換
+    const previousCard = this.playerSchedule[targetSlotId];
+    if (previousCard && previousCard.id !== card.id) {
+      // 原卡片返回托盤顯示
+      const prevTrayCard = document.getElementById(`tray_${previousCard.id}`);
+      if (prevTrayCard) prevTrayCard.style.display = 'flex';
     }
 
-    exportCertificatePNG() {
-      const canvas = this.exportCanvas;
-      const ctx = canvas.getContext('2d');
-      const W = canvas.width;
-      const H = canvas.height;
+    // 安排新卡片到槽位
+    this.playerSchedule[targetSlotId] = card;
+    this.renderSlotContent(targetSlotId, card);
 
-      const wallGrad = ctx.createRadialGradient(W / 2, H * 0.35, 100, W / 2, H * 0.4, W * 0.7);
-      wallGrad.addColorStop(0, '#3E2F23');
-      wallGrad.addColorStop(1, '#1A130E');
-      ctx.fillStyle = wallGrad;
-      ctx.fillRect(0, 0, W, H);
+    // 隱藏托盤中已被使用的卡片
+    const trayCard = document.getElementById(`tray_${card.id}`);
+    if (trayCard) trayCard.style.display = 'none';
 
-      ctx.fillStyle = '#261C15';
-      ctx.fillRect(0, H - 70, W, 70);
-      ctx.fillStyle = '#D4AF37';
-      ctx.fillRect(0, H - 72, W, 2);
+    this.updateScheduleStatus();
+  }
 
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
+  removeCardFromSlot(slotId) {
+    const card = this.playerSchedule[slotId];
+    if (!card) return;
 
-      ctx.fillStyle = '#F59E0B';
-      ctx.font = 'bold 24px ' + getComputedStyle(document.body).fontFamily;
-      ctx.fillText('🏆 名畫變裝工作室 ． 官方成果證書 🏆', W / 2, 60);
+    delete this.playerSchedule[slotId];
+    this.renderSlotContent(slotId, null);
 
-      ctx.fillStyle = '#FEF3C7';
-      ctx.font = '900 52px ' + getComputedStyle(document.body).fontFamily;
-      ctx.fillText('《名畫變裝大師》結業成果展', W / 2, 120);
+    // 讓卡片重現於托盤
+    const trayCard = document.getElementById(`tray_${card.id}`);
+    if (trayCard) trayCard.style.display = 'flex';
 
-      ctx.fillStyle = '#E2D5C8';
-      ctx.font = '22px ' + getComputedStyle(document.body).fontFamily;
-      ctx.fillText('仔細觀察、發揮創意，生活中的毛巾、帽子與水壺也能成就藝術經典！', W / 2, 170);
+    this.updateScheduleStatus();
+  }
 
-      const cardWidth = 480;
-      const cardHeight = 600;
-      const startX = (W - (cardWidth * 3 + 60 * 2)) / 2;
-      const startY = 220;
+  renderSlotContent(slotId, card) {
+    const contentArea = document.getElementById(`slot_content_${slotId}`);
+    const slotCardEl = document.getElementById(`slot_${slotId}`);
+    if (!contentArea || !slotCardEl) return;
 
-      let grandTotal = 0;
-
-      [0, 1, 2].forEach(i => {
-        const res = this.levelResults[i] || { totalScore: 90, grade: '超有創意的模仿高手！' };
-        grandTotal += res.totalScore;
-        const level = LEVELS_DATA[i];
-        const cx = startX + i * (cardWidth + 60);
-
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-        ctx.fillRect(cx + 8, startY + 8, cardWidth, cardHeight);
-
-        const goldFrame = ctx.createLinearGradient(cx, startY, cx + cardWidth, startY + cardHeight);
-        goldFrame.addColorStop(0, '#F5D77F');
-        goldFrame.addColorStop(0.5, '#B8860B');
-        goldFrame.addColorStop(1, '#DAA520');
-        ctx.fillStyle = goldFrame;
-        ctx.fillRect(cx, startY, cardWidth, cardHeight);
-
-        ctx.fillStyle = '#1C1510';
-        ctx.fillRect(cx + 14, startY + 14, cardWidth - 28, cardHeight - 28);
-
-        const innerImg = new Image();
-        innerImg.src = level.originalImg;
-        if (innerImg.complete && innerImg.naturalWidth) {
-          ctx.drawImage(innerImg, cx + 24, startY + 24, cardWidth - 48, 420);
-        } else {
-          ctx.fillStyle = '#33271E';
-          ctx.fillRect(cx + 24, startY + 24, cardWidth - 48, 420);
-          ctx.fillStyle = '#FEF3C7';
-          ctx.font = 'bold 28px ' + getComputedStyle(document.body).fontFamily;
-          ctx.fillText(level.paintingName, cx + cardWidth / 2, startY + 230);
-        }
-
-        ctx.fillStyle = '#FAF6ED';
-        ctx.fillRect(cx + 30, startY + 460, cardWidth - 60, 105);
-        ctx.strokeStyle = '#D4AF37';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(cx + 30, startY + 460, cardWidth - 60, 105);
-
-        ctx.fillStyle = '#2F241E';
-        ctx.font = 'bold 22px ' + getComputedStyle(document.body).fontFamily;
-        ctx.fillText(level.paintingName + ' 仿作', cx + cardWidth / 2, startY + 490);
-
-        ctx.fillStyle = '#B45309';
-        ctx.font = '900 24px ' + getComputedStyle(document.body).fontFamily;
-        ctx.fillText(`得分：${res.totalScore} 分 ． ${res.grade}`, cx + cardWidth / 2, startY + 530);
+    if (card) {
+      slotCardEl.classList.add('has-card');
+      contentArea.innerHTML = `
+        <div class="placed-activity-pill">
+          <div class="placed-pill-info">
+            <span>${card.icon}</span>
+            <span>${card.title}</span>
+          </div>
+          <button class="btn-remove-slot" title="移除活動回到卡片庫" aria-label="移除活動">✕</button>
+        </div>
+      `;
+      // 綁定移除按鈕
+      const removeBtn = contentArea.querySelector('.btn-remove-slot');
+      removeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.sound.playClick();
+        this.removeCardFromSlot(slotId);
       });
-
-      let grandTitle = '';
-      if (grandTotal >= 270) grandTitle = '🌟 羅浮宮特聘 ． 傳說級名畫變裝大師 🌟';
-      else if (grandTotal >= 210) grandTitle = '✨ 靈活運用生活道具 ． 天才藝術策展人 ✨';
-      else grandTitle = '🎨 潛力無窮 ． 觀察神探變裝助手 🎨';
-
-      ctx.fillStyle = '#FCD34D';
-      ctx.font = 'bold 28px ' + getComputedStyle(document.body).fontFamily;
-      ctx.fillText(`總得分：${grandTotal}／300 分 ｜ 榮譽稱號：${grandTitle}`, W / 2, H - 120);
-
-      const today = new Date();
-      const dateStr = `${today.getFullYear()} 年 ${today.getMonth() + 1} 月 ${today.getDate()} 日`;
-      ctx.fillStyle = '#A89587';
-      ctx.font = '18px ' + getComputedStyle(document.body).fontFamily;
-      ctx.fillText(`名畫變裝工作室 榮譽認證 ｜ 頒發日期：${dateStr}`, W / 2, H - 85);
-
-      try {
-        const link = document.createElement('a');
-        link.download = `名畫變裝大師-我的作品展_${today.getFullYear()}${today.getMonth() + 1}${today.getDate()}.png`;
-        link.href = canvas.toDataURL('image/png');
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      } catch (err) {
-        console.error('匯出海報失敗：', err);
-        alert('海報圖卡已產生，但瀏覽器阻擋了自動下載，請長按或右鍵存檔。');
-      }
+    } else {
+      slotCardEl.classList.remove('has-card');
+      contentArea.innerHTML = `<span class="slot-empty-placeholder">點擊或拖入活動</span>`;
     }
   }
 
-  window.addEventListener('DOMContentLoaded', () => {
-    window.gameInstance = new MasterpieceMakeoverGame();
-  });
+  updateScheduleStatus() {
+    const level = LEVELS[this.currentLevelIndex];
+    if (!level || !level.slots) return;
 
-})();
+    const totalSlots = level.slots.length;
+    const filledCount = Object.keys(this.playerSchedule).length;
+    const remainingCount = totalSlots - filledCount;
+
+    this.scheduleFillTag.textContent = `已安排 ${filledCount} / ${totalSlots}`;
+    this.trayCountTag.textContent = `${remainingCount} / ${totalSlots} 張`;
+
+    // 精神值模擬與提示
+    const percent = Math.round((filledCount / totalSlots) * 50) + 50;
+    this.updateEnergyBar(percent);
+
+    if (filledCount === totalSlots) {
+      this.btnCheckSchedule.disabled = false;
+      this.scheduleCheckHint.textContent = '🎉 6 張活動已全部安排完成，可以檢查囉！';
+    } else {
+      this.btnCheckSchedule.disabled = true;
+      this.scheduleCheckHint.textContent = `還剩 ${remainingCount} 張活動卡片未安排喔！`;
+    }
+  }
+
+  updateEnergyBar(val) {
+    const clamped = Math.max(0, Math.min(100, val));
+    this.hudEnergyBar.style.width = `${clamped}%`;
+    this.hudEnergyVal.textContent = `${clamped}%`;
+    if (clamped >= 80) {
+      this.hudEnergyIcon.textContent = '🌟';
+    } else if (clamped >= 50) {
+      this.hudEnergyIcon.textContent = '⭐';
+    } else {
+      this.hudEnergyIcon.textContent = '💤';
+    }
+  }
+
+  // ===========================================================================
+  // 五、 評分系統與過關邏輯（核心分離原則：分數絕不限制過關）
+  // ===========================================================================
+
+  // 1. 基本操作任務是否已完成
+  isTaskComplete() {
+    if (this.currentLevelIndex === 0 || this.currentLevelIndex === 1) {
+      const level = LEVELS[this.currentLevelIndex];
+      return Object.keys(this.playerSchedule).length === level.slots.length;
+    } else if (this.currentLevelIndex === 2) {
+      // 第三關：有選取就寢時間即可完成
+      return Boolean(this.selectedBedtime);
+    }
+    return false;
+  }
+
+  // 2. 第一、二關評分計算（0～100 分）
+  calculateScheduleScore() {
+    let score = 0;
+    const levelId = LEVELS[this.currentLevelIndex].id;
+
+    if (levelId === 1) {
+      // 第一關：晨型小狗 Inu（07:00 起床, 07:30 早餐, 08:00 上學, 16:00 運動, 19:00 讀書, 21:30 睡覺）
+      const s0700 = this.playerSchedule['slot_0700']?.id;
+      const s0730 = this.playerSchedule['slot_0730']?.id;
+      const s0800 = this.playerSchedule['slot_0800']?.id;
+      const s1600 = this.playerSchedule['slot_1600']?.id;
+      const s1900 = this.playerSchedule['slot_1900']?.id;
+      const s2130 = this.playerSchedule['slot_2130']?.id;
+
+      if (s0700 === 'card_wake') score += 20;
+      if (s0730 === 'card_breakfast') score += 15;
+      if (s0800 === 'card_school') score += 20;
+      if (s1600 === 'card_sports') score += 15;
+      if (s1900 === 'card_study') score += 15;
+      if (s2130 === 'card_sleep') score += 15;
+
+      // 順序邏輯補償：若起床在早餐前且早餐在上學前
+      const allSlots = ['slot_0700', 'slot_0730', 'slot_0800', 'slot_1600', 'slot_1900', 'slot_2130'];
+      const wakeIdx = allSlots.findIndex(s => this.playerSchedule[s]?.id === 'card_wake');
+      const bfIdx = allSlots.findIndex(s => this.playerSchedule[s]?.id === 'card_breakfast');
+      const schoolIdx = allSlots.findIndex(s => this.playerSchedule[s]?.id === 'card_school');
+
+      if (wakeIdx !== -1 && bfIdx !== -1 && wakeIdx < bfIdx && score < 40) score += 10;
+      if (bfIdx !== -1 && schoolIdx !== -1 && bfIdx < schoolIdx && score < 60) score += 10;
+
+    } else if (levelId === 2) {
+      // 第二關：夜型小貓 Neko（09:00 起床, 10:00 早餐, 14:00 自由活動, 17:00 運動, 20:00 閱讀, 23:00 睡覺）
+      const s0900 = this.playerSchedule['slot_0900']?.id;
+      const s1000 = this.playerSchedule['slot_1000']?.id;
+      const s1400 = this.playerSchedule['slot_1400']?.id;
+      const s1700 = this.playerSchedule['slot_1700']?.id;
+      const s2000 = this.playerSchedule['slot_2000']?.id;
+      const s2300 = this.playerSchedule['slot_2300']?.id;
+
+      if (s0900 === 'card_wake') score += 20;
+      if (s1000 === 'card_breakfast') score += 15;
+      if (s1400 === 'card_freetime') score += 15;
+      if (s1700 === 'card_sports') score += 15;
+      if (s2000 === 'card_reading') score += 20; // 夜型人在夜晚專注閱讀
+      if (s2300 === 'card_sleep') score += 15;
+
+      // 邏輯順序加分
+      const allSlots = ['slot_0900', 'slot_1000', 'slot_1400', 'slot_1700', 'slot_2000', 'slot_2300'];
+      const wakeIdx = allSlots.findIndex(s => this.playerSchedule[s]?.id === 'card_wake');
+      const bfIdx = allSlots.findIndex(s => this.playerSchedule[s]?.id === 'card_breakfast');
+      if (wakeIdx !== -1 && bfIdx !== -1 && wakeIdx < bfIdx && score < 35) score += 10;
+    }
+
+    return Math.max(0, Math.min(100, score));
+  }
+
+  // 3. 取得作息回饋與改善建議
+  getScheduleFeedback(score) {
+    const levelId = LEVELS[this.currentLevelIndex].id;
+    let positive = '';
+    let advice = '';
+
+    if (levelId === 1) {
+      if (score >= 90) {
+        positive = '太棒了！你的安排完美符合晨型小狗 Inu 的生活節奏，早起早睡精神百倍！';
+        advice = '維持規律的晨間陽光與準時就寢，能讓白天的學習專注力達到最高！';
+      } else if (score >= 70) {
+        positive = '很棒的作息規劃！Inu 一整天都能兼顧運動與學習。';
+        advice = '若能把「睡覺」安排在晚上 21:30，早上起床會更神清氣爽喔！';
+      } else if (score >= 50) {
+        positive = '不錯的嘗試！你已經排好了完整的一天活動。';
+        advice = '如果晚上能早一點休息，早晨起床精神會更好喔！';
+      } else {
+        positive = '你順利完成了 Inu 一天的時間表安排！';
+        advice = '換個安排方式，例如讓「起床」在早餐前面、「睡覺」在夜間，會有新的發現喔！';
+      }
+    } else if (levelId === 2) {
+      if (score >= 90) {
+        positive = '太厲害了！你完全掌握了夜貓子 Neko 的假日節奏，兼顧了晚間專注與充足睡眠！';
+        advice = '夜型人在傍晚和夜晚思緒清晰，安排閱讀和思考能發揮最好的學習效益！';
+      } else if (score >= 70) {
+        positive = '很好的假日安排！充分展現了不同作息偏好的特色。';
+        advice = '假日雖然可以稍微晚起，但仍要記得保留運動與放鬆時光喔！';
+      } else if (score >= 50) {
+        positive = '完成了一份有趣的假日生活表，Neko 迫不及待想體驗了！';
+        advice = '夜型人不代表可以無限制熬夜，睡滿 9～10 小時對健康才是最重要的基石！';
+      } else {
+        positive = '你探索了夜型小貓的假日時間規劃！';
+        advice = '試著把閱讀安排在傍晚或晚上、把睡覺安排在夜間，看看精神值的變化吧！';
+      }
+    }
+
+    return { positive, advice };
+  }
+
+  // 4. 第一、二關點擊「檢查時間表」處理
+  handleEvaluateSchedule() {
+    const score = this.calculateScheduleScore();
+    this.levelScores[this.currentLevelIndex] = score;
+
+    const { positive, advice } = this.getScheduleFeedback(score);
+    const level = LEVELS[this.currentLevelIndex];
+
+    this.showResultModal({
+      title: `${level.name.replace(/：.*$/, '')}任務完成！`,
+      subtitle: `${level.charName} 已經有一份新的生活時間表了！`,
+      avatar: level.avatar,
+      score: score,
+      positive: positive,
+      advice: advice,
+      nextBtnText: '繼續下一關 ➔'
+    });
+  }
+
+  // -------------------------------------------------------------
+  // 第三關：健康作息大挑戰邏輯（睡前環境與就寢時數）
+  // -------------------------------------------------------------
+  setupBedroomLevel(level) {
+    this.hudSleepChip.style.display = 'inline-flex';
+    this.updateLevel3Calculation();
+    this.updateLevel3EnvDisplay();
+  }
+
+  resetLevel3() {
+    this.bedroomState = {
+      phone: 'active',
+      lamp: 'bright',
+      book: 'closed'
+    };
+    this.selectedBedtime = '21:00';
+    this.selectedSleepHours = 10.0;
+    const bedtimeBtns = this.bedtimeOptions.querySelectorAll('.btn-bedtime-choice');
+    bedtimeBtns.forEach(b => {
+      b.classList.toggle('active', b.getAttribute('data-time') === '21:00');
+    });
+    this.updateLevel3Calculation();
+    this.updateLevel3EnvDisplay();
+  }
+
+  togglePhoneState() {
+    this.sound.playClick();
+    this.bedroomState.phone = this.bedroomState.phone === 'active' ? 'off' : 'active';
+    this.updateLevel3EnvDisplay();
+  }
+
+  toggleLampState() {
+    this.sound.playClick();
+    this.bedroomState.lamp = this.bedroomState.lamp === 'bright' ? 'soft' : 'bright';
+    this.updateLevel3EnvDisplay();
+  }
+
+  toggleBookState() {
+    this.sound.playClick();
+    this.bedroomState.book = this.bedroomState.book === 'closed' ? 'reading' : 'closed';
+    this.updateLevel3EnvDisplay();
+  }
+
+  updateLevel3EnvDisplay() {
+    // 1. 手機
+    const isPhoneOff = this.bedroomState.phone === 'off';
+    this.imgPhone.src = isPhoneOff ? 'assets/props/phone_off.svg' : 'assets/props/phone_active.svg';
+    this.badgePhone.textContent = isPhoneOff ? '已收起' : '使用中';
+    this.badgePhone.className = `item-state-badge ${isPhoneOff ? 'badge-done' : 'badge-active'}`;
+    this.btnTogglePhone.textContent = isPhoneOff ? '重新拿出' : '收起手機';
+    this.itemPhone.classList.toggle('is-optimized', isPhoneOff);
+    this.feedbackPhone.textContent = isPhoneOff
+      ? '睡前減少使用手機，可以減少光線與內容刺激。'
+      : '睡前使用手機，螢幕藍光與訊息容易刺激大腦保持清醒。';
+
+    // 2. 檯燈
+    const isLampSoft = this.bedroomState.lamp === 'soft';
+    this.imgLamp.src = isLampSoft ? 'assets/props/lamp_soft.svg' : 'assets/props/lamp_bright.svg';
+    this.badgeLamp.textContent = isLampSoft ? '柔和光線' : '燈光明亮';
+    this.badgeLamp.className = `item-state-badge ${isLampSoft ? 'badge-done' : 'badge-warn'}`;
+    this.btnToggleLamp.textContent = isLampSoft ? '調為明亮' : '調為柔和';
+    this.itemLamp.classList.toggle('is-optimized', isLampSoft);
+    this.feedbackLamp.textContent = isLampSoft
+      ? '降低睡前光線亮度，有助於營造放鬆的環境。'
+      : '太亮的光線會抑制褪黑激素分泌，影響睡意產生。';
+
+    // 3. 書本
+    const isBookReading = this.bedroomState.book === 'reading';
+    this.imgBook.src = isBookReading ? 'assets/props/book_open.svg' : 'assets/props/book_closed.svg';
+    this.badgeBook.textContent = isBookReading ? '安靜閱讀' : '未翻開';
+    this.badgeBook.className = `item-state-badge ${isBookReading ? 'badge-done' : 'badge-idle'}`;
+    this.btnToggleBook.textContent = isBookReading ? '放回桌上' : '安靜閱讀';
+    this.itemBook.classList.toggle('is-optimized', isBookReading);
+    this.feedbackBook.textContent = isBookReading
+      ? '睡前安排安靜、放鬆的活動，可以幫助建立規律的睡眠習慣。'
+      : '睡前安排安靜閱讀或聆聽輕柔音樂，有助於情緒放鬆。';
+
+    // 計數
+    let completedCount = 0;
+    if (isPhoneOff) completedCount++;
+    if (isLampSoft) completedCount++;
+    if (isBookReading) completedCount++;
+    this.envCompletedCounter.textContent = `已調整 ${completedCount} / 3 項`;
+  }
+
+  updateLevel3Calculation() {
+    this.displayBedtime.textContent = this.selectedBedtime;
+    this.displaySleepHours.textContent = `${this.selectedSleepHours.toFixed(1)} 小時`;
+    this.hudSleepHours.textContent = `${this.selectedSleepHours.toFixed(1)} 小時`;
+
+    const isAdequate = this.selectedSleepHours >= 9.0;
+    if (isAdequate) {
+      this.guidelineStatusText.textContent = '🎉 很棒！你安排了符合年齡建議的睡眠時間！';
+      this.guidelineStatusText.className = 'guideline-status-text';
+      this.hudSleepStatus.textContent = '充足';
+      this.hudSleepStatus.className = 'stat-status-badge status-good';
+      this.updateEnergyBar(95);
+    } else {
+      this.guidelineStatusText.textContent = '💡 睡眠時間有點短喔！可以試著提早休息。';
+      this.guidelineStatusText.className = 'guideline-status-text warn';
+      this.hudSleepStatus.textContent = '偏短';
+      this.hudSleepStatus.className = 'stat-status-badge status-warn';
+      this.updateEnergyBar(60);
+    }
+  }
+
+  calculateLevel3Score() {
+    let score = 0;
+
+    // 任務一：環境優化（各 15 分，共 45 分）
+    if (this.bedroomState.phone === 'off') score += 15;
+    if (this.bedroomState.lamp === 'soft') score += 15;
+    if (this.bedroomState.book === 'reading') score += 15;
+
+    // 任務二：睡眠時數（符合 9～12 小時得 55 分，稍短也有不同客觀分數）
+    if (this.selectedSleepHours >= 9.5) {
+      score += 55;
+    } else if (this.selectedSleepHours >= 9.0) {
+      score += 45;
+    } else if (this.selectedSleepHours >= 8.5) {
+      score += 35;
+    } else {
+      score += 25;
+    }
+
+    return Math.max(0, Math.min(100, score));
+  }
+
+  handleEvaluateLevel3() {
+    const score = this.calculateLevel3Score();
+    this.levelScores[2] = score;
+
+    let envDone = 0;
+    if (this.bedroomState.phone === 'off') envDone++;
+    if (this.bedroomState.lamp === 'soft') envDone++;
+    if (this.bedroomState.book === 'reading') envDone++;
+
+    let posText = `睡前環境完成了 ${envDone} / 3 項調整，睡眠安排了 ${this.selectedSleepHours.toFixed(1)} 小時！`;
+    let advText = '';
+    if (this.selectedSleepHours < 9.0) {
+      advText = '睡眠時間偏短，面對上學日可試著提早就寢，以維持整天的專注與活力！';
+    } else {
+      advText = '充分運用了「收起手機、柔和燈光與放鬆閱讀」，幫助夜型小貓逐步適應上學日！';
+    }
+
+    this.showResultModal({
+      title: '第三關任務完成！',
+      subtitle: 'Neko 與 Usagi 共同打造了優質的睡眠準備計畫！',
+      avatar: 'assets/characters/trio.svg',
+      score: score,
+      positive: posText,
+      advice: advText,
+      nextBtnText: '領取通關徽章 🏆'
+    });
+  }
+
+  // -------------------------------------------------------------
+  // 結果展示彈窗與跑分動畫（絕不受分數限制）
+  // -------------------------------------------------------------
+  showResultModal(data) {
+    this.resultCharAvatar.src = data.avatar;
+    this.resultTitle.textContent = data.title;
+    this.resultSubtitle.textContent = data.subtitle;
+    this.resultFeedbackPos.textContent = data.positive;
+    this.resultFeedbackAdv.textContent = data.advice;
+    this.btnResultNextText.textContent = data.nextBtnText;
+
+    // 分數等級標籤
+    let tierText = '';
+    if (data.score >= 90) {
+      tierText = '時間規劃高手！';
+    } else if (data.score >= 70) {
+      tierText = '很棒的作息安排！';
+    } else if (data.score >= 50) {
+      tierText = '繼續探索自己的生活節奏！';
+    } else {
+      tierText = '換個安排方式，也許會有新的發現！';
+    }
+    this.resultTierBadge.textContent = tierText;
+
+    // 顯示彈窗
+    this.modalResult.classList.add('show');
+
+    // 數字跑分滾動動畫
+    this.animateScoreCounter(0, data.score, 800);
+  }
+
+  animateScoreCounter(start, end, duration) {
+    const startTime = performance.now();
+    const update = (now) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(1, elapsed / duration);
+      // easeOutCubic
+      const current = Math.floor(start + (end - start) * (1 - Math.pow(1 - progress, 3)));
+      this.resultScoreVal.textContent = current;
+      if (progress < 1) {
+        requestAnimationFrame(update);
+      } else {
+        this.resultScoreVal.textContent = end;
+        this.sound.playSuccess();
+      }
+    };
+    requestAnimationFrame(update);
+  }
+
+  closeModalResult() {
+    this.modalResult.classList.remove('show');
+  }
+
+  // -------------------------------------------------------------
+  // 切換關卡（無條件自由過關）
+  // -------------------------------------------------------------
+  goToNextLevel() {
+    if (this.currentLevelIndex < 2) {
+      this.startLevel(this.currentLevelIndex + 1);
+    } else {
+      // 完成全部三關，進入最終榮譽通關畫面
+      this.showVictoryScreen();
+    }
+  }
+
+  // -------------------------------------------------------------
+  // 最終通關畫面（Victory Screen）
+  // -------------------------------------------------------------
+  showVictoryScreen() {
+    this.sound.playFanfare();
+    this.showScreen(this.screenVictory);
+
+    // 填入三關各別分數
+    this.summaryScore1.textContent = `${this.levelScores[0]} 分`;
+    this.summaryScore2.textContent = `${this.levelScores[1]} 分`;
+    this.summaryScore3.textContent = `${this.levelScores[2]} 分`;
+
+    // 啟動彩帶紙花效果
+    this.launchConfetti();
+  }
+
+  launchConfetti() {
+    const canvas = this.confettiCanvas;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    canvas.width = canvas.parentElement.clientWidth || 800;
+    canvas.height = canvas.parentElement.clientHeight || 600;
+
+    const pieces = [];
+    const colors = ['#FF6B6B', '#FFD93D', '#6BCB77', '#4D96FF', '#9D4EDD', '#FFA07A'];
+
+    for (let i = 0; i < 90; i++) {
+      pieces.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * -canvas.height,
+        size: Math.random() * 8 + 4,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        velY: Math.random() * 3 + 2,
+        velX: Math.random() * 2 - 1,
+        rot: Math.random() * 360,
+        rotSpeed: Math.random() * 8 - 4
+      });
+    }
+
+    let frames = 0;
+    const render = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      pieces.forEach(p => {
+        p.y += p.velY;
+        p.x += p.velX;
+        p.rot += p.rotSpeed;
+
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate((p.rot * Math.PI) / 180);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 1.4);
+        ctx.restore();
+
+        if (p.y > canvas.height) {
+          p.y = -10;
+          p.x = Math.random() * canvas.width;
+        }
+      });
+
+      frames++;
+      if (frames < 360) {
+        requestAnimationFrame(render);
+      } else {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+    };
+    requestAnimationFrame(render);
+  }
+}
+
+// =============================================================================
+// 六、 啟動遊戲實例
+// =============================================================================
+window.addEventListener('DOMContentLoaded', () => {
+  window.game = new ChronotypeAdventure();
+});

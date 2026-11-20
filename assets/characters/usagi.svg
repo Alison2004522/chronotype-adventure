@@ -1,56 +1,65 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 220" width="100%" height="100%">
   <defs>
-    <radialGradient id="usagiFur" cx="50%" cy="40%" r="60%">
+    <radialGradient id="usagiWhite" cx="50%" cy="35%" r="65%">
       <stop offset="0%" stop-color="#FFFFFF"/>
-      <stop offset="80%" stop-color="#F5F5F7"/>
-      <stop offset="100%" stop-color="#E0E0E6"/>
+      <stop offset="75%" stop-color="#FFF9EF"/>
+      <stop offset="100%" stop-color="#E2E8F0"/>
     </radialGradient>
     <filter id="usagiShadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#E91E63" flood-opacity="0.15"/>
+      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#475569" flood-opacity="0.2"/>
     </filter>
   </defs>
 
-  <ellipse cx="100" cy="208" rx="52" ry="9" fill="#E1BEE7" opacity="0.5"/>
+  <ellipse cx="100" cy="208" rx="52" ry="10" fill="#E2E8F0" opacity="0.7"/>
 
   <g filter="url(#usagiShadow)">
-    <path d="M 65,70 C 45,20 55,-5 72,5 C 88,15 88,45 82,75 Z" fill="#FFF" stroke="#D81B60" stroke-width="3.5"/>
-    <path d="M 68,62 C 55,25 62,8 72,16 C 80,24 80,45 76,66 Z" fill="#F8BBD0"/>
-    <path d="M 135,70 C 150,25 140,-5 125,5 C 112,15 115,45 118,75 Z" fill="#FFF" stroke="#D81B60" stroke-width="3.5"/>
-    <path d="M 132,62 C 142,28 135,8 126,16 C 118,24 120,45 122,66 Z" fill="#F8BBD0"/>
+    <!-- Bunny Tail -->
+    <circle cx="145" cy="165" r="14" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="3"/>
 
-    <ellipse cx="100" cy="158" rx="42" ry="38" fill="url(#usagiFur)" stroke="#D81B60" stroke-width="3.5"/>
-    <path d="M 75,140 Q 100,150 125,140 L 128,175 Q 100,185 72,175 Z" fill="#F48FB1" stroke="#C2185B" stroke-width="2"/>
-    <circle cx="100" cy="155" r="3" fill="#FFF"/>
-    <circle cx="100" cy="168" r="3" fill="#FFF"/>
+    <!-- Body -->
+    <ellipse cx="100" cy="155" rx="42" ry="38" fill="url(#usagiWhite)" stroke="#94A3B8" stroke-width="3.5"/>
+    <ellipse cx="100" cy="158" rx="24" ry="22" fill="#FCE7F3" opacity="0.6"/>
 
-    <circle cx="100" cy="96" r="50" fill="url(#usagiFur)" stroke="#D81B60" stroke-width="3.5"/>
+    <!-- Left Long Ear -->
+    <path d="M 68,60 C 50,5 65,-5 82,15 C 92,30 85,55 80,68 Z" fill="url(#usagiWhite)" stroke="#94A3B8" stroke-width="3.5"/>
+    <path d="M 70,52 C 58,15 68,6 78,22 C 84,33 80,50 76,58 Z" fill="#F472B6" opacity="0.75"/>
+    <!-- Right Long Ear (cute bent tip) -->
+    <path d="M 132,60 C 150,5 135,-5 118,15 C 108,30 115,55 120,68 Z" fill="url(#usagiWhite)" stroke="#94A3B8" stroke-width="3.5"/>
+    <path d="M 130,52 C 142,15 132,6 122,22 C 116,33 120,50 124,58 Z" fill="#F472B6" opacity="0.75"/>
 
-    <circle cx="80" cy="94" r="14" fill="none" stroke="#D81B60" stroke-width="3"/>
-    <circle cx="120" cy="94" r="14" fill="none" stroke="#D81B60" stroke-width="3"/>
-    <line x1="94" y1="94" x2="106" y2="94" stroke="#D81B60" stroke-width="3"/>
+    <!-- Head -->
+    <circle cx="100" cy="95" r="50" fill="url(#usagiWhite)" stroke="#94A3B8" stroke-width="3.5"/>
 
-    <circle cx="68" cy="108" r="7" fill="#FF80AB" opacity="0.6"/>
-    <circle cx="132" cy="108" r="7" fill="#FF80AB" opacity="0.6"/>
+    <!-- Cheeks blush -->
+    <ellipse cx="68" cy="106" rx="9" ry="5" fill="#F472B6" opacity="0.6"/>
+    <ellipse cx="132" cy="106" rx="9" ry="5" fill="#F472B6" opacity="0.6"/>
 
-    <path d="M 74,94 Q 80,87 86,94" fill="none" stroke="#880E4F" stroke-width="3.5" stroke-linecap="round"/>
-    <path d="M 114,94 Q 120,87 126,94" fill="none" stroke="#880E4F" stroke-width="3.5" stroke-linecap="round"/>
+    <!-- Big Ruby/Sparkle Eyes -->
+    <ellipse cx="80" cy="90" rx="7" ry="9" fill="#DB2777"/>
+    <ellipse cx="80" cy="90" rx="4" ry="7" fill="#831843"/>
+    <circle cx="78" cy="86" r="2.5" fill="#FFF"/>
+    <circle cx="82" cy="93" r="1.2" fill="#FFF"/>
 
-    <ellipse cx="100" cy="103" rx="4" ry="3" fill="#FF4081"/>
+    <ellipse cx="120" cy="90" rx="7" ry="9" fill="#DB2777"/>
+    <ellipse cx="120" cy="90" rx="4" ry="7" fill="#831843"/>
+    <circle cx="118" cy="86" r="2.5" fill="#FFF"/>
+    <circle cx="122" cy="93" r="1.2" fill="#FFF"/>
 
-    <path d="M 95,106 Q 100,109 100,106 Q 100,109 105,106" fill="none" stroke="#880E4F" stroke-width="2.5" stroke-linecap="round"/>
+    <!-- Nose & Mouth -->
+    <ellipse cx="100" cy="98" rx="4" ry="3" fill="#F472B6"/>
+    <path d="M 96,102 Q 100,105 100,102 Q 100,105 104,102" fill="none" stroke="#475569" stroke-width="2.5" stroke-linecap="round"/>
 
-    <g transform="translate(122, 135) rotate(15)">
-      <rect x="0" y="0" width="34" height="44" rx="4" fill="#FFE082" stroke="#FFA000" stroke-width="2"/>
-      <rect x="10" y="-4" width="14" height="8" rx="2" fill="#78909C"/>
-      <line x1="6" y1="12" x2="28" y2="12" stroke="#FFA000" stroke-width="2"/>
-      <line x1="6" y1="20" x2="24" y2="20" stroke="#FFA000" stroke-width="2"/>
-      <line x1="6" y1="28" x2="26" y2="28" stroke="#FFA000" stroke-width="2"/>
-      <circle cx="24" cy="34" r="5" fill="#FFF" stroke="#E91E63" stroke-width="1.5"/>
-      <line x1="24" y1="34" x2="24" y2="31" stroke="#E91E63" stroke-width="1.5"/>
-      <line x1="24" y1="34" x2="26" y2="34" stroke="#E91E63" stroke-width="1.5"/>
+    <!-- Clock Pin Badge on chest -->
+    <g transform="translate(100, 142)">
+      <circle cx="0" cy="0" r="11" fill="#FEF08A" stroke="#EAB308" stroke-width="2"/>
+      <circle cx="0" cy="0" r="8" fill="#FEF9C3"/>
+      <line x1="0" y1="0" x2="0" y2="-5" stroke="#475569" stroke-width="1.8" stroke-linecap="round"/>
+      <line x1="0" y1="0" x2="3.5" y2="0" stroke="#E11D48" stroke-width="1.5" stroke-linecap="round"/>
+      <circle cx="0" cy="0" r="1.5" fill="#E11D48"/>
     </g>
 
-    <circle cx="82" cy="170" r="9" fill="#FFF" stroke="#D81B60" stroke-width="3"/>
-    <circle cx="118" cy="170" r="9" fill="#FFF" stroke="#D81B60" stroke-width="3"/>
+    <!-- Paws -->
+    <ellipse cx="82" cy="180" rx="10" ry="8" fill="#FFF" stroke="#94A3B8" stroke-width="3"/>
+    <ellipse cx="118" cy="180" rx="10" ry="8" fill="#FFF" stroke="#94A3B8" stroke-width="3"/>
   </g>
 </svg>

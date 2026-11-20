@@ -3,524 +3,462 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>《名畫變裝大師》（Masterpiece Makeover）- 互動式藝術教育遊戲</title>
-  <meta name="description" content="運用生活常見用品，重新模仿世界名畫人物與構圖的藝術教育互動遊戲。">
-  <link rel="icon" type="image/svg+xml" href="assets/props/palette.svg">
+  <title>《生理時鐘大冒險》（Chronotype Adventure）</title>
+  <meta name="description" content="根據《晨型人 vs. 夜型人》設計的 2D 互動式時間規劃教育遊戲，探索生理時鐘、健康睡眠與生活節奏。">
+  <link rel="icon" type="image/svg+xml" href="assets/icons/clock.svg">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <!-- 主遊戲外框（16:9 比例最適化，自適應縮放） -->
+  <!-- 遊戲主容器（橫向 16:9 自適應設計） -->
   <div id="game-container">
 
-    <!-- 1. 遊戲開始畫面 -->
-    <section id="start-screen" class="view-screen active">
-      <div class="start-card">
-        <div class="studio-badge">🎨 名畫變裝工作室 ． 藝術挑戰</div>
-        <h1 class="game-title">《名畫變裝大師》</h1>
-        <div class="game-subtitle">Masterpiece Makeover ． 生活中的名畫模仿大挑戰</div>
-
-        <div class="start-banner-visual">
-          <div class="studio-scene-deco">
-            <div class="deco-easel">🖼️</div>
-            <div class="deco-hero-chibi">
-              <img src="assets/characters/chibi_artist_neutral.svg" alt="Q 版小畫家助手" class="start-chibi-img">
-            </div>
-            <div class="deco-props">
-              <span class="bubble-prop bp-1"><img src="assets/props/blue_towel.svg" alt="藍色毛巾"></span>
-              <span class="bubble-prop bp-2"><img src="assets/props/pearl_earring.svg" alt="珍珠耳環"></span>
-              <span class="bubble-prop bp-3"><img src="assets/props/milk_jug.svg" alt="牛奶壺"></span>
-              <span class="bubble-prop bp-4"><img src="assets/props/grey_hat.svg" alt="灰色帽子"></span>
-            </div>
-          </div>
+    <!-- 頂部資訊 HUD 導航列 -->
+    <header id="top-hud">
+      <div class="hud-left">
+        <div class="hud-chip" id="hud-level-chip">
+          <span class="chip-icon">🧭</span>
+          <span id="hud-level-tag">關卡 1／3</span>
+          <span id="hud-level-title" class="hud-title-text">晨光活力計畫</span>
         </div>
-
-        <div class="start-story-box">
-          <p class="story-lead">世界名畫變裝挑戰開始啦！</p>
-          <p>沒有華麗服裝，也沒有昂貴道具？<br>
-          沒關係！只要<strong>仔細觀察、發揮創意</strong>，家裡的普通物品也能變成名畫道具！</p>
-          <p class="story-highlight">快來挑戰三幅世界名畫，成為最厲害的變裝大師吧！</p>
+        <div class="hud-chip character-chip" id="hud-char-chip">
+          <img id="hud-char-avatar" src="assets/characters/inu.svg" alt="角色頭像" class="mini-avatar">
+          <span id="hud-char-name">Inu（晨型小狗）</span>
         </div>
+      </div>
 
-        <div class="level-preview-list">
-          <div class="preview-item">
-            <span class="preview-num">1</span>
-            <span class="preview-name">《戴珍珠耳環的少女》</span>
+      <div class="hud-center">
+        <!-- 精神能量即時模擬膠囊 -->
+        <div class="hud-chip stat-chip" id="hud-energy-chip" title="作息模擬精神值（遊戲示意，非醫學測量）">
+          <span class="stat-icon" id="hud-energy-icon">⭐</span>
+          <span class="stat-label">精神值：</span>
+          <div class="energy-mini-track">
+            <div id="hud-energy-bar" class="energy-mini-fill" style="width: 50%;"></div>
           </div>
-          <div class="preview-arrow">➔</div>
-          <div class="preview-item">
-            <span class="preview-num">2</span>
-            <span class="preview-name">《倒牛奶的女僕》</span>
-          </div>
-          <div class="preview-arrow">➔</div>
-          <div class="preview-item">
-            <span class="preview-num">3</span>
-            <span class="preview-name">《戴灰氈帽的自畫像》</span>
-          </div>
+          <span id="hud-energy-val" class="stat-value">50%</span>
         </div>
+        <!-- 睡眠時數即時統計膠囊（第 3 關或必要時動態更新） -->
+        <div class="hud-chip stat-chip" id="hud-sleep-chip" title="每日建議睡眠時數">
+          <span class="stat-icon">💤</span>
+          <span class="stat-label">睡眠：</span>
+          <span id="hud-sleep-hours" class="stat-value">9.5 小時</span>
+          <span id="hud-sleep-status" class="stat-status-badge status-good">充足</span>
+        </div>
+      </div>
 
-        <button id="btn-start-game" class="btn-primary btn-large">
-          <span>🎨 開始變裝！</span>
+      <div class="hud-right">
+        <button id="btn-sound-toggle" class="hud-icon-btn" title="開關音效" aria-label="開關音效">
+          <span id="sound-icon">🔊</span>
+        </button>
+        <button id="btn-reset-level" class="hud-icon-btn reset-btn" title="重新安排此關時間表" aria-label="重新安排此關時間表">
+          <span>🔄</span>
+          <span class="btn-text">重設</span>
         </button>
       </div>
-    </section>
+    </header>
 
-    <!-- 2. 關卡主遊玩畫面 -->
-    <section id="game-screen" class="view-screen">
+    <!-- 浮動提示氣泡（非阻塞提示） -->
+    <div id="toast-toast" class="toast-hidden" role="alert" aria-live="polite">
+      <span class="toast-icon">💡</span>
+      <span id="toast-text">把活動放進適合的時間格吧！</span>
+    </div>
 
-      <!-- 頂部資訊 HUD -->
-      <header id="game-hud">
-        <div class="hud-left">
-          <span class="hud-logo">🎨 《名畫變裝大師》</span>
-          <span id="hud-level-badge" class="level-pill">第 1／3 關</span>
+    <!-- 遊戲主體視窗區 -->
+    <main id="game-main">
+
+      <!-- ============================================== -->
+      <!-- 1. 遊戲開始畫面（Start Screen） -->
+      <!-- ============================================== -->
+      <section id="screen-start" class="game-screen active">
+        <!-- 日夜交錯背景裝飾 -->
+        <div class="start-bg-decor-left">
+          <span class="floating-item sun-deco">☀️</span>
+          <span class="floating-item cloud-deco c-1">☁️</span>
+          <span class="floating-item cloud-deco c-2">🌤️</span>
+          <span class="floating-item town-deco-day">🏡</span>
         </div>
-        <div class="hud-center">
-          <span id="hud-painting-title" class="painting-pill">第一關：神祕的珍珠少女 ．《戴珍珠耳環的少女》</span>
+        <div class="start-bg-decor-right">
+          <span class="floating-item moon-deco">🌙</span>
+          <span class="floating-item star-deco s-1">⭐</span>
+          <span class="floating-item star-deco s-2">✨</span>
+          <span class="floating-item star-deco s-3">🌟</span>
+          <span class="floating-item town-deco-night">🏠</span>
         </div>
-        <div class="hud-right">
-          <button id="btn-inspect-painting" class="hud-btn" title="放大觀察名畫細節">
-            <span>🔍 放大觀察</span>
-          </button>
-          <button id="btn-toggle-sound" class="hud-btn sound-btn" title="切換音效">
-            <span id="sound-icon">🔊</span>
-          </button>
-        </div>
-      </header>
 
-      <!-- 操作提示橫幅 -->
-      <div id="instruction-bar">
-        <span class="tip-icon">💡</span>
-        <span id="instruction-text">觀察左邊的名畫，把合適的日常道具拖到右邊角色身上，並調整姿勢與構圖吧！</span>
-      </div>
+        <div class="start-card">
+          <div class="start-badge-tag">⏰ 夢幻生理時鐘王國 ⏰</div>
+          <h1 class="main-game-title">《生理時鐘大冒險》</h1>
+          <div class="game-subtitle">一起探索晨型人與夜型人的生活節奏！</div>
 
-      <!-- 中央雙對照主操作區 -->
-      <main id="workspace">
-
-        <!-- 左側：世界名畫原作區 -->
-        <div class="masterpiece-panel">
-          <div class="panel-header">
-            <span class="panel-tag">🏛️ 世界名畫原作</span>
-            <span id="painting-artist-tag" class="artist-tag">維梅爾 ． 約 1665 年</span>
+          <div class="start-hero-image">
+            <img src="assets/characters/trio.svg" alt="Inu, Usagi, Neko" class="hero-trio-img">
           </div>
 
-          <div class="painting-frame-wrapper">
-            <div class="ornate-gold-frame">
-              <div class="frame-inner">
-                <img id="painting-img" src="assets/paintings/pearl_girl.jpg" alt="世界名畫原作" class="original-painting">
-                <button id="btn-quick-zoom" class="quick-zoom-overlay" title="放大深入觀察">
-                  <span>🔍 點擊放大觀察細節</span>
+          <div class="start-story-box">
+            <p class="story-lead">
+              「太陽升起，有人精神百倍！<br>
+              月亮出現，有人卻才剛充滿活力！<br>
+              每個人的生理時鐘都不太一樣。<br>
+              你能幫助三位好朋友，找到適合自己的生活節奏嗎？」
+            </p>
+            <div class="story-hint-badge">
+              💡 只要完成時間規劃即可通關，不設分數限制，盡情探索不同作息安排！
+            </div>
+          </div>
+
+          <div class="start-actions">
+            <button id="btn-start-game" class="btn-primary-large pulse-btn">
+              <span>🚀 開始冒險！</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================== -->
+      <!-- 2. 第一關與第二關：生活時間安排板（Schedule Board） -->
+      <!-- ============================================== -->
+      <section id="screen-schedule" class="game-screen">
+        <div class="level-scene-container" id="level-scene-wrap">
+
+          <!-- 關卡情境導言卡 -->
+          <div class="level-intro-card">
+            <div class="intro-avatar-box">
+              <img id="level-char-pic" src="assets/characters/inu.svg" alt="角色插畫" class="intro-char-img">
+            </div>
+            <div class="intro-content">
+              <div class="intro-meta">
+                <span class="badge-type" id="level-type-tag">🌅 晨型小狗</span>
+                <span class="intro-title" id="level-quest-title">第一關：晨光活力計畫</span>
+              </div>
+              <p class="intro-story-text" id="level-story-desc">
+                「Inu 是一隻喜歡早起的小狗！可是今天他的生活時間表被打亂了！你能幫他重新安排一天的生活嗎？」
+              </p>
+            </div>
+            <div class="intro-hint-tip">
+              <span>👉 拖曳卡片或點擊卡片後點擊時間格！</span>
+            </div>
+          </div>
+
+          <!-- 主要互動工作區：左側活動卡片庫，右側每日生活時間表 -->
+          <div class="interactive-workspace">
+
+            <!-- 左側：待安排活動卡片托盤 -->
+            <div class="cards-tray-panel">
+              <div class="panel-header">
+                <span class="panel-title-icon">📦</span>
+                <h3 class="panel-title">待安排活動卡片</h3>
+                <span class="tray-counter" id="tray-count-tag">6 / 6 張</span>
+              </div>
+              <p class="tray-subtext">點擊卡片選取，或直接拖曳到時間格中：</p>
+              <div class="cards-pool" id="cards-pool">
+                <!-- 動態注入 6 張活動卡片 -->
+              </div>
+            </div>
+
+            <!-- 右側：每日生活計畫板（6 個時間格） -->
+            <div class="schedule-board-panel">
+              <div class="panel-header">
+                <span class="panel-title-icon">📅</span>
+                <h3 class="panel-title">每日生活計畫板</h3>
+                <span class="schedule-status-tag" id="schedule-fill-tag">已安排 0 / 6</span>
+              </div>
+
+              <!-- 時間格容器（六大時段） -->
+              <div class="time-slots-container" id="time-slots-container">
+                <!-- 動態注入 6 個時間槽位 -->
+              </div>
+
+              <!-- 檢查按鈕與過關導引 -->
+              <div class="schedule-actions-bar">
+                <div class="schedule-msg" id="schedule-check-hint">
+                  請將 6 張活動卡片全部安排進時間格喔！
+                </div>
+                <button id="btn-check-schedule" class="btn-check-main" disabled>
+                  <span>📋 檢查時間表！</span>
                 </button>
               </div>
             </div>
-            <div id="painting-caption" class="painting-placard">
-              <div class="placard-title" id="placard-title">《戴珍珠耳環的少女》</div>
-              <div class="placard-museum" id="placard-museum">荷蘭海牙毛里茨之家博物館館藏</div>
+
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ============================================== -->
+      <!-- 3. 第三關：健康作息大挑戰（臥室環境與就寢時間） -->
+      <!-- ============================================== -->
+      <section id="screen-bedroom" class="game-screen">
+        <div class="bedroom-challenge-wrapper">
+
+          <!-- 關卡導言卡 -->
+          <div class="level-intro-card bedroom-intro">
+            <div class="intro-avatar-box duo-avatars">
+              <img src="assets/characters/neko.svg" alt="Neko" class="intro-char-img duo-neko">
+              <img src="assets/characters/usagi.svg" alt="Usagi" class="intro-char-img duo-usagi">
+            </div>
+            <div class="intro-content">
+              <div class="intro-meta">
+                <span class="badge-type night-badge">🌙 夜型小貓 × 作息小幫手</span>
+                <span class="intro-title">第三關：健康作息大挑戰</span>
+              </div>
+              <p class="intro-story-text">
+                「明天早上 8 點就要上學了！可是 Neko 平常比較晚睡，早上常常起不來。Usagi 決定陪他一起調整作息！你能幫助 Neko 找到比較健康的睡眠習慣嗎？」
+              </p>
+            </div>
+            <div class="intro-hint-tip">
+              <span>✨ 點擊臥室物品調整環境，並選擇合適的就寢時間！</span>
             </div>
           </div>
-        </div>
 
-        <!-- 中間分隔指示標記 -->
-        <div class="comparison-divider">
-          <div class="divider-line"></div>
-          <div class="divider-badge">VS 模仿創作</div>
-          <div class="divider-line"></div>
-        </div>
+          <!-- 第三關雙任務工作區 -->
+          <div class="bedroom-workspace">
 
-        <!-- 右側：玩家模仿工作區 -->
-        <div class="stage-panel">
-          <div class="panel-header">
-            <span class="panel-tag">✨ 你的模仿工作區</span>
-            <span id="equipped-count-tag" class="status-tag">已搭配 0 個道具</span>
-          </div>
+            <!-- 任務一：整理睡前環境（3 個互動生活物件） -->
+            <div class="bedroom-task-card task-env-card">
+              <div class="task-title-bar">
+                <span class="task-step-badge">任務一</span>
+                <h3>🛏️ 整理睡前環境（點擊物件切換調整）</h3>
+                <span class="task-status-counter" id="env-completed-counter">已調整 0 / 3 項</span>
+              </div>
+              <p class="task-instruction">點擊臥室中的物品，改善睡前環境營造放鬆氛圍：</p>
 
-          <!-- 模仿舞台畫布容器 -->
-          <div class="stage-frame-wrapper">
-            <div id="makeover-stage" class="makeover-stage bg-pearl-dark">
+              <!-- 三個可點擊互動的生活物件 -->
+              <div class="bedroom-scene-items">
 
-              <!-- 背景裝飾層（可隨構圖風格動態切換） -->
-              <div id="stage-bg-layer" class="stage-bg-layer"></div>
-
-              <!-- 角色與道具整體群組（受構圖 X 軸與縮放 Scale 控制） -->
-              <div id="character-actor-group" class="character-actor-group">
-
-                <!-- 角色插畫本體層 -->
-                <div id="chibi-character-container" class="chibi-character-container">
-                  <img id="chibi-base-img" src="assets/characters/pose_pearl_target.svg" alt="變裝角色" class="chibi-body-img">
-                </div>
-
-                <!-- 道具裝備槽位層（與角色精準對位） -->
-                <div id="slots-overlay" class="slots-overlay">
-                  <!-- 頭巾／帽子槽位 -->
-                  <div class="prop-slot slot-head" data-slot="head" title="頭頂／帽子槽位">
-                    <div class="slot-indicator">頭部</div>
-                    <div class="slot-content" id="slot-content-head"></div>
+                <!-- 1. 手機 -->
+                <div class="bedroom-item-card" id="item-phone" role="button" tabindex="0" title="點擊切換手機使用狀態">
+                  <div class="item-visual-box">
+                    <img id="img-phone" src="assets/props/phone_active.svg" alt="手機狀態" class="item-prop-img">
                   </div>
-                  <!-- 頭巾後擺／髮飾槽位 -->
-                  <div class="prop-slot slot-hair-accent" data-slot="hair-accent" title="頭飾／披巾槽位">
-                    <div class="slot-indicator">披巾</div>
-                    <div class="slot-content" id="slot-content-hair-accent"></div>
-                  </div>
-                  <!-- 耳環槽位 -->
-                  <div class="prop-slot slot-ear" data-slot="ear" title="耳環槽位">
-                    <div class="slot-indicator">耳飾</div>
-                    <div class="slot-content" id="slot-content-ear"></div>
-                  </div>
-                  <!-- 臉部／眼鏡槽位 -->
-                  <div class="prop-slot slot-face" data-slot="face" title="面部槽位">
-                    <div class="slot-indicator">臉部</div>
-                    <div class="slot-content" id="slot-content-face"></div>
-                  </div>
-                  <!-- 身體／衣服／圍裙槽位 -->
-                  <div class="prop-slot slot-body" data-slot="body" title="服裝／圍裙槽位">
-                    <div class="slot-indicator">衣服</div>
-                    <div class="slot-content" id="slot-content-body"></div>
-                  </div>
-                  <!-- 頸部／圍巾槽位 -->
-                  <div class="prop-slot slot-neck" data-slot="neck" title="圍巾／頸部槽位">
-                    <div class="slot-indicator">頸部</div>
-                    <div class="slot-content" id="slot-content-neck"></div>
-                  </div>
-                  <!-- 手部／手持道具槽位 -->
-                  <div class="prop-slot slot-hand" data-slot="hand" title="手部／水壺槽位">
-                    <div class="slot-indicator">手持</div>
-                    <div class="slot-content" id="slot-content-hand"></div>
-                  </div>
-                </div>
-
-                <!-- 前景道具與桌子層（第 2 關倒牛奶的女僕專用麵包桌） -->
-                <div id="stage-foreground-table" class="stage-foreground-table" style="display: none;">
-                  <div class="rustic-table">
-                    <div class="table-surface"></div>
-                    <div class="prop-slot slot-table" data-slot="table" title="桌上前台槽位">
-                      <div class="slot-indicator">桌上</div>
-                      <div class="slot-content" id="slot-content-table"></div>
+                  <div class="item-info">
+                    <div class="item-name-row">
+                      <span class="item-name">📱 智慧型手機</span>
+                      <span class="item-state-badge badge-active" id="badge-phone">使用中</span>
                     </div>
+                    <div class="item-feedback" id="feedback-phone">
+                      睡前使用手機，螢幕藍光與訊息容易刺激大腦保持清醒。
+                    </div>
+                    <button class="btn-toggle-item" id="btn-toggle-phone">收起手機</button>
+                  </div>
+                </div>
+
+                <!-- 2. 檯燈 -->
+                <div class="bedroom-item-card" id="item-lamp" role="button" tabindex="0" title="點擊切換檯燈光線亮度">
+                  <div class="item-visual-box">
+                    <img id="img-lamp" src="assets/props/lamp_bright.svg" alt="檯燈狀態" class="item-prop-img">
+                  </div>
+                  <div class="item-info">
+                    <div class="item-name-row">
+                      <span class="item-name">💡 臥室檯燈</span>
+                      <span class="item-state-badge badge-warn" id="badge-lamp">燈光明亮</span>
+                    </div>
+                    <div class="item-feedback" id="feedback-lamp">
+                      太亮的光線會抑制褪黑激素分泌，影響睡意產生。
+                    </div>
+                    <button class="btn-toggle-item" id="btn-toggle-lamp">調為柔和</button>
+                  </div>
+                </div>
+
+                <!-- 3. 書本 -->
+                <div class="bedroom-item-card" id="item-book" role="button" tabindex="0" title="點擊安排睡前放鬆活動">
+                  <div class="item-visual-box">
+                    <img id="img-book" src="assets/props/book_closed.svg" alt="書本狀態" class="item-prop-img">
+                  </div>
+                  <div class="item-info">
+                    <div class="item-name-row">
+                      <span class="item-name">📖 睡前讀物</span>
+                      <span class="item-state-badge badge-idle" id="badge-book">未翻開</span>
+                    </div>
+                    <div class="item-feedback" id="feedback-book">
+                      睡前安靜閱讀或聆聽輕柔音樂，有助於情緒放鬆。
+                    </div>
+                    <button class="btn-toggle-item" id="btn-toggle-book">安靜閱讀</button>
                   </div>
                 </div>
 
               </div>
-
-              <!-- 拖曳中的視覺回饋浮層 -->
-              <div id="drag-ghost" class="drag-ghost" style="display: none;"></div>
-
-            </div>
-          </div>
-        </div>
-
-      </main>
-
-      <!-- 底部控制抽屜與操作面板 -->
-      <footer id="bottom-dock">
-
-        <!-- 標籤頁切換按鈕列 -->
-        <div class="dock-tabs">
-          <button class="dock-tab active" data-tab="props">
-            <span>🧺 生活道具欄</span>
-          </button>
-          <button class="dock-tab" data-tab="pose">
-            <span>🧍 姿勢調整</span>
-          </button>
-          <button class="dock-tab" data-tab="composition">
-            <span>📐 構圖調整</span>
-          </button>
-        </div>
-
-        <!-- 標籤頁 1：日常道具欄 -->
-        <div id="tab-props" class="tab-panel active">
-          <div class="shelf-instruction">
-            <span>可拖曳道具至角色身上，或點擊道具卡片再點擊槽位放置。點擊已裝備的道具可卸下！</span>
-          </div>
-          <div id="props-shelf" class="props-shelf-container">
-            <!-- 道具卡片由 JS 動態生成 -->
-          </div>
-        </div>
-
-        <!-- 標籤頁 2：姿勢調整 -->
-        <div id="tab-pose" class="tab-panel">
-          <div class="pose-controls-grid">
-            <div class="control-box">
-              <div class="control-title">👤 人物身體與面向</div>
-              <div id="pose-buttons" class="option-button-group">
-                <!-- 姿勢按鈕由 JS 根據關卡生成 -->
-              </div>
-            </div>
-            <div class="control-box">
-              <div class="control-title">👀 眼神與表情</div>
-              <div id="expression-buttons" class="option-button-group">
-                <!-- 表情按鈕由 JS 根據關卡生成 -->
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 標籤頁 3：構圖調整 -->
-        <div id="tab-composition" class="tab-panel">
-          <div class="comp-controls-grid">
-            <!-- 人物左右位置調整 -->
-            <div class="comp-control-group">
-              <div class="slider-info">
-                <span class="slider-label">↔️ 人物左右位置：</span>
-                <span id="pos-x-val" class="slider-badge">置中 (50%)</span>
-              </div>
-              <div class="slider-row">
-                <span class="range-bound">靠左</span>
-                <input type="range" id="slider-pos-x" min="20" max="80" step="5" value="50" aria-label="人物左右位置">
-                <span class="range-bound">靠右</span>
-              </div>
             </div>
 
-            <!-- 人物大小/鏡頭縮放調整 -->
-            <div class="comp-control-group">
-              <div class="slider-info">
-                <span class="slider-label">🔍 人物大小比例：</span>
-                <span id="scale-val" class="slider-badge">標準 (100%)</span>
+            <!-- 任務二：安排就寢時間 -->
+            <div class="bedroom-task-card task-bedtime-card">
+              <div class="task-title-bar">
+                <span class="task-step-badge">任務二</span>
+                <h3>⏰ 安排就寢時間（固定 07:00 起床）</h3>
               </div>
-              <div class="slider-row">
-                <span class="range-bound">全身遠景</span>
-                <input type="range" id="slider-scale" min="80" max="120" step="5" value="100" aria-label="人物大小比例">
-                <span class="range-bound">特寫半身</span>
+              <p class="task-instruction">
+                Neko 今年 12 歲，明天早上 8 點上學，固定 07:00 起床準備。請為他選擇就寢時間：
+              </p>
+
+              <!-- 六個可選就寢時間按鈕 -->
+              <div class="bedtime-options-grid" id="bedtime-options">
+                <button class="btn-bedtime-choice" data-time="20:30" data-hours="10.5">
+                  <span class="bt-time">20:30</span>
+                  <span class="bt-hours">睡眠 10.5 小時</span>
+                </button>
+                <button class="btn-bedtime-choice active" data-time="21:00" data-hours="10.0">
+                  <span class="bt-time">21:00</span>
+                  <span class="bt-hours">睡眠 10.0 小時</span>
+                </button>
+                <button class="btn-bedtime-choice" data-time="21:30" data-hours="9.5">
+                  <span class="bt-time">21:30</span>
+                  <span class="bt-hours">睡眠 9.5 小時</span>
+                </button>
+                <button class="btn-bedtime-choice" data-time="22:00" data-hours="9.0">
+                  <span class="bt-time">22:00</span>
+                  <span class="bt-hours">睡眠 9.0 小時</span>
+                </button>
+                <button class="btn-bedtime-choice" data-time="22:30" data-hours="8.5">
+                  <span class="bt-time">22:30</span>
+                  <span class="bt-hours">睡眠 8.5 小時</span>
+                </button>
+                <button class="btn-bedtime-choice" data-time="23:00" data-hours="8.0">
+                  <span class="bt-time">23:00</span>
+                  <span class="bt-hours">睡眠 8.0 小時</span>
+                </button>
               </div>
+
+              <!-- 即時睡眠時數與健康提醒資訊卡 -->
+              <div class="sleep-calculation-card">
+                <div class="calc-row">
+                  <span class="calc-label">🛏️ 安排就寢：<strong id="display-bedtime">21:00</strong></span>
+                  <span class="calc-label">⏰ 固定起床：<strong>07:00</strong></span>
+                  <span class="calc-label">💤 預計睡眠：<strong id="display-sleephours" class="text-highlight">10.0 小時</strong></span>
+                </div>
+                <div class="guideline-reminder-box" id="guideline-box">
+                  <div class="guideline-title">📌 6～12 歲兒童健康睡眠建議：每日約 <strong>9～12 小時</strong></div>
+                  <div class="guideline-status-text" id="guideline-status-text">
+                    🎉 很棒！你安排了符合年齡建議的睡眠時間！
+                  </div>
+                  <div class="guideline-subtext">
+                    * 註：時數為排程估算，實際入睡時間可能晚於上床時間。
+                  </div>
+                </div>
+              </div>
+
+              <!-- 完成第三關按鈕 -->
+              <div class="bedroom-actions-bar">
+                <button id="btn-complete-level3" class="btn-check-main">
+                  <span>✨ 完成健康作息計畫！</span>
+                </button>
+              </div>
+
             </div>
 
-            <!-- 背景風格切換 -->
-            <div class="comp-control-group">
-              <div class="slider-info">
-                <span class="slider-label">🖼️ 背景氛圍：</span>
-                <span id="bg-name-val" class="slider-badge">經典名畫背景</span>
-              </div>
-              <div id="bg-buttons" class="option-button-group">
-                <!-- 背景選項按鈕由 JS 依關卡動態生成 -->
-              </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ============================================== -->
+      <!-- 4. 關卡評量與結果彈窗（Level Result Modal） -->
+      <!-- ============================================== -->
+      <div id="modal-result" class="modal-backdrop">
+        <div class="modal-card">
+          <div class="modal-decor-sparkles">✨ ⭐ ✨</div>
+          <div class="modal-char-expression">
+            <img id="result-char-avatar" src="assets/characters/inu.svg" alt="角色表情" class="result-avatar-img">
+          </div>
+
+          <h2 class="modal-title" id="result-title">第一關任務完成！</h2>
+          <div class="modal-subtitle" id="result-subtitle">Inu 已經有一份新的生活時間表了！</div>
+
+          <!-- 分數數字跑動展示 -->
+          <div class="result-score-box">
+            <div class="score-label">作息模擬分數</div>
+            <div class="score-number-row">
+              <span id="result-score-val" class="score-digits">0</span>
+              <span class="score-unit">分</span>
+            </div>
+            <div class="score-tier-badge" id="result-tier-badge">時間規劃高手！</div>
+          </div>
+
+          <!-- 正向回饋與改善建議 -->
+          <div class="result-feedback-card">
+            <div class="feedback-item positive">
+              <span class="fb-icon">💖</span>
+              <span id="result-feedback-pos" class="fb-text">很棒的作息安排！</span>
+            </div>
+            <div class="feedback-item advice">
+              <span class="fb-icon">💡</span>
+              <span id="result-feedback-adv" class="fb-text">如果晚上早一點休息，早上可能會更有精神喔！</span>
+            </div>
+            <div class="feedback-disclaimer">
+              ⚠️ 分數是遊戲中的參考回饋，不代表你的能力或健康程度。
             </div>
           </div>
-        </div>
 
-        <!-- 底部主操作功能按鈕列 -->
-        <div class="dock-actions">
-          <button id="btn-reset-stage" class="btn-secondary" title="清空已搭配的道具與重設設定">
-            <span>🔄 重設本關</span>
-          </button>
-          <button id="btn-finish-makeover" class="btn-primary btn-finish" title="提交作品並進行藝術相似度評分">
-            <span>✨ 完成模仿！</span>
-          </button>
-        </div>
-
-      </footer>
-
-    </section>
-
-    <!-- 3. 名畫放大深入觀察彈窗 (Modal Inspect) -->
-    <div id="modal-inspect" class="modal-overlay">
-      <div class="modal-card inspect-card">
-        <button id="btn-close-inspect" class="modal-close-btn" title="關閉">✕</button>
-        <div class="inspect-header">
-          <div class="inspect-tag">🔍 名畫觀察放大鏡</div>
-          <h2 id="inspect-painting-title" class="inspect-title">《戴珍珠耳環的少女》細節觀察</h2>
-          <div id="inspect-painting-meta" class="inspect-meta">作者：約翰尼斯 ． 維梅爾（Johannes Vermeer）｜ 年份：約 1665 年</div>
-        </div>
-
-        <div class="inspect-body">
-          <div class="inspect-left">
-            <div class="inspect-img-frame">
-              <img id="inspect-img" src="assets/paintings/pearl_girl.jpg" alt="名畫放大圖" class="inspect-full-img">
-            </div>
+          <!-- 操作按鈕：返回調整 vs 繼續下一關（絕不受分數限制！） -->
+          <div class="modal-actions-row">
+            <button id="btn-result-adjust" class="btn-secondary">
+              <span>✏️ 返回調整</span>
+            </button>
+            <button id="btn-result-next" class="btn-primary">
+              <span id="btn-result-next-text">繼續下一關 ➔</span>
+            </button>
           </div>
-          <div class="inspect-right">
-            <h3 class="inspect-section-title">💡 藝術助理觀察指南</h3>
-            <ul class="inspect-guide-list">
-              <li>
-                <strong>👗 人物服裝與頭飾：</strong>
-                <span id="guide-clothes">少女頭上包覆著鮮明的藍色頭巾，後方垂下金黃色的披巾，身穿棕色大衣。</span>
-              </li>
-              <li>
-                <strong>👤 面向與眼神：</strong>
-                <span id="guide-pose">身體微微側向，頭部轉向觀眾，眼睛專注地凝視前方，雙唇微張。</span>
-              </li>
-              <li>
-                <strong>✨ 視覺亮點物品：</strong>
-                <span id="guide-props">耳朵上有一顆巨大的水滴形珍珠耳環，在深色背景中閃爍微光。</span>
-              </li>
-              <li>
-                <strong>🎨 構圖與色彩：</strong>
-                <span id="guide-composition">深色沉靜背景烘托出少女鮮豔的藍黃頭巾與珍珠光澤，人物位於畫面中央偏前。</span>
-              </li>
-              <li>
-                <strong>🧺 生活替代妙方：</strong>
-                <span id="guide-life-tip">可以用家裡的「藍色毛巾」摺成頭巾，搭配「黃色布料」垂在腦後，再找一顆「珍珠飾品」掛在耳邊！</span>
-              </li>
-            </ul>
-          </div>
-        </div>
-
-        <div class="modal-footer">
-          <button id="btn-inspect-got-it" class="btn-primary">
-            <span>我知道了，回工作室變裝！ ➔</span>
-          </button>
         </div>
       </div>
-    </div>
 
-    <!-- 4. 關卡評分與回饋彈窗 (Modal Score) -->
-    <div id="modal-score" class="modal-overlay">
-      <div class="modal-card score-card">
-        <div class="score-header-decor">✨ 🎨 🏆</div>
-        <h2 id="score-rank-title" class="score-rank-title">傳說級變裝大師！</h2>
-        <div class="score-level-name" id="score-level-name">第一關：神祕的珍珠少女 ． 成果評分</div>
-
-        <!-- 左右並列成果對比 -->
-        <div class="score-comparison-row">
-          <div class="score-thumb-box">
-            <div class="score-thumb-label">🏛️ 原作</div>
-            <img id="score-original-thumb" src="assets/paintings/pearl_girl.jpg" alt="原作縮圖" class="score-thumb-img">
+      <!-- ============================================== -->
+      <!-- 5. 最終冠軍通關畫面（Final Victory Screen） -->
+      <!-- ============================================== -->
+      <section id="screen-victory" class="game-screen">
+        <canvas id="confetti-canvas"></canvas>
+        <div class="victory-card">
+          <div class="victory-badge-glow">
+            <img src="assets/icons/medal.svg" alt="生理時鐘管理大師金牌" class="victory-medal-icon">
           </div>
-          <div class="score-vs-badge">VS</div>
-          <div class="score-thumb-box">
-            <div class="score-thumb-label">✨ 你的模仿作品</div>
-            <div id="score-player-preview" class="score-player-preview"></div>
+          <h1 class="victory-title">👑 生理時鐘管理大師！</h1>
+          <div class="victory-subtitle">恭喜你完成三項挑戰，成為生活節奏引導專家！</div>
+
+          <!-- 三好友慶祝插畫 -->
+          <div class="victory-trio-scene">
+            <img src="assets/characters/trio.svg" alt="好友一同慶祝" class="victory-trio-img">
+          </div>
+
+          <!-- 三關得分回顧卡片 -->
+          <div class="scores-summary-grid">
+            <div class="summary-col">
+              <div class="col-head">🌅 第 1 關</div>
+              <div class="col-name">晨光活力計畫</div>
+              <div class="col-score" id="summary-score-1">-- 分</div>
+            </div>
+            <div class="summary-col">
+              <div class="col-head">🌙 第 2 關</div>
+              <div class="col-name">夜貓子的時間表</div>
+              <div class="col-score" id="summary-score-2">-- 分</div>
+            </div>
+            <div class="summary-col">
+              <div class="col-head">✨ 第 3 關</div>
+              <div class="col-name">健康作息大挑戰</div>
+              <div class="col-score" id="summary-score-3">-- 分</div>
+            </div>
+          </div>
+
+          <!-- 核心教育總結文字 -->
+          <div class="victory-concept-box">
+            <p>
+              「每個人的生理時鐘都不太一樣。<br>
+              有人早上精神好，有人晚上比較有活力。<br>
+              不論是晨型人還是夜型人，<strong>充足睡眠與健康作息都很重要！</strong>」
+            </p>
+          </div>
+
+          <!-- 動作按鈕 -->
+          <div class="victory-actions-row">
+            <button id="btn-play-again" class="btn-primary">
+              <span>🔄 再玩一次</span>
+            </button>
+            <button id="btn-return-home" class="btn-secondary">
+              <span>🏠 返回首頁</span>
+            </button>
           </div>
         </div>
+      </section>
 
-        <!-- 四大評分項目條列 -->
-        <div class="score-breakdown-card">
-          <div class="score-item">
-            <div class="score-item-header">
-              <span class="score-item-name">🧺 道具搭配（滿分 40 分）</span>
-              <span id="score-val-props" class="score-item-points">40 分</span>
-            </div>
-            <div class="score-progress-bar"><div id="bar-props" class="score-fill" style="width: 100%;"></div></div>
-          </div>
-
-          <div class="score-item">
-            <div class="score-item-header">
-              <span class="score-item-name">🧍 姿勢模仿（滿分 30 分）</span>
-              <span id="score-val-pose" class="score-item-points">30 分</span>
-            </div>
-            <div class="score-progress-bar"><div id="bar-pose" class="score-fill" style="width: 100%;"></div></div>
-          </div>
-
-          <div class="score-item">
-            <div class="score-item-header">
-              <span class="score-item-name">📐 構圖還原（滿分 20 分）</span>
-              <span id="score-val-comp" class="score-item-points">20 分</span>
-            </div>
-            <div class="score-progress-bar"><div id="bar-comp" class="score-fill" style="width: 100%;"></div></div>
-          </div>
-
-          <div class="score-item">
-            <div class="score-item-header">
-              <span class="score-item-name">💡 創意運用（滿分 10 分）</span>
-              <span id="score-val-creative" class="score-item-points">10 分</span>
-            </div>
-            <div class="score-progress-bar"><div id="bar-creative" class="score-fill" style="width: 100%;"></div></div>
-          </div>
-
-          <div class="score-total-row">
-            <span class="total-label">總得分</span>
-            <span id="score-total-val" class="total-val">100 分</span>
-          </div>
-        </div>
-
-        <!-- 具體回饋與教育提示 -->
-        <div class="feedback-box">
-          <div class="feedback-title">🎯 藝術導師的具體回饋：</div>
-          <p id="feedback-detail-text" class="feedback-text">
-            頭巾和耳環搭配得非常好！如果人物再微微側身轉向右邊一點，神韻就會跟原畫一模一樣囉！
-          </p>
-          <div id="education-summary-box" class="education-summary-box">
-            💡 <strong>教育亮點：</strong><span id="education-summary-text">學生能觀察到服裝配色、人物角度及背景對整體構圖的影響。</span>
-          </div>
-        </div>
-
-        <div class="modal-footer score-footer">
-          <button id="btn-readjust" class="btn-secondary">
-            <span>🔄 再調整一次</span>
-          </button>
-          <button id="btn-next-level" class="btn-primary">
-            <span id="next-level-btn-text">前往下一關 ➔</span>
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- 5. 最終成果展畫面 (Exhibition Screen) -->
-    <section id="exhibition-screen" class="view-screen">
-      <div class="exhibition-wrapper">
-        <div class="gallery-ribbon">🏆 國家級藝術成果展</div>
-        <h1 class="gallery-title">《名畫變裝成果展！》</h1>
-        <p class="gallery-lead">
-          恭喜你完成三幅世界名畫挑戰！<br>
-          原來生活中的毛巾、帽子、圍裙和水壺，都能成為創作名畫的好幫手！<br>
-          仔細觀察、發揮想像，你也能成為名畫變裝大師！
-        </p>
-
-        <!-- 三大畫框展覽牆 -->
-        <div class="gallery-wall">
-
-          <!-- 作品 1 -->
-          <div class="exhibit-frame-card">
-            <div class="exhibit-gold-frame">
-              <div id="exhibit-work-1" class="exhibit-canvas-preview"></div>
-            </div>
-            <div class="exhibit-placard">
-              <div class="exhibit-title">《戴珍珠耳環的少女》仿作</div>
-              <div class="exhibit-score" id="exhibit-score-1">得分：100 分</div>
-              <div class="exhibit-grade" id="exhibit-grade-1">傳說級變裝大師</div>
-            </div>
-          </div>
-
-          <!-- 作品 2 -->
-          <div class="exhibit-frame-card">
-            <div class="exhibit-gold-frame">
-              <div id="exhibit-work-2" class="exhibit-canvas-preview"></div>
-            </div>
-            <div class="exhibit-placard">
-              <div class="exhibit-title">《倒牛奶的女僕》仿作</div>
-              <div class="exhibit-score" id="exhibit-score-2">得分：100 分</div>
-              <div class="exhibit-grade" id="exhibit-grade-2">傳說級變裝大師</div>
-            </div>
-          </div>
-
-          <!-- 作品 3 -->
-          <div class="exhibit-frame-card">
-            <div class="exhibit-gold-frame">
-              <div id="exhibit-work-3" class="exhibit-canvas-preview"></div>
-            </div>
-            <div class="exhibit-placard">
-              <div class="exhibit-title">《戴灰氈帽的自畫像》仿作</div>
-              <div class="exhibit-score" id="exhibit-score-3">得分：100 分</div>
-              <div class="exhibit-grade" id="exhibit-grade-3">傳說級變裝大師</div>
-            </div>
-          </div>
-
-        </div>
-
-        <!-- 總榮譽面板 -->
-        <div class="grand-honor-banner">
-          <div class="honor-title">🎓 策展總評分</div>
-          <div class="honor-score" id="exhibit-total-score">總得分：300／300 分</div>
-          <div class="honor-badge" id="exhibit-grand-title">🌟 羅浮宮特聘 ． 傳說級名畫變裝大師 🌟</div>
-        </div>
-
-        <!-- 成果展動作按鈕 -->
-        <div class="exhibition-actions">
-          <button id="btn-download-certificate" class="btn-primary btn-large">
-            <span>📸 下載我的作品展（PNG 圖卡）</span>
-          </button>
-          <button id="btn-replay-game" class="btn-secondary">
-            <span>🔄 重新挑戰</span>
-          </button>
-          <button id="btn-back-home" class="btn-secondary">
-            <span>🏠 返回首頁</span>
-          </button>
-        </div>
-
-      </div>
-    </section>
+    </main>
 
   </div>
-
-  <!-- 用於本機產生 1920x1080 作品紀念海報的隱藏 Canvas -->
-  <canvas id="export-canvas" width="1920" height="1080" style="display: none;"></canvas>
 
   <script src="game.js"></script>
 </body>

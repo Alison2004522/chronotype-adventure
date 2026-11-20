@@ -1,88 +1,86 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 540 240" width="100%" height="100%">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 220" width="100%" height="100%">
   <defs>
-    <filter id="groupShadow" x="-10%" y="-10%" width="120%" height="120%">
-      <feDropShadow dx="0" dy="6" stdDeviation="6" flood-color="#000" flood-opacity="0.15"/>
-    </filter>
+    <radialGradient id="trioSunGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FEF08A" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#FEF08A" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="trioMoonGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#C7D2FE" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#C7D2FE" stop-opacity="0"/>
+    </radialGradient>
   </defs>
 
-  <g transform="translate(40, 20)">
-    <circle cx="30" cy="30" r="22" fill="#FFD54F" stroke="#FFA000" stroke-width="3"/>
-    <g stroke="#FFA000" stroke-width="3" stroke-linecap="round">
-      <line x1="30" y1="2" x2="30" y2="-6"/>
-      <line x1="30" y1="58" x2="30" y2="66"/>
-      <line x1="2" y1="30" x2="-6" y2="30"/>
-      <line x1="58" y1="30" x2="66" y2="30"/>
-      <line x1="10" y1="10" x2="4" y2="4"/>
-      <line x1="50" y1="50" x2="56" y2="56"/>
-      <line x1="10" y1="50" x2="4" y2="56"/>
-      <line x1="50" y1="10" x2="56" y2="4"/>
-    </g>
+  <!-- Left: Morning sun glow -->
+  <circle cx="80" cy="60" r="70" fill="url(#trioSunGlow)"/>
+  <circle cx="70" cy="50" r="28" fill="#FBBF24"/>
+  <g stroke="#F59E0B" stroke-width="3" stroke-linecap="round">
+    <line x1="70" y1="12" x2="70" y2="2" />
+    <line x1="70" y1="88" x2="70" y2="98" />
+    <line x1="32" y1="50" x2="22" y2="50" />
+    <line x1="108" y1="50" x2="118" y2="50" />
+    <line x1="43" y1="23" x2="35" y2="15" />
+    <line x1="97" y1="77" x2="105" y2="85" />
+    <line x1="43" y1="77" x2="35" y2="85" />
+    <line x1="97" y1="23" x2="105" y2="15" />
   </g>
 
-  <g transform="translate(440, 15)">
-    <path d="M 35,5 A 25 25 0 1 0 60 55 A 20 20 0 0 1 35 5 Z" fill="#FFE082" stroke="#FFB300" stroke-width="2.5"/>
-    <polygon points="10,15 13,22 20,23 15,28 16,35 10,31 4,35 5,28 0,23 7,22" fill="#FFF59D"/>
-    <polygon points="65,65 67,70 72,71 68,75 69,80 65,77 61,80 62,75 58,71 63,70" fill="#FFF59D"/>
+  <!-- Right: Night moon and stars glow -->
+  <circle cx="340" cy="60" r="70" fill="url(#trioMoonGlow)"/>
+  <path d="M 345,35 A 25 25 0 0 0 355 70 A 30 30 0 1 1 345 35 Z" fill="#FDE047" stroke="#EAB308" stroke-width="2"/>
+  <polygon points="310,40 313,46 320,47 315,52 316,58 310,55 304,58 305,52 300,47 307,46" fill="#FDE047"/>
+  <polygon points="380,55 382,60 387,61 383,65 384,70 380,67 376,70 377,65 373,61 378,60" fill="#FDE047"/>
+
+  <!-- Center: Friendly Trio -->
+  <!-- Left: Inu -->
+  <g transform="translate(45, 45) scale(0.68)">
+    <ellipse cx="100" cy="208" rx="55" ry="10" fill="#E2D4BE" opacity="0.6"/>
+    <ellipse cx="100" cy="155" rx="46" ry="42" fill="#FFA834" stroke="#D97706" stroke-width="4"/>
+    <circle cx="100" cy="92" r="54" fill="#FFA834" stroke="#D97706" stroke-width="4"/>
+    <ellipse cx="80" cy="108" rx="22" ry="18" fill="#FFFBF5"/>
+    <ellipse cx="120" cy="108" rx="22" ry="18" fill="#FFFBF5"/>
+    <ellipse cx="68" cy="105" rx="8" ry="5" fill="#FF8A80" opacity="0.6"/>
+    <ellipse cx="132" cy="105" rx="8" ry="5" fill="#FF8A80" opacity="0.6"/>
+    <ellipse cx="82" cy="86" rx="6.5" ry="8" fill="#3E2723"/>
+    <ellipse cx="118" cy="86" rx="6.5" ry="8" fill="#3E2723"/>
+    <circle cx="80" cy="83" r="2.5" fill="#FFFFFF"/>
+    <circle cx="116" cy="83" r="2.5" fill="#FFFFFF"/>
+    <path d="M 94,103 Q 100,107 100,102 Q 100,107 106,103" fill="none" stroke="#2E1C0C" stroke-width="2.5"/>
+    <path d="M 72,128 Q 100,146 128,128 Q 100,165 72,128 Z" fill="#EE5253" stroke="#B71C1C" stroke-width="2.5"/>
   </g>
 
-  <g filter="url(#groupShadow)">
-    <g transform="translate(60, 40) scale(0.85)">
-      <ellipse cx="100" cy="155" rx="46" ry="42" fill="#FFA834" stroke="#D97706" stroke-width="4"/>
-      <path d="M 82,140 Q 100,165 118,140 Q 100,185 82,140 Z" fill="#FFFBF5"/>
-      <path d="M 52,65 Q 40,15 65,25 Q 82,38 78,72 Z" fill="#FFA834" stroke="#D97706" stroke-width="4"/>
-      <path d="M 148,65 Q 160,15 135,25 Q 118,38 122,72 Z" fill="#FFA834" stroke="#D97706" stroke-width="4"/>
-      <circle cx="100" cy="92" r="54" fill="#FFA834" stroke="#D97706" stroke-width="4"/>
-      <ellipse cx="80" cy="108" rx="22" ry="18" fill="#FFFBF5"/>
-      <ellipse cx="120" cy="108" rx="22" ry="18" fill="#FFFBF5"/>
-      <circle cx="68" cy="105" r="7" fill="#FF8A80" opacity="0.6"/>
-      <circle cx="132" cy="105" r="7" fill="#FF8A80" opacity="0.6"/>
-      <ellipse cx="82" cy="86" rx="6.5" ry="8" fill="#3E2723"/>
-      <circle cx="80" cy="83" r="2.5" fill="#FFF"/>
-      <ellipse cx="118" cy="86" rx="6.5" ry="8" fill="#3E2723"/>
-      <circle cx="116" cy="83" r="2.5" fill="#FFF"/>
-      <path d="M 95,96 Q 100,93 105,96 Q 100,103 95,96 Z" fill="#2E1C0C"/>
-      <path d="M 96,106 Q 100,116 104,106 Z" fill="#FF6B8B"/>
-      <path d="M 72,128 Q 100,146 128,128 Q 100,165 72,128 Z" fill="#FF5252" stroke="#B71C1C" stroke-width="2.5"/>
-      <circle cx="100" cy="136" r="4.5" fill="#FFD54F"/>
-    </g>
+  <!-- Center: Usagi -->
+  <g transform="translate(145, 30) scale(0.72)">
+    <ellipse cx="100" cy="208" rx="52" ry="10" fill="#E2E8F0" opacity="0.7"/>
+    <ellipse cx="100" cy="155" rx="42" ry="38" fill="#FFFFFF" stroke="#94A3B8" stroke-width="3.5"/>
+    <!-- Ears -->
+    <path d="M 68,60 C 50,5 65,-5 82,15 C 92,30 85,55 80,68 Z" fill="#FFFFFF" stroke="#94A3B8" stroke-width="3.5"/>
+    <path d="M 70,52 C 58,15 68,6 78,22 C 84,33 80,50 76,58 Z" fill="#F472B6" opacity="0.75"/>
+    <path d="M 132,60 C 150,5 135,-5 118,15 C 108,30 115,55 120,68 Z" fill="#FFFFFF" stroke="#94A3B8" stroke-width="3.5"/>
+    <path d="M 130,52 C 142,15 132,6 122,22 C 116,33 120,50 124,58 Z" fill="#F472B6" opacity="0.75"/>
+    <circle cx="100" cy="95" r="50" fill="#FFFFFF" stroke="#94A3B8" stroke-width="3.5"/>
+    <ellipse cx="68" cy="106" rx="9" ry="5" fill="#F472B6" opacity="0.6"/>
+    <ellipse cx="132" cy="106" rx="9" ry="5" fill="#F472B6" opacity="0.6"/>
+    <ellipse cx="80" cy="90" rx="7" ry="9" fill="#DB2777"/>
+    <ellipse cx="120" cy="90" rx="7" ry="9" fill="#DB2777"/>
+    <circle cx="78" cy="86" r="2.5" fill="#FFF"/>
+    <circle cx="118" cy="86" r="2.5" fill="#FFF"/>
+    <ellipse cx="100" cy="98" rx="4" ry="3" fill="#F472B6"/>
+    <circle cx="100" cy="142" r="9" fill="#FEF08A" stroke="#EAB308" stroke-width="2"/>
+  </g>
 
-    <g transform="translate(180, 20) scale(0.9)">
-      <path d="M 65,70 C 45,20 55,-5 72,5 C 88,15 88,45 82,75 Z" fill="#FFF" stroke="#D81B60" stroke-width="3.5"/>
-      <path d="M 68,62 C 55,25 62,8 72,16 C 80,24 80,45 76,66 Z" fill="#F8BBD0"/>
-      <path d="M 135,70 C 150,25 140,-5 125,5 C 112,15 115,45 118,75 Z" fill="#FFF" stroke="#D81B60" stroke-width="3.5"/>
-      <path d="M 132,62 C 142,28 135,8 126,16 C 118,24 120,45 122,66 Z" fill="#F8BBD0"/>
-      <ellipse cx="100" cy="158" rx="42" ry="38" fill="#FFF" stroke="#D81B60" stroke-width="3.5"/>
-      <path d="M 75,140 Q 100,150 125,140 L 128,175 Q 100,185 72,175 Z" fill="#F48FB1" stroke="#C2185B" stroke-width="2"/>
-      <circle cx="100" cy="96" r="50" fill="#FFF" stroke="#D81B60" stroke-width="3.5"/>
-      <circle cx="80" cy="94" r="14" fill="none" stroke="#D81B60" stroke-width="3"/>
-      <circle cx="120" cy="94" r="14" fill="none" stroke="#D81B60" stroke-width="3"/>
-      <line x1="94" y1="94" x2="106" y2="94" stroke="#D81B60" stroke-width="3"/>
-      <circle cx="68" cy="108" r="7" fill="#FF80AB" opacity="0.6"/>
-      <circle cx="132" cy="108" r="7" fill="#FF80AB" opacity="0.6"/>
-      <path d="M 74,94 Q 80,87 86,94" fill="none" stroke="#880E4F" stroke-width="3.5" stroke-linecap="round"/>
-      <path d="M 114,94 Q 120,87 126,94" fill="none" stroke="#880E4F" stroke-width="3.5" stroke-linecap="round"/>
-      <ellipse cx="100" cy="103" rx="4" ry="3" fill="#FF4081"/>
-      <path d="M 95,106 Q 100,109 100,106 Q 100,109 105,106" fill="none" stroke="#880E4F" stroke-width="2.5" stroke-linecap="round"/>
-    </g>
-
-    <g transform="translate(310, 40) scale(0.85)">
-      <ellipse cx="100" cy="155" rx="44" ry="40" fill="#5C6BC0" stroke="#3949AB" stroke-width="4"/>
-      <ellipse cx="100" cy="160" rx="20" ry="24" fill="#E8EAF6"/>
-      <path d="M 50,68 Q 42,15 72,32 Q 85,42 80,72 Z" fill="#5C6BC0" stroke="#3949AB" stroke-width="4"/>
-      <path d="M 150,68 Q 158,15 128,32 Q 115,42 120,72 Z" fill="#5C6BC0" stroke="#3949AB" stroke-width="4"/>
-      <circle cx="100" cy="94" r="52" fill="#5C6BC0" stroke="#3949AB" stroke-width="4"/>
-      <polygon points="100,56 103,63 110,64 105,68 107,75 100,71 93,75 95,68 90,64 97,63" fill="#FFE082"/>
-      <ellipse cx="70" cy="108" rx="8" ry="4" fill="#FF80AB" opacity="0.5"/>
-      <ellipse cx="130" cy="108" rx="8" ry="4" fill="#FF80AB" opacity="0.5"/>
-      <ellipse cx="80" cy="92" rx="9" ry="11" fill="#00BFA5"/>
-      <ellipse cx="80" cy="92" rx="5" ry="10" fill="#1A237E"/>
-      <circle cx="77" cy="87" r="3" fill="#FFF"/>
-      <ellipse cx="120" cy="92" rx="9" ry="11" fill="#00BFA5"/>
-      <ellipse cx="120" cy="92" rx="5" ry="10" fill="#1A237E"/>
-      <circle cx="117" cy="87" r="3" fill="#FFF"/>
-      <polygon points="100,101 96,97 104,97" fill="#FF80AB"/>
-      <path d="M 94,103 Q 97,106 100,103 Q 103,106 106,103" fill="none" stroke="#1A237E" stroke-width="2.5" stroke-linecap="round"/>
-      <path d="M 68,132 C 85,142 115,142 132,132 C 136,138 132,148 118,150 C 95,152 75,145 68,132 Z" fill="#FFE082" stroke="#E65100" stroke-width="2"/>
-    </g>
+  <!-- Right: Neko -->
+  <g transform="translate(245, 45) scale(0.68)">
+    <ellipse cx="100" cy="208" rx="55" ry="10" fill="#CFD8DC" opacity="0.6"/>
+    <ellipse cx="100" cy="155" rx="44" ry="40" fill="#6366F1" stroke="#3949AB" stroke-width="4"/>
+    <polygon points="55,80 40,25 80,48" fill="#6366F1" stroke="#3949AB" stroke-width="4"/>
+    <polygon points="145,80 160,25 120,48" fill="#6366F1" stroke="#3949AB" stroke-width="4"/>
+    <circle cx="100" cy="94" r="52" fill="#6366F1" stroke="#3949AB" stroke-width="4"/>
+    <ellipse cx="68" cy="108" rx="8" ry="4" fill="#FF80AB" opacity="0.5"/>
+    <ellipse cx="130" cy="108" rx="8" ry="4" fill="#FF80AB" opacity="0.5"/>
+    <ellipse cx="80" cy="92" rx="9" ry="11" fill="#00BFA5"/>
+    <ellipse cx="120" cy="92" rx="9" ry="11" fill="#00BFA5"/>
+    <circle cx="77" cy="87" r="3" fill="#FFF"/>
+    <circle cx="117" cy="87" r="3" fill="#FFF"/>
+    <path d="M 68,132 C 85,142 115,142 132,132 C 136,138 132,148 118,150 C 95,152 75,145 68,132 Z" fill="#FFE082" stroke="#E65100" stroke-width="2"/>
   </g>
 </svg>
