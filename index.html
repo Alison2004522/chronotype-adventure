@@ -3,595 +3,524 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="description" content="《生日蛋糕小店長》（Birthday Cake Shop Manager）—— 2D 互動式生活數學與閱讀理解教育遊戲。學習閱讀菜單、挑選尺寸、比較價格與計算運費。">
-  <meta name="theme-color" content="#FFF7ED">
-  <title>《生日蛋糕小店長》Birthday Cake Shop Manager</title>
+  <title>《名畫變裝大師》（Masterpiece Makeover）- 互動式藝術教育遊戲</title>
+  <meta name="description" content="運用生活常見用品，重新模仿世界名畫人物與構圖的藝術教育互動遊戲。">
+  <link rel="icon" type="image/svg+xml" href="assets/props/palette.svg">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <!-- 音訊控制器 (Web Audio API 驅動) -->
-  <header class="game-header">
-    <div class="header-left">
-      <span class="store-icon">🎂</span>
-      <h1 class="store-title">生日蛋糕小店長</h1>
-      <span class="store-subtitle">甜蜜烘焙坊</span>
-    </div>
-    
-    <div class="header-center" id="progressContainer">
-      <span class="progress-label" id="progressLabel">今日訂單：1／3</span>
-      <div class="stars-track" id="starsTrack">
-        <div class="star-item" id="star1"><img src="assets/decorations/star-empty.svg" alt="星星 1"></div>
-        <div class="star-item" id="star2"><img src="assets/decorations/star-empty.svg" alt="星星 2"></div>
-        <div class="star-item" id="star3"><img src="assets/decorations/star-empty.svg" alt="星星 3"></div>
-      </div>
-    </div>
 
-    <div class="header-right">
-      <button type="button" class="btn-tool" id="btnHandbook" title="開啟蛋糕菜單與訂購規則手冊">
-        📖 <span class="btn-text">店長手冊</span>
-      </button>
-      <button type="button" class="btn-tool" id="btnAudio" title="切換音效開關">
-        🔊 <span class="btn-text">音效開</span>
-      </button>
-    </div>
-  </header>
+  <!-- 主遊戲外框（16:9 比例最適化，自適應縮放） -->
+  <div id="game-container">
 
-  <!-- 主遊戲視窗容器 -->
-  <main class="game-app" id="gameApp">
-
-    <!-- ================= 畫面一：開始營業畫面 ================= -->
-    <section class="screen screen-start active" id="screenStart">
+    <!-- 1. 遊戲開始畫面 -->
+    <section id="start-screen" class="view-screen active">
       <div class="start-card">
-        <div class="start-banner">
-          <div class="bunting-decorations">
-            <span class="bunting-flag flag-pink"></span>
-            <span class="bunting-flag flag-yellow"></span>
-            <span class="bunting-flag flag-blue"></span>
-            <span class="bunting-flag flag-green"></span>
-            <span class="bunting-flag flag-orange"></span>
-            <span class="bunting-flag flag-pink"></span>
-            <span class="bunting-flag flag-yellow"></span>
-          </div>
-          <h2 class="game-headline">歡迎光臨！《生日蛋糕小店長》</h2>
-          <p class="game-tagline">🍰 閱讀菜單 ． 聰明選購 ． 計算運費 ． 滿足顧客需求 🍰</p>
-        </div>
+        <div class="studio-badge">🎨 名畫變裝工作室 ． 藝術挑戰</div>
+        <h1 class="game-title">《名畫變裝大師》</h1>
+        <div class="game-subtitle">Masterpiece Makeover ． 生活中的名畫模仿大挑戰</div>
 
-        <div class="start-content">
-          <div class="manager-welcome-col">
-            <div class="manager-avatar-wrap">
-              <img src="assets/characters/manager.svg" alt="Q版小店長" class="img-manager-hero">
+        <div class="start-banner-visual">
+          <div class="studio-scene-deco">
+            <div class="deco-easel">🖼️</div>
+            <div class="deco-hero-chibi">
+              <img src="assets/characters/chibi_artist_neutral.svg" alt="Q 版小畫家助手" class="start-chibi-img">
             </div>
-          </div>
-
-          <div class="story-bubble-col">
-            <div class="speech-bubble story-bubble">
-              <div class="bubble-header">
-                <span class="bubble-badge">🌟 今日店長任務</span>
-              </div>
-              <p class="story-text">
-                歡迎來到甜蜜生日蛋糕店！<br><br>
-                今天店裡有三位顧客前來訂購生日蛋糕：<br>
-                有人在乎<strong>人數與預算</strong>、有人指定<strong>特殊口味與限定月份</strong>，還有人需要<strong>訂購多個蛋糕並安排外送</strong>。<br><br>
-                請仔細閱讀菜單與訂購須知，挑選最適合的蛋糕、確認尺寸並完成結帳！你能順利贏得<strong>「金牌蛋糕小店長」</strong>的榮譽稱號嗎？
-              </p>
-            </div>
-
-            <div class="start-action-row">
-              <button type="button" class="btn-primary btn-large btn-start-game" id="btnStartGame">
-                <span class="btn-glow"></span>
-                🎉 開始營業！接下第一筆訂單
-              </button>
+            <div class="deco-props">
+              <span class="bubble-prop bp-1"><img src="assets/props/blue_towel.svg" alt="藍色毛巾"></span>
+              <span class="bubble-prop bp-2"><img src="assets/props/pearl_earring.svg" alt="珍珠耳環"></span>
+              <span class="bubble-prop bp-3"><img src="assets/props/milk_jug.svg" alt="牛奶壺"></span>
+              <span class="bubble-prop bp-4"><img src="assets/props/grey_hat.svg" alt="灰色帽子"></span>
             </div>
           </div>
         </div>
 
-        <!-- 底部特色介紹標籤 -->
-        <div class="start-features-bar">
-          <div class="feature-item"><span>👥</span> 根據聚會人數選擇合適尺寸</div>
-          <div class="feature-item"><span>📅</span> 掌握季節限定月份與預訂規則</div>
-          <div class="feature-item"><span>💰</span> 精算商品小計與不同外送運費</div>
-          <div class="feature-item"><span>💡</span> 閱讀生活文本做最好消費決策</div>
+        <div class="start-story-box">
+          <p class="story-lead">世界名畫變裝挑戰開始啦！</p>
+          <p>沒有華麗服裝，也沒有昂貴道具？<br>
+          沒關係！只要<strong>仔細觀察、發揮創意</strong>，家裡的普通物品也能變成名畫道具！</p>
+          <p class="story-highlight">快來挑戰三幅世界名畫，成為最厲害的變裝大師吧！</p>
         </div>
+
+        <div class="level-preview-list">
+          <div class="preview-item">
+            <span class="preview-num">1</span>
+            <span class="preview-name">《戴珍珠耳環的少女》</span>
+          </div>
+          <div class="preview-arrow">➔</div>
+          <div class="preview-item">
+            <span class="preview-num">2</span>
+            <span class="preview-name">《倒牛奶的女僕》</span>
+          </div>
+          <div class="preview-arrow">➔</div>
+          <div class="preview-item">
+            <span class="preview-num">3</span>
+            <span class="preview-name">《戴灰氈帽的自畫像》</span>
+          </div>
+        </div>
+
+        <button id="btn-start-game" class="btn-primary btn-large">
+          <span>🎨 開始變裝！</span>
+        </button>
       </div>
     </section>
 
-    <!-- ================= 畫面二：營業中（核心訂單處理工作區） ================= -->
-    <section class="screen screen-play" id="screenPlay">
-      
-      <!-- 關卡標題列 -->
-      <div class="stage-banner" id="stageBanner">
-        <span class="stage-pill" id="stagePill">第 1 關</span>
-        <h2 class="stage-title" id="stageTitle">精打細算的生日派對</h2>
-        <span class="stage-customer-name" id="stageCustomerName">顧客：小晴</span>
+    <!-- 2. 關卡主遊玩畫面 -->
+    <section id="game-screen" class="view-screen">
+
+      <!-- 頂部資訊 HUD -->
+      <header id="game-hud">
+        <div class="hud-left">
+          <span class="hud-logo">🎨 《名畫變裝大師》</span>
+          <span id="hud-level-badge" class="level-pill">第 1／3 關</span>
+        </div>
+        <div class="hud-center">
+          <span id="hud-painting-title" class="painting-pill">第一關：神祕的珍珠少女 ．《戴珍珠耳環的少女》</span>
+        </div>
+        <div class="hud-right">
+          <button id="btn-inspect-painting" class="hud-btn" title="放大觀察名畫細節">
+            <span>🔍 放大觀察</span>
+          </button>
+          <button id="btn-toggle-sound" class="hud-btn sound-btn" title="切換音效">
+            <span id="sound-icon">🔊</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- 操作提示橫幅 -->
+      <div id="instruction-bar">
+        <span class="tip-icon">💡</span>
+        <span id="instruction-text">觀察左邊的名畫，把合適的日常道具拖到右邊角色身上，並調整姿勢與構圖吧！</span>
       </div>
 
-      <div class="play-grid">
-        <!-- 左欄：顧客需求資訊區 -->
-        <aside class="panel panel-customer" id="panelCustomer">
+      <!-- 中央雙對照主操作區 -->
+      <main id="workspace">
+
+        <!-- 左側：世界名畫原作區 -->
+        <div class="masterpiece-panel">
           <div class="panel-header">
-            <h3>👤 顧客委託需求</h3>
+            <span class="panel-tag">🏛️ 世界名畫原作</span>
+            <span id="painting-artist-tag" class="artist-tag">維梅爾 ． 約 1665 年</span>
           </div>
 
-          <div class="customer-profile-card">
-            <div class="customer-avatar-box">
-              <img id="customerAvatar" src="assets/characters/customer-qing.svg" alt="當前顧客" class="img-customer">
-            </div>
-            
-            <div class="customer-dialog-bubble">
-              <div class="bubble-speaker" id="customerSpeaker">小晴 說：</div>
-              <p class="customer-speech" id="customerSpeech">
-                「你好！我要幫家人準備生日蛋糕！我們總共有 5 個人，預算只有 700 元。希望吃到有水果和布丁的蛋糕，而且會自己來店裡拿。可以幫我挑選嗎？」
-              </p>
-            </div>
-          </div>
-
-          <!-- 需求規格清單標籤 -->
-          <div class="req-badges-container" id="reqBadgesContainer">
-            <!-- 動態注入標籤 -->
-          </div>
-
-          <!-- 背景情境補充（例如第三關提前預訂說明） -->
-          <div class="context-note-box" id="contextNoteBox" style="display: none;">
-            <span class="note-icon">📌</span>
-            <span class="note-text" id="contextNoteText"></span>
-          </div>
-
-          <!-- 提示按鈕與提示卡片 -->
-          <div class="hint-section">
-            <button type="button" class="btn-hint" id="btnShowHint">
-              💡 查看店長提示 (<span id="hintCount">3</span> 個線索)
-            </button>
-            <div class="hint-card" id="hintCard" style="display: none;">
-              <div class="hint-card-header">
-                <span>💡 店長小提示</span>
-                <button type="button" class="btn-close-hint" id="btnCloseHint">×</button>
-              </div>
-              <p class="hint-card-text" id="hintText"></p>
-            </div>
-          </div>
-        </aside>
-
-        <!-- 中欄：六款蛋糕展示菜單區 -->
-        <section class="panel panel-menu" id="panelMenu">
-          <div class="panel-header panel-header-menu">
-            <h3>🍰 生日蛋糕展示櫥窗</h3>
-            <span class="menu-hint-text">點擊卡片即可放入工作檯挑選尺寸與結帳</span>
-          </div>
-
-          <div class="cake-cards-grid" id="cakeCardsGrid">
-            <!-- 六款蛋糕卡片由 JavaScript 動態生成渲染 -->
-          </div>
-        </section>
-
-        <!-- 右欄：店長工作檯（客製尺寸、數量、取貨與即時收銀試算） -->
-        <aside class="panel panel-checkout" id="panelCheckout">
-          <div class="panel-header">
-            <h3>🧾 店長訂單工作檯</h3>
-          </div>
-
-          <div class="order-workbench">
-            <!-- 尚未選取蛋糕時的引導提示 -->
-            <div class="empty-selection-placeholder" id="emptyPlaceholder">
-              <div class="placeholder-icon">🎂</div>
-              <p>請先從中間櫥窗點選一款蛋糕！</p>
-            </div>
-
-            <!-- 已選取蛋糕客製面板 -->
-            <div class="selected-cake-details" id="selectedDetails" style="display: none;">
-              <!-- 頂部蛋糕縮圖與特色介紹 -->
-              <div class="current-cake-summary">
-                <div class="summary-thumb-wrap">
-                  <img id="summaryCakeImg" src="" alt="蛋糕預覽" class="summary-cake-img">
-                </div>
-                <div class="summary-cake-info">
-                  <h4 class="summary-cake-name" id="summaryCakeName">城堡蛋糕</h4>
-                  <span class="summary-cake-tag" id="summaryCakeTag">人氣推薦</span>
-                  <p class="summary-cake-desc" id="summaryCakeDesc">香草蛋糕搭配什錦水果和布丁夾層...</p>
-                </div>
-              </div>
-
-              <!-- 步驟 1：尺寸選擇 -->
-              <div class="config-block">
-                <label class="config-label">
-                  <span class="step-num">1</span> 選擇蛋糕尺寸（請比對人數需求）：
-                </label>
-                <div class="size-options-group" id="sizeOptionsGroup">
-                  <!-- 尺寸按鈕動態注入 -->
-                </div>
-                <div class="size-guide-tip" id="sizeGuideTip">
-                  💡 建議人數：6 吋 (4～6 人) ｜ 8 吋 (6～8 人) ｜ 10 吋 (8～10 人)
-                </div>
-              </div>
-
-              <!-- 步驟 2：訂購數量 -->
-              <div class="config-block">
-                <label class="config-label">
-                  <span class="step-num">2</span> 訂購數量：
-                </label>
-                <div class="quantity-controller">
-                  <button type="button" class="btn-qty" id="btnQtyMinus" aria-label="減少數量">−</button>
-                  <span class="qty-display" id="qtyDisplay">1</span>
-                  <span class="qty-unit">個</span>
-                  <button type="button" class="btn-qty" id="btnQtyPlus" aria-label="增加數量">＋</button>
-                  <span class="qty-rule-notice" id="qtyRuleNotice">(本關需求請看顧客指示)</span>
-                </div>
-              </div>
-
-              <!-- 步驟 3：取貨方式 -->
-              <div class="config-block">
-                <label class="config-label">
-                  <span class="step-num">3</span> 取貨方式：
-                </label>
-                <div class="method-options-group">
-                  <button type="button" class="btn-method active" data-method="pickup" id="btnMethodPickup">
-                    <span class="method-icon">🏪</span>
-                    <span class="method-name">門市自取</span>
-                    <span class="method-fee">(免運費 NT$ 0)</span>
-                  </button>
-                  <button type="button" class="btn-method" data-method="delivery" id="btnMethodDelivery">
-                    <span class="method-icon">🚚</span>
-                    <span class="method-name">外送服務</span>
-                    <span class="method-fee" id="deliveryFeeLabel">(依尺寸數量計費)</span>
-                  </button>
-                </div>
-                <div class="delivery-notice-box" id="deliveryNoticeBox" style="display: none;">
-                  ⚠️ <span id="deliveryNoticeText">外送服務僅限下午 2 點以後送達。</span>
-                </div>
-              </div>
-
-              <!-- 收銀機即時試算表 -->
-              <div class="register-receipt">
-                <div class="receipt-header">
-                  <span>💰 收銀機即時結帳試算</span>
-                </div>
-                <div class="receipt-row">
-                  <span class="row-label">商品單價：</span>
-                  <span class="row-value" id="valUnitPrice">NT$ 660</span>
-                </div>
-                <div class="receipt-row">
-                  <span class="row-label">訂購數量：</span>
-                  <span class="row-value" id="valQty">× 1 個</span>
-                </div>
-                <div class="receipt-row">
-                  <span class="row-label">商品小計：</span>
-                  <span class="row-value highlight" id="valSubtotal">NT$ 660</span>
-                </div>
-                <div class="receipt-row">
-                  <span class="row-label">外送運費：</span>
-                  <span class="row-value" id="valShipping">NT$ 0</span>
-                </div>
-                <div class="receipt-divider"></div>
-                <div class="receipt-row receipt-total-row">
-                  <span class="row-label">訂單總金額：</span>
-                  <span class="row-value total-price" id="valTotal">NT$ 660</span>
-                </div>
-                <div class="receipt-row budget-row" id="budgetRow">
-                  <span class="row-label">顧客預算上限：</span>
-                  <span class="row-value" id="valBudget">NT$ 700</span>
-                </div>
-                <div class="budget-status-pill" id="budgetStatusPill">
-                  ✅ 符合顧客預算內
-                </div>
-              </div>
-
-              <!-- 訂單回饋與錯誤提示條 -->
-              <div class="feedback-alert" id="feedbackAlert" style="display: none;">
-                <span class="feedback-icon" id="feedbackIcon">⚠️</span>
-                <span class="feedback-text" id="feedbackText">請檢查商品選擇</span>
-              </div>
-
-              <!-- 結帳按鈕 -->
-              <div class="checkout-action-row">
-                <button type="button" class="btn-primary btn-large btn-checkout" id="btnConfirmOrder">
-                  🛒 確認訂單並結帳！
+          <div class="painting-frame-wrapper">
+            <div class="ornate-gold-frame">
+              <div class="frame-inner">
+                <img id="painting-img" src="assets/paintings/pearl_girl.jpg" alt="世界名畫原作" class="original-painting">
+                <button id="btn-quick-zoom" class="quick-zoom-overlay" title="放大深入觀察">
+                  <span>🔍 點擊放大觀察細節</span>
                 </button>
               </div>
             </div>
+            <div id="painting-caption" class="painting-placard">
+              <div class="placard-title" id="placard-title">《戴珍珠耳環的少女》</div>
+              <div class="placard-museum" id="placard-museum">荷蘭海牙毛里茨之家博物館館藏</div>
+            </div>
           </div>
-        </aside>
-      </div>
+        </div>
+
+        <!-- 中間分隔指示標記 -->
+        <div class="comparison-divider">
+          <div class="divider-line"></div>
+          <div class="divider-badge">VS 模仿創作</div>
+          <div class="divider-line"></div>
+        </div>
+
+        <!-- 右側：玩家模仿工作區 -->
+        <div class="stage-panel">
+          <div class="panel-header">
+            <span class="panel-tag">✨ 你的模仿工作區</span>
+            <span id="equipped-count-tag" class="status-tag">已搭配 0 個道具</span>
+          </div>
+
+          <!-- 模仿舞台畫布容器 -->
+          <div class="stage-frame-wrapper">
+            <div id="makeover-stage" class="makeover-stage bg-pearl-dark">
+
+              <!-- 背景裝飾層（可隨構圖風格動態切換） -->
+              <div id="stage-bg-layer" class="stage-bg-layer"></div>
+
+              <!-- 角色與道具整體群組（受構圖 X 軸與縮放 Scale 控制） -->
+              <div id="character-actor-group" class="character-actor-group">
+
+                <!-- 角色插畫本體層 -->
+                <div id="chibi-character-container" class="chibi-character-container">
+                  <img id="chibi-base-img" src="assets/characters/pose_pearl_target.svg" alt="變裝角色" class="chibi-body-img">
+                </div>
+
+                <!-- 道具裝備槽位層（與角色精準對位） -->
+                <div id="slots-overlay" class="slots-overlay">
+                  <!-- 頭巾／帽子槽位 -->
+                  <div class="prop-slot slot-head" data-slot="head" title="頭頂／帽子槽位">
+                    <div class="slot-indicator">頭部</div>
+                    <div class="slot-content" id="slot-content-head"></div>
+                  </div>
+                  <!-- 頭巾後擺／髮飾槽位 -->
+                  <div class="prop-slot slot-hair-accent" data-slot="hair-accent" title="頭飾／披巾槽位">
+                    <div class="slot-indicator">披巾</div>
+                    <div class="slot-content" id="slot-content-hair-accent"></div>
+                  </div>
+                  <!-- 耳環槽位 -->
+                  <div class="prop-slot slot-ear" data-slot="ear" title="耳環槽位">
+                    <div class="slot-indicator">耳飾</div>
+                    <div class="slot-content" id="slot-content-ear"></div>
+                  </div>
+                  <!-- 臉部／眼鏡槽位 -->
+                  <div class="prop-slot slot-face" data-slot="face" title="面部槽位">
+                    <div class="slot-indicator">臉部</div>
+                    <div class="slot-content" id="slot-content-face"></div>
+                  </div>
+                  <!-- 身體／衣服／圍裙槽位 -->
+                  <div class="prop-slot slot-body" data-slot="body" title="服裝／圍裙槽位">
+                    <div class="slot-indicator">衣服</div>
+                    <div class="slot-content" id="slot-content-body"></div>
+                  </div>
+                  <!-- 頸部／圍巾槽位 -->
+                  <div class="prop-slot slot-neck" data-slot="neck" title="圍巾／頸部槽位">
+                    <div class="slot-indicator">頸部</div>
+                    <div class="slot-content" id="slot-content-neck"></div>
+                  </div>
+                  <!-- 手部／手持道具槽位 -->
+                  <div class="prop-slot slot-hand" data-slot="hand" title="手部／水壺槽位">
+                    <div class="slot-indicator">手持</div>
+                    <div class="slot-content" id="slot-content-hand"></div>
+                  </div>
+                </div>
+
+                <!-- 前景道具與桌子層（第 2 關倒牛奶的女僕專用麵包桌） -->
+                <div id="stage-foreground-table" class="stage-foreground-table" style="display: none;">
+                  <div class="rustic-table">
+                    <div class="table-surface"></div>
+                    <div class="prop-slot slot-table" data-slot="table" title="桌上前台槽位">
+                      <div class="slot-indicator">桌上</div>
+                      <div class="slot-content" id="slot-content-table"></div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              <!-- 拖曳中的視覺回饋浮層 -->
+              <div id="drag-ghost" class="drag-ghost" style="display: none;"></div>
+
+            </div>
+          </div>
+        </div>
+
+      </main>
+
+      <!-- 底部控制抽屜與操作面板 -->
+      <footer id="bottom-dock">
+
+        <!-- 標籤頁切換按鈕列 -->
+        <div class="dock-tabs">
+          <button class="dock-tab active" data-tab="props">
+            <span>🧺 生活道具欄</span>
+          </button>
+          <button class="dock-tab" data-tab="pose">
+            <span>🧍 姿勢調整</span>
+          </button>
+          <button class="dock-tab" data-tab="composition">
+            <span>📐 構圖調整</span>
+          </button>
+        </div>
+
+        <!-- 標籤頁 1：日常道具欄 -->
+        <div id="tab-props" class="tab-panel active">
+          <div class="shelf-instruction">
+            <span>可拖曳道具至角色身上，或點擊道具卡片再點擊槽位放置。點擊已裝備的道具可卸下！</span>
+          </div>
+          <div id="props-shelf" class="props-shelf-container">
+            <!-- 道具卡片由 JS 動態生成 -->
+          </div>
+        </div>
+
+        <!-- 標籤頁 2：姿勢調整 -->
+        <div id="tab-pose" class="tab-panel">
+          <div class="pose-controls-grid">
+            <div class="control-box">
+              <div class="control-title">👤 人物身體與面向</div>
+              <div id="pose-buttons" class="option-button-group">
+                <!-- 姿勢按鈕由 JS 根據關卡生成 -->
+              </div>
+            </div>
+            <div class="control-box">
+              <div class="control-title">👀 眼神與表情</div>
+              <div id="expression-buttons" class="option-button-group">
+                <!-- 表情按鈕由 JS 根據關卡生成 -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 標籤頁 3：構圖調整 -->
+        <div id="tab-composition" class="tab-panel">
+          <div class="comp-controls-grid">
+            <!-- 人物左右位置調整 -->
+            <div class="comp-control-group">
+              <div class="slider-info">
+                <span class="slider-label">↔️ 人物左右位置：</span>
+                <span id="pos-x-val" class="slider-badge">置中 (50%)</span>
+              </div>
+              <div class="slider-row">
+                <span class="range-bound">靠左</span>
+                <input type="range" id="slider-pos-x" min="20" max="80" step="5" value="50" aria-label="人物左右位置">
+                <span class="range-bound">靠右</span>
+              </div>
+            </div>
+
+            <!-- 人物大小/鏡頭縮放調整 -->
+            <div class="comp-control-group">
+              <div class="slider-info">
+                <span class="slider-label">🔍 人物大小比例：</span>
+                <span id="scale-val" class="slider-badge">標準 (100%)</span>
+              </div>
+              <div class="slider-row">
+                <span class="range-bound">全身遠景</span>
+                <input type="range" id="slider-scale" min="80" max="120" step="5" value="100" aria-label="人物大小比例">
+                <span class="range-bound">特寫半身</span>
+              </div>
+            </div>
+
+            <!-- 背景風格切換 -->
+            <div class="comp-control-group">
+              <div class="slider-info">
+                <span class="slider-label">🖼️ 背景氛圍：</span>
+                <span id="bg-name-val" class="slider-badge">經典名畫背景</span>
+              </div>
+              <div id="bg-buttons" class="option-button-group">
+                <!-- 背景選項按鈕由 JS 依關卡動態生成 -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 底部主操作功能按鈕列 -->
+        <div class="dock-actions">
+          <button id="btn-reset-stage" class="btn-secondary" title="清空已搭配的道具與重設設定">
+            <span>🔄 重設本關</span>
+          </button>
+          <button id="btn-finish-makeover" class="btn-primary btn-finish" title="提交作品並進行藝術相似度評分">
+            <span>✨ 完成模仿！</span>
+          </button>
+        </div>
+
+      </footer>
+
     </section>
 
-    <!-- ================= 畫面三：最終通關慶祝畫面 ================= -->
-    <section class="screen screen-victory" id="screenVictory">
-      <div class="victory-card">
-        <div class="victory-header">
-          <div class="medal-icon-wrap">
-            <img src="assets/decorations/medal-gold.svg" alt="金牌" class="img-gold-medal">
-          </div>
-          <h2 class="victory-title">🎉 恭喜榮獲「金牌蛋糕小店長」！ 🎉</h2>
-          <p class="victory-subtitle">三位顧客的生日蛋糕訂單皆已圓滿完成！</p>
+    <!-- 3. 名畫放大深入觀察彈窗 (Modal Inspect) -->
+    <div id="modal-inspect" class="modal-overlay">
+      <div class="modal-card inspect-card">
+        <button id="btn-close-inspect" class="modal-close-btn" title="關閉">✕</button>
+        <div class="inspect-header">
+          <div class="inspect-tag">🔍 名畫觀察放大鏡</div>
+          <h2 id="inspect-painting-title" class="inspect-title">《戴珍珠耳環的少女》細節觀察</h2>
+          <div id="inspect-painting-meta" class="inspect-meta">作者：約翰尼斯 ． 維梅爾（Johannes Vermeer）｜ 年份：約 1665 年</div>
         </div>
 
-        <div class="victory-illustration">
-          <img src="assets/characters/celebration-group.svg" alt="全體大合照" class="img-celebration-group">
-        </div>
-
-        <div class="victory-message-bubble">
-          <p>
-            「太厲害了！你成功完成了今天的每一筆生日蛋糕委託！<br>
-            你學會了<strong>從菜單尋找口味資訊</strong>、<strong>依據聚會人數選擇合適尺寸</strong>、<strong>看懂季節限定月份</strong>，還精確地<strong>計算了多顆蛋糕的外送運費與預算</strong>！<br>
-            生活中的每一筆聰明消費，都離不開仔細的閱讀與邏輯判斷！」
-          </p>
-        </div>
-
-        <!-- 三筆訂單完整結算收據明細 -->
-        <div class="final-receipts-summary">
-          <h3 class="summary-heading">📋 今日營業成果收據明細</h3>
-          
-          <div class="receipts-grid">
-            <!-- 訂單 1 -->
-            <div class="receipt-card">
-              <div class="receipt-card-header">
-                <span class="card-badge">訂單 1</span>
-                <h4>顧客：小晴（家庭派對）</h4>
-              </div>
-              <ul class="receipt-items-list">
-                <li><strong>蛋糕款式：</strong>🏰 城堡蛋糕</li>
-                <li><strong>尺寸規格：</strong>6 吋（適合 5 人分享）</li>
-                <li><strong>數量：</strong>1 個</li>
-                <li><strong>取貨方式：</strong>門市自取（運費 $0）</li>
-                <li><strong>口味特色：</strong>香草、水果與布丁夾層</li>
-                <li class="receipt-price-line"><strong>訂單金額：</strong>NT$ 660（預算 700 元內）</li>
-              </ul>
-              <div class="receipt-stamp">合格 ✅</div>
-            </div>
-
-            <!-- 訂單 2 -->
-            <div class="receipt-card">
-              <div class="receipt-card-header">
-                <span class="card-badge">訂單 2</span>
-                <h4>顧客：小樂（夏日芒果派對）</h4>
-              </div>
-              <ul class="receipt-items-list">
-                <li><strong>蛋糕款式：</strong>🥭 浪漫嘉年華</li>
-                <li><strong>尺寸規格：</strong>8 吋（適合 8 人分享）</li>
-                <li><strong>數量：</strong>1 個</li>
-                <li><strong>取貨方式：</strong>門市自取（運費 $0）</li>
-                <li><strong>限定月份：</strong>7～8 月限定（符合 7/20 派對）</li>
-                <li class="receipt-price-line"><strong>訂單金額：</strong>NT$ 990</li>
-              </ul>
-              <div class="receipt-stamp">合格 ✅</div>
-            </div>
-
-            <!-- 訂單 3 -->
-            <div class="receipt-card">
-              <div class="receipt-card-header">
-                <span class="card-badge">訂單 3</span>
-                <h4>顧客：小宇（公司多人慶生）</h4>
-              </div>
-              <ul class="receipt-items-list">
-                <li><strong>蛋糕款式：</strong>🍫 邱比特蛋糕</li>
-                <li><strong>尺寸規格：</strong>8 吋（巧克力基底）</li>
-                <li><strong>數量：</strong>2 個（單價 $880 × 2 = $1,760）</li>
-                <li><strong>取貨方式：</strong>外送（下午 3 點，運費 $200）</li>
-                <li><strong>預約規則：</strong>符合提前結單與外送時段</li>
-                <li class="receipt-price-line"><strong>訂單總額：</strong>NT$ 1,960（預算 2,000 元內）</li>
-              </ul>
-              <div class="receipt-stamp">合格 ✅</div>
+        <div class="inspect-body">
+          <div class="inspect-left">
+            <div class="inspect-img-frame">
+              <img id="inspect-img" src="assets/paintings/pearl_girl.jpg" alt="名畫放大圖" class="inspect-full-img">
             </div>
           </div>
-
-          <!-- 三筆訂單總營收 (清楚標記為三位顧客之總和) -->
-          <div class="grand-total-banner">
-            <div class="grand-total-left">
-              <span class="grand-label">今日三位顧客訂單營業總額：</span>
-              <span class="grand-math-formula">（NT$ 660 ＋ NT$ 990 ＋ NT$ 1,960）</span>
-            </div>
-            <div class="grand-total-right">
-              <span class="grand-amount">NT$ 3,610 元</span>
-            </div>
+          <div class="inspect-right">
+            <h3 class="inspect-section-title">💡 藝術助理觀察指南</h3>
+            <ul class="inspect-guide-list">
+              <li>
+                <strong>👗 人物服裝與頭飾：</strong>
+                <span id="guide-clothes">少女頭上包覆著鮮明的藍色頭巾，後方垂下金黃色的披巾，身穿棕色大衣。</span>
+              </li>
+              <li>
+                <strong>👤 面向與眼神：</strong>
+                <span id="guide-pose">身體微微側向，頭部轉向觀眾，眼睛專注地凝視前方，雙唇微張。</span>
+              </li>
+              <li>
+                <strong>✨ 視覺亮點物品：</strong>
+                <span id="guide-props">耳朵上有一顆巨大的水滴形珍珠耳環，在深色背景中閃爍微光。</span>
+              </li>
+              <li>
+                <strong>🎨 構圖與色彩：</strong>
+                <span id="guide-composition">深色沉靜背景烘托出少女鮮豔的藍黃頭巾與珍珠光澤，人物位於畫面中央偏前。</span>
+              </li>
+              <li>
+                <strong>🧺 生活替代妙方：</strong>
+                <span id="guide-life-tip">可以用家裡的「藍色毛巾」摺成頭巾，搭配「黃色布料」垂在腦後，再找一顆「珍珠飾品」掛在耳邊！</span>
+              </li>
+            </ul>
           </div>
-          <p class="grand-total-disclaimer">
-            💡 <strong>店長提示說明：</strong>此金額為三位不同顧客之各自訂單費用加總，非單一顧客之消費。
-          </p>
         </div>
 
-        <div class="victory-actions">
-          <button type="button" class="btn-primary btn-large" id="btnPlayAgain">
-            🔄 再玩一次
-          </button>
-          <button type="button" class="btn-secondary btn-large" id="btnBackHome">
-            🏠 返回首頁
+        <div class="modal-footer">
+          <button id="btn-inspect-got-it" class="btn-primary">
+            <span>我知道了，回工作室變裝！ ➔</span>
           </button>
         </div>
       </div>
-    </section>
+    </div>
 
-  </main>
+    <!-- 4. 關卡評分與回饋彈窗 (Modal Score) -->
+    <div id="modal-score" class="modal-overlay">
+      <div class="modal-card score-card">
+        <div class="score-header-decor">✨ 🎨 🏆</div>
+        <h2 id="score-rank-title" class="score-rank-title">傳說級變裝大師！</h2>
+        <div class="score-level-name" id="score-level-name">第一關：神祕的珍珠少女 ． 成果評分</div>
 
-  <!-- ================= 彈窗一：單關成功慶祝彈窗 ================= -->
-  <div class="modal-overlay" id="modalStageSuccess">
-    <div class="modal-card modal-stage-success-card">
-      <div class="success-packaging-anim">
-        <div class="box-anim-wrap">
-          <img src="assets/decorations/box-closed.svg" alt="精美蛋糕外帶盒" class="img-box-anim">
+        <!-- 左右並列成果對比 -->
+        <div class="score-comparison-row">
+          <div class="score-thumb-box">
+            <div class="score-thumb-label">🏛️ 原作</div>
+            <img id="score-original-thumb" src="assets/paintings/pearl_girl.jpg" alt="原作縮圖" class="score-thumb-img">
+          </div>
+          <div class="score-vs-badge">VS</div>
+          <div class="score-thumb-box">
+            <div class="score-thumb-label">✨ 你的模仿作品</div>
+            <div id="score-player-preview" class="score-player-preview"></div>
+          </div>
         </div>
-        <div class="gold-star-anim">
-          <img src="assets/decorations/star-filled.svg" alt="獲得星星" class="img-star-anim">
+
+        <!-- 四大評分項目條列 -->
+        <div class="score-breakdown-card">
+          <div class="score-item">
+            <div class="score-item-header">
+              <span class="score-item-name">🧺 道具搭配（滿分 40 分）</span>
+              <span id="score-val-props" class="score-item-points">40 分</span>
+            </div>
+            <div class="score-progress-bar"><div id="bar-props" class="score-fill" style="width: 100%;"></div></div>
+          </div>
+
+          <div class="score-item">
+            <div class="score-item-header">
+              <span class="score-item-name">🧍 姿勢模仿（滿分 30 分）</span>
+              <span id="score-val-pose" class="score-item-points">30 分</span>
+            </div>
+            <div class="score-progress-bar"><div id="bar-pose" class="score-fill" style="width: 100%;"></div></div>
+          </div>
+
+          <div class="score-item">
+            <div class="score-item-header">
+              <span class="score-item-name">📐 構圖還原（滿分 20 分）</span>
+              <span id="score-val-comp" class="score-item-points">20 分</span>
+            </div>
+            <div class="score-progress-bar"><div id="bar-comp" class="score-fill" style="width: 100%;"></div></div>
+          </div>
+
+          <div class="score-item">
+            <div class="score-item-header">
+              <span class="score-item-name">💡 創意運用（滿分 10 分）</span>
+              <span id="score-val-creative" class="score-item-points">10 分</span>
+            </div>
+            <div class="score-progress-bar"><div id="bar-creative" class="score-fill" style="width: 100%;"></div></div>
+          </div>
+
+          <div class="score-total-row">
+            <span class="total-label">總得分</span>
+            <span id="score-total-val" class="total-val">100 分</span>
+          </div>
+        </div>
+
+        <!-- 具體回饋與教育提示 -->
+        <div class="feedback-box">
+          <div class="feedback-title">🎯 藝術導師的具體回饋：</div>
+          <p id="feedback-detail-text" class="feedback-text">
+            頭巾和耳環搭配得非常好！如果人物再微微側身轉向右邊一點，神韻就會跟原畫一模一樣囉！
+          </p>
+          <div id="education-summary-box" class="education-summary-box">
+            💡 <strong>教育亮點：</strong><span id="education-summary-text">學生能觀察到服裝配色、人物角度及背景對整體構圖的影響。</span>
+          </div>
+        </div>
+
+        <div class="modal-footer score-footer">
+          <button id="btn-readjust" class="btn-secondary">
+            <span>🔄 再調整一次</span>
+          </button>
+          <button id="btn-next-level" class="btn-primary">
+            <span id="next-level-btn-text">前往下一關 ➔</span>
+          </button>
         </div>
       </div>
+    </div>
 
-      <div class="success-content">
-        <span class="success-pill">🌟 訂單完成！</span>
-        <h3 class="success-title" id="stageSuccessTitle">太棒了！第一筆訂單完成！</h3>
-        <p class="success-message" id="stageSuccessMessage">
-          你幫小晴選到適合 5 人分享的蛋糕，而且沒有超出預算！第一筆訂單完成！
+    <!-- 5. 最終成果展畫面 (Exhibition Screen) -->
+    <section id="exhibition-screen" class="view-screen">
+      <div class="exhibition-wrapper">
+        <div class="gallery-ribbon">🏆 國家級藝術成果展</div>
+        <h1 class="gallery-title">《名畫變裝成果展！》</h1>
+        <p class="gallery-lead">
+          恭喜你完成三幅世界名畫挑戰！<br>
+          原來生活中的毛巾、帽子、圍裙和水壺，都能成為創作名畫的好幫手！<br>
+          仔細觀察、發揮想像，你也能成為名畫變裝大師！
         </p>
 
-        <div class="stage-receipt-mini" id="stageMiniReceipt">
-          <!-- 當關收據快速瀏覽 -->
+        <!-- 三大畫框展覽牆 -->
+        <div class="gallery-wall">
+
+          <!-- 作品 1 -->
+          <div class="exhibit-frame-card">
+            <div class="exhibit-gold-frame">
+              <div id="exhibit-work-1" class="exhibit-canvas-preview"></div>
+            </div>
+            <div class="exhibit-placard">
+              <div class="exhibit-title">《戴珍珠耳環的少女》仿作</div>
+              <div class="exhibit-score" id="exhibit-score-1">得分：100 分</div>
+              <div class="exhibit-grade" id="exhibit-grade-1">傳說級變裝大師</div>
+            </div>
+          </div>
+
+          <!-- 作品 2 -->
+          <div class="exhibit-frame-card">
+            <div class="exhibit-gold-frame">
+              <div id="exhibit-work-2" class="exhibit-canvas-preview"></div>
+            </div>
+            <div class="exhibit-placard">
+              <div class="exhibit-title">《倒牛奶的女僕》仿作</div>
+              <div class="exhibit-score" id="exhibit-score-2">得分：100 分</div>
+              <div class="exhibit-grade" id="exhibit-grade-2">傳說級變裝大師</div>
+            </div>
+          </div>
+
+          <!-- 作品 3 -->
+          <div class="exhibit-frame-card">
+            <div class="exhibit-gold-frame">
+              <div id="exhibit-work-3" class="exhibit-canvas-preview"></div>
+            </div>
+            <div class="exhibit-placard">
+              <div class="exhibit-title">《戴灰氈帽的自畫像》仿作</div>
+              <div class="exhibit-score" id="exhibit-score-3">得分：100 分</div>
+              <div class="exhibit-grade" id="exhibit-grade-3">傳說級變裝大師</div>
+            </div>
+          </div>
+
         </div>
 
-        <button type="button" class="btn-primary btn-large btn-next-stage" id="btnNextStage">
-          下一位顧客 ➔
-        </button>
+        <!-- 總榮譽面板 -->
+        <div class="grand-honor-banner">
+          <div class="honor-title">🎓 策展總評分</div>
+          <div class="honor-score" id="exhibit-total-score">總得分：300／300 分</div>
+          <div class="honor-badge" id="exhibit-grand-title">🌟 羅浮宮特聘 ． 傳說級名畫變裝大師 🌟</div>
+        </div>
+
+        <!-- 成果展動作按鈕 -->
+        <div class="exhibition-actions">
+          <button id="btn-download-certificate" class="btn-primary btn-large">
+            <span>📸 下載我的作品展（PNG 圖卡）</span>
+          </button>
+          <button id="btn-replay-game" class="btn-secondary">
+            <span>🔄 重新挑戰</span>
+          </button>
+          <button id="btn-back-home" class="btn-secondary">
+            <span>🏠 返回首頁</span>
+          </button>
+        </div>
+
       </div>
-    </div>
+    </section>
+
   </div>
 
-  <!-- ================= 彈窗二：店長手冊與訂購須知彈窗 ================= -->
-  <div class="modal-overlay" id="modalHandbook">
-    <div class="modal-card modal-handbook-card">
-      <div class="modal-header">
-        <div class="modal-title-group">
-          <span class="modal-icon">📖</span>
-          <h3>甜蜜生日蛋糕店 ． 店長手冊與訂購須知</h3>
-        </div>
-        <button type="button" class="btn-close-modal" id="btnCloseHandbook" aria-label="關閉手冊">×</button>
-      </div>
-
-      <!-- 導航分頁籤 -->
-      <div class="handbook-tabs">
-        <button type="button" class="tab-btn active" data-tab="tabMenu">🍰 六款蛋糕菜單</button>
-        <button type="button" class="tab-btn" data-tab="tabSizes">📏 尺寸與人數建議</button>
-        <button type="button" class="tab-btn" data-tab="tabShipping">🚚 外送運費標準</button>
-        <button type="button" class="tab-btn" data-tab="tabRules">📌 預訂與特殊規定</button>
-      </div>
-
-      <!-- 分頁內容 -->
-      <div class="handbook-tab-contents">
-        <!-- 分頁 1：菜單 -->
-        <div class="tab-content active" id="tabMenu">
-          <div class="handbook-table-wrap">
-            <table class="handbook-table">
-              <thead>
-                <tr>
-                  <th>蛋糕名稱</th>
-                  <th>口味與食材特色</th>
-                  <th>提供尺寸與售價</th>
-                  <th>特殊標籤／備註</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td><strong>1. 城堡</strong></td>
-                  <td>香草蛋糕搭配什錦水果和布丁夾層，以小巧卡士達泡芙裝飾，造型如同城堡。</td>
-                  <td>6 吋：660 元<br>8 吋：880 元<br>10 吋：1,100 元</td>
-                  <td><span class="badge-tag">人氣推薦</span></td>
-                </tr>
-                <tr>
-                  <td><strong>2. 浪漫嘉年華</strong></td>
-                  <td>芒果與椰子慕斯相遇，搭配明亮豐富的表層裝飾。</td>
-                  <td>6 吋：750 元<br>8 吋：990 元</td>
-                  <td><span class="badge-tag tag-summer">7～8 月限定</span></td>
-                </tr>
-                <tr>
-                  <td><strong>3. 邱比特</strong></td>
-                  <td>水蜜桃慕斯、焦糖慕斯搭配濃郁巧克力蛋糕，外層鮮奶油披覆。</td>
-                  <td>8 吋：880 元<br>10 吋：1,100 元<br><em>(無 6 吋)</em></td>
-                  <td><span class="badge-tag">濃郁巧克力</span></td>
-                </tr>
-                <tr>
-                  <td><strong>4. HAPPY TIME</strong></td>
-                  <td>鬆軟手指蛋糕裝盛焦糖洋梨丁及水果慕斯。</td>
-                  <td>6 吋：750 元<br>8 吋：990 元</td>
-                  <td><span class="badge-tag tag-pickup">限到店取貨</span></td>
-                </tr>
-                <tr>
-                  <td><strong>5. 珠寶音樂盒</strong></td>
-                  <td>香草蛋糕搭配起司布蕾夾層，以新鮮草莓裝飾。</td>
-                  <td>6 吋：880 元<br>8 吋：1,100 元</td>
-                  <td><span class="badge-tag tag-winter">12～2 月限定</span></td>
-                </tr>
-                <tr>
-                  <td><strong>6. 真情告白</strong></td>
-                  <td>食品級墨水印製材料，可將顧客提供的照片完整呈現於蛋糕上。</td>
-                  <td>6 吋：880 元<br>8 吋：1,100 元</td>
-                  <td><span class="badge-tag tag-advance">需 7 天前預訂並附照片</span></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- 分頁 2：尺寸與人數 -->
-        <div class="tab-content" id="tabSizes">
-          <div class="handbook-info-grid">
-            <div class="info-card">
-              <div class="info-card-header">🍰 6 吋蛋糕</div>
-              <div class="info-card-body">
-                <p class="highlight-people">適合 4～6 人 分享</p>
-                <p>小家庭、三五好友或小型聚會最佳選擇。</p>
-              </div>
-            </div>
-            <div class="info-card">
-              <div class="info-card-header">🍰 8 吋蛋糕</div>
-              <div class="info-card-body">
-                <p class="highlight-people">適合 6～8 人 分享</p>
-                <p>中型朋友聚會、部門同仁共同慶生最佳尺寸。</p>
-              </div>
-            </div>
-            <div class="info-card">
-              <div class="info-card-header">🍰 10 吋蛋糕</div>
-              <div class="info-card-body">
-                <p class="highlight-people">適合 8～10 人 分享</p>
-                <p>多人大型派對、全公司歡慶活動最適宜。</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 分頁 3：運費表 -->
-        <div class="tab-content" id="tabShipping">
-          <p class="tab-intro">本店外送服務委託專業冷藏宅配，運費按尺寸與箱數計收：</p>
-          <div class="handbook-table-wrap">
-            <table class="handbook-table text-center">
-              <thead>
-                <tr>
-                  <th>尺寸</th>
-                  <th>數量：1 個</th>
-                  <th>數量：2 個</th>
-                  <th>外送限制說明</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td><strong>6 吋</strong></td>
-                  <td>150 元</td>
-                  <td>180 元</td>
-                  <td>可正常冷藏外送</td>
-                </tr>
-                <tr>
-                  <td><strong>8 吋</strong></td>
-                  <td>150 元</td>
-                  <td>200 元</td>
-                  <td>可正常冷藏外送</td>
-                </tr>
-                <tr>
-                  <td><strong>10 吋</strong></td>
-                  <td>200 元</td>
-                  <td><span class="text-danger font-bold">不可外送</span></td>
-                  <td>2 個 10 吋超過配送體積，不提供外送</td>
-                </tr>
-                <tr>
-                  <td><strong>門市自取</strong></td>
-                  <td colspan="3"><span class="text-success font-bold">一律免運費（0 元）</span></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <p class="text-subnote">⚠️ 特別提醒：文章中未提供混合尺寸的外送運費，因此本店限制外送訂單須為相同尺寸。</p>
-        </div>
-
-        <!-- 分頁 4：規則 -->
-        <div class="tab-content" id="tabRules">
-          <ul class="rules-list">
-            <li><strong>結單時間：</strong>每日預訂結單時間為<strong>下午 4 點</strong>，下午 4 點後的訂購視為隔日訂單。</li>
-            <li><strong>外送時間限制：</strong>外送服務僅限<strong>下午 2 點（14:00）以後</strong>送達。</li>
-            <li><strong>提前取貨：</strong>若需要在上午或提前取貨，需自行至門市自取。</li>
-            <li><strong>門市自取限定：</strong>HAPPY TIME 蛋糕為維護手工手指餅乾與慕斯細緻造型，<strong>限到店取貨</strong>，不提供外送。</li>
-            <li><strong>照片相片蛋糕：</strong>「真情告白」照片蛋糕製作需要排程印製，必須於<strong> 7 天前預訂</strong>並提供清楚的照片檔案。</li>
-            <li><strong>跨年度限定月份：</strong>「珠寶音樂盒」限定販售月份為 12～2 月（包含 12 月、1 月、2 月皆有販售）。</li>
-          </ul>
-        </div>
-      </div>
-
-      <div class="modal-footer">
-        <button type="button" class="btn-primary" id="btnHandbookOk">我知道了，繼續服務客人</button>
-      </div>
-    </div>
-  </div>
+  <!-- 用於本機產生 1920x1080 作品紀念海報的隱藏 Canvas -->
+  <canvas id="export-canvas" width="1920" height="1080" style="display: none;"></canvas>
 
   <script src="game.js"></script>
 </body>
