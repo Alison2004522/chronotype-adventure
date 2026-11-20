@@ -47,7 +47,13 @@ const requiredFiles = [
   "assets/icons/star_empty.svg",
   "assets/icons/trophy.svg",
   "assets/icons/receipt.svg",
-  "assets/icons/coin.svg"
+  "assets/icons/coin.svg",
+  "assets/cakes/castle.png",
+  "assets/cakes/summer.png",
+  "assets/cakes/cupid.png",
+  "assets/cakes/happy-time.png",
+  "assets/cakes/jewelry-box.png",
+  "assets/cakes/confession.png"
 ];
 
 requiredFiles.forEach((file) => {

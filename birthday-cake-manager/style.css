@@ -619,6 +619,31 @@ body {
   transform: scale(1.05);
 }
 
+.zoom-badge {
+  position: absolute;
+  bottom: 6px;
+  right: 6px;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(2px);
+  color: var(--color-caramel-deep);
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  border: 1px solid #E0D4C5;
+  pointer-events: none;
+  opacity: 0.85;
+  transition: all var(--transition-fast);
+}
+
+.cake-card:hover .zoom-badge {
+  opacity: 1;
+  background: #FFFFFF;
+  color: var(--color-pink-primary);
+  border-color: var(--color-pink-soft);
+  transform: scale(1.05);
+}
+
 /* 圖片未就位時的優雅占位盤（零 Emoji、零 AI 生成，保持純淨） */
 .img-placeholder-box {
   width: 100%;

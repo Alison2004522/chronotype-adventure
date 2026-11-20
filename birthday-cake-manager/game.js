@@ -609,9 +609,10 @@
           .join("");
 
         card.innerHTML = `
-          <div class="cake-img-wrap" title="點擊查看大圖">
-            <!-- 嘗試載入使用者提供的圖片，若尚未放置則平滑進入占位盤 -->
+          <div class="cake-img-wrap" title="點擊查看蛋糕大圖">
+            <!-- 載入雲端蛋糕真實照片 -->
             <img src="${cake.image}" alt="${cake.name}" loading="lazy" class="cake-img-el">
+            <span class="zoom-badge">🔍 點擊放大</span>
             <div class="img-placeholder-box" style="display: none;">
               <div class="plate-drawing"></div>
               <span class="ph-cake-title">${cake.name}</span>
@@ -636,6 +637,15 @@
         imgEl.addEventListener("error", () => {
           imgEl.style.display = "none";
           placeholderEl.style.display = "flex";
+        });
+
+        // 點擊圖片區塊：同時選取並展開大圖查看
+        const imgWrap = card.querySelector(".cake-img-wrap");
+        imgWrap.addEventListener("click", (e) => {
+          e.stopPropagation();
+          this.sound.playClick();
+          this.selectCake(cake.id);
+          this.openLightbox(cake);
         });
 
         // 點選卡片挑選商品
@@ -1155,6 +1165,16 @@
     showVictoryScreen() {
       this.sound.playSuccess();
       this.showScreen("victory-screen");
+    }
+
+    // 開啟蛋糕大圖預覽
+    openLightbox(cake) {
+      this.dom.lightboxCakeName.textContent = `🎂 ${cake.name} - 蛋糕大圖查看`;
+      this.dom.lightboxImgContainer.innerHTML = `
+        <img src="${cake.image}" alt="${cake.name}" style="max-width:100%; max-height:350px; object-fit:contain; border-radius:10px; box-shadow:0 4px 12px rgba(0,0,0,0.15);">
+      `;
+      this.dom.lightboxDesc.textContent = `${cake.name}：${cake.description}（${cake.tags.join(" ． ")}）`;
+      this.openModal(this.dom.modalLightbox);
     }
 
     // 重新開始完整遊戲

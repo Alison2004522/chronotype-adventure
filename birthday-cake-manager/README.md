@@ -102,19 +102,19 @@
 
 ### 蛋糕圖片檔名對照表
 
-請將您雲端素材庫中的 6 款蛋糕圖檔，放置於專案中的 `assets/cakes/` 資料夾內：
+已成功自雲端素材資料夾 `品學堂遊戲-生日蛋糕` 完整對應並導入專案：
 
-| 蛋糕名稱 | 目標路徑與檔名 | 說明 |
-|---|---|---|
-| **城堡** | `assets/cakes/castle.png` | 香草水果布丁泡芙蛋糕 |
-| **浪漫嘉年華** | `assets/cakes/summer.png` | 芒果椰子慕斯蛋糕 |
-| **邱比特** | `assets/cakes/cupid.png` | 巧克力焦糖水蜜桃蛋糕 |
-| **HAPPY TIME** | `assets/cakes/happy-time.png` | 洋梨手指水果慕斯蛋糕 |
-| **珠寶音樂盒** | `assets/cakes/jewelry-box.png` | 草莓起司布蕾蛋糕 |
-| **真情告白** | `assets/cakes/confession.png` | 食品級相片印製蛋糕 |
+| 蛋糕名稱 | 原始雲端圖檔 | 專案載入路徑 | 狀態 |
+|---|---|---|:---:|
+| **城堡** | `城堡-蛋糕圖片.jpg` | `assets/cakes/castle.png` (`castle.jpg`) | ✅ 已成功整合 |
+| **浪漫嘉年華** | `浪漫嘉年華-蛋糕圖片.jpg` | `assets/cakes/summer.png` (`summer.jpg`) | ✅ 已成功整合 |
+| **邱比特** | `邱比特-蛋糕圖片.jpg` | `assets/cakes/cupid.png` (`cupid.jpg`) | ✅ 已成功整合 |
+| **HAPPY TIME** | `HAPPY　TIME-蛋糕圖片.jpg` | `assets/cakes/happy-time.png` (`happy-time.jpg`) | ✅ 已成功整合 |
+| **珠寶音樂盒** | `珠寶音樂盒-蛋糕圖片.jpg` | `assets/cakes/jewelry-box.png` (`jewelry-box.jpg`) | ✅ 已成功整合 |
+| **真情告白** | `真情告白-蛋糕圖片.jpg` | `assets/cakes/confession.png` (`confession.jpg`) | ✅ 已成功整合 |
 
-> 💡 **自動容錯與占位說明**：  
-> 若圖檔尚未放入資料夾，系統會透過優雅的質感托盤占位區與清晰文字標籤（包含所需檔名）呈現，絕不顯示破碎圖示，一旦圖檔加入即可自動完美顯示！
+> 💡 **自動放大查看說明**：  
+> 點擊任意蛋糕卡片上的照片區域，可開啟大圖預覽燈箱，檢視蛋糕真實細緻裝飾！
 
 ---
 
