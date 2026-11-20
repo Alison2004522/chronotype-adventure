@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 240" width="100%" height="100%">
+  <defs>
+    <filter id="shadow-yu" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="4" stdDeviation="3" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+  <g filter="url(#shadow-yu)">
+    <!-- Legs & Trousers -->
+    <rect x="80" y="195" width="15" height="28" rx="6" fill="#37474F"/>
+    <rect x="105" y="195" width="15" height="28" rx="6" fill="#37474F"/>
+    <!-- Shoes -->
+    <ellipse cx="87" cy="225" rx="14" ry="7" fill="#263238"/>
+    <ellipse cx="113" cy="225" rx="14" ry="7" fill="#263238"/>
+
+    <!-- Collared Shirt -->
+    <path d="M62 135 Q100 125 138 135 L142 195 Q100 200 58 195 Z" fill="#E3F2FD" stroke="#90CAF9" stroke-width="1.5"/>
+    <!-- Collar -->
+    <polygon points="90,135 100,150 82,142" fill="#FFFFFF" stroke="#90CAF9" stroke-width="1.5"/>
+    <polygon points="110,135 100,150 118,142" fill="#FFFFFF" stroke="#90CAF9" stroke-width="1.5"/>
+    <!-- Tie -->
+    <polygon points="98,150 102,150 105,178 100,185 95,178" fill="#5C6BC0"/>
+
+    <!-- Arms -->
+    <!-- Holding order envelope / memo pad -->
+    <path d="M62 135 Q45 160 70 172" fill="none" stroke="#FFE0B2" stroke-width="12" stroke-linecap="round"/>
+    <path d="M138 135 Q155 160 130 172" fill="none" stroke="#FFE0B2" stroke-width="12" stroke-linecap="round"/>
+    <!-- Company Memo Folder in hands -->
+    <rect x="80" y="165" width="40" height="25" rx="2" fill="#78909C"/>
+    <rect x="84" y="168" width="32" height="19" rx="1" fill="#FFFFFF"/>
+    <line x1="88" y1="174" x2="112" y2="174" stroke="#B0BEC5" stroke-width="1.5"/>
+    <line x1="88" y1="179" x2="108" y2="179" stroke="#B0BEC5" stroke-width="1.5"/>
+
+    <!-- Head -->
+    <circle cx="100" cy="85" r="42" fill="#FFE0B2"/>
+    <!-- Neat Side-part Hair -->
+    <path d="M58 85 Q54 48 85 45 Q125 42 142 65 Q145 85 142 90 Z" fill="#2C3437"/>
+    <path d="M60 75 Q75 62 100 68 Q125 65 140 78 Q115 68 85 70 Z" fill="#2C3437"/>
+
+    <circle cx="58" cy="88" r="8" fill="#FFE0B2"/>
+    <circle cx="142" cy="88" r="8" fill="#FFE0B2"/>
+
+    <!-- Glasses -->
+    <rect x="68" y="78" width="26" height="20" rx="6" fill="none" stroke="#5D4037" stroke-width="3"/>
+    <rect x="106" y="78" width="26" height="20" rx="6" fill="none" stroke="#5D4037" stroke-width="3"/>
+    <line x1="94" y1="88" x2="106" y2="88" stroke="#5D4037" stroke-width="3"/>
+    <line x1="58" y1="85" x2="68" y2="85" stroke="#5D4037" stroke-width="2"/>
+    <line x1="132" y1="85" x2="142" y2="85" stroke="#5D4037" stroke-width="2"/>
+
+    <!-- Eyes behind glasses -->
+    <ellipse cx="81" cy="88" rx="4.5" ry="6" fill="#263238"/>
+    <ellipse cx="119" cy="88" rx="4.5" ry="6" fill="#263238"/>
+    <circle cx="79.5" cy="86" r="1.8" fill="#FFFFFF"/>
+    <circle cx="117.5" cy="86" r="1.8" fill="#FFFFFF"/>
+
+    <!-- Blush -->
+    <ellipse cx="73" cy="99" rx="6" ry="3.5" fill="#FF8A80" opacity="0.5"/>
+    <ellipse cx="127" cy="99" rx="6" ry="3.5" fill="#FF8A80" opacity="0.5"/>
+
+    <!-- Eyebrows -->
+    <path d="M72 73 Q81 70 88 73" fill="none" stroke="#2C3437" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M112 73 Q119 70 128 73" fill="none" stroke="#2C3437" stroke-width="2.5" stroke-linecap="round"/>
+
+    <!-- Polite Smile -->
+    <path d="M94 99 Q100 106 106 99" fill="none" stroke="#C2185B" stroke-width="2.5" stroke-linecap="round"/>
+  </g>
+</svg>

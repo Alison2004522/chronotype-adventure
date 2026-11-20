@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 120" width="100%" height="100%">
+  <path d="M15 10 L85 10 L85 105 L78 100 L71 105 L64 100 L57 105 L50 100 L43 105 L36 100 L29 105 L22 100 L15 105 Z" fill="#FFFDF8" stroke="#D7CCC8" stroke-width="2"/>
+  <rect x="25" y="22" width="50" height="6" rx="2" fill="#F6A9B8"/>
+  <line x1="25" y1="38" x2="75" y2="38" stroke="#BCAAA4" stroke-width="2" stroke-dasharray="3 2"/>
+  <line x1="25" y1="48" x2="60" y2="48" stroke="#8D6E63" stroke-width="3" stroke-linecap="round"/>
+  <line x1="68" y1="48" x2="75" y2="48" stroke="#8D6E63" stroke-width="3" stroke-linecap="round"/>
+  <line x1="25" y1="58" x2="55" y2="58" stroke="#BCAAA4" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="65" y1="58" x2="75" y2="58" stroke="#BCAAA4" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="25" y1="68" x2="50" y2="68" stroke="#BCAAA4" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="65" y1="68" x2="75" y2="68" stroke="#BCAAA4" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="25" y1="78" x2="75" y2="78" stroke="#8D6E63" stroke-width="2"/>
+  <line x1="25" y1="88" x2="45" y2="88" stroke="#D81B60" stroke-width="3.5" stroke-linecap="round"/>
+  <line x1="55" y1="88" x2="75" y2="88" stroke="#D81B60" stroke-width="3.5" stroke-linecap="round"/>
+</svg>

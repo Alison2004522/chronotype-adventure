@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>《生日蛋糕小店長》（Birthday Cake Shop Manager）- 互動式教育遊戲</title>
+  <meta name="description" content="依據生日蛋糕菜單與訂購規則，扮演蛋糕小店長完成三位顧客的需求挑戰！">
+  <link rel="icon" type="image/svg+xml" href="assets/icons/star_gold.svg">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- 主遊戲容器（16:9 最適化與自適應響應式佈局） -->
+  <div id="game-app">
+
+    <!-- 頂部導航 HUD 資訊列 -->
+    <header id="game-hud">
+      <div class="hud-left">
+        <span class="hud-logo">🎂 《生日蛋糕小店長》</span>
+        <span id="hud-level-badge" class="level-pill">今日訂單：1／3</span>
+      </div>
+
+      <div class="hud-center">
+        <!-- 三顆星進度指示器 -->
+        <div class="star-progress-container" title="闖關星級進度">
+          <div class="star-slot" id="star-slot-1">
+            <img src="assets/icons/star_empty.svg" alt="關卡 1 星星" class="star-icon">
+          </div>
+          <div class="star-slot" id="star-slot-2">
+            <img src="assets/icons/star_empty.svg" alt="關卡 2 星星" class="star-icon">
+          </div>
+          <div class="star-slot" id="star-slot-3">
+            <img src="assets/icons/star_empty.svg" alt="關卡 3 星星" class="star-icon">
+          </div>
+        </div>
+      </div>
+
+      <div class="hud-right">
+        <button id="btn-open-rules" class="hud-btn" title="查看完整菜單與訂購須知">
+          <span>📖 菜單與須知</span>
+        </button>
+        <button id="btn-toggle-sound" class="hud-btn sound-btn" title="切換音效">
+          <span id="sound-icon">🔊</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- 1. 遊戲開始畫面 -->
+    <section id="start-screen" class="view-screen active">
+      <div class="start-card">
+        <div class="bakery-banner-flag">🎉 甜蜜生日蛋糕店 ． 開張大吉 🎉</div>
+        <h1 class="game-main-title">《生日蛋糕小店長》</h1>
+        <div class="game-subtitle">Birthday Cake Shop Manager ． 生活數學與閱讀理解挑戰</div>
+
+        <div class="start-hero-visual">
+          <div class="hero-character-box">
+            <img src="assets/characters/manager_normal.svg" alt="Q 版小店長" class="start-manager-img">
+          </div>
+          <div class="floating-cake-preview">
+            <div class="preview-badge">✨ 今日熱門推薦</div>
+            <div class="preview-text">城堡 ． 浪漫嘉年華 ． 邱比特</div>
+          </div>
+        </div>
+
+        <div class="start-story-bubble">
+          <p class="story-lead">歡迎光臨！我是烘焙實習小店長！</p>
+          <p>
+            今天店裡有三位顧客要訂生日蛋糕！<br>
+            每位客人的<strong>人數、口味喜好、預算</strong>與<strong>取貨方式</strong>都不一樣喔。<br>
+            你能仔細閱讀菜單與訂購規則，幫大家挑出最合適的蛋糕並完成訂單嗎？
+          </p>
+        </div>
+
+        <div class="start-level-preview-bar">
+          <div class="level-tag-step">
+            <span class="step-num">1</span>
+            <span class="step-desc">精打細算的生日派對</span>
+          </div>
+          <div class="step-arrow">➔</div>
+          <div class="level-tag-step">
+            <span class="step-num">2</span>
+            <span class="step-desc">夏日芒果派對</span>
+          </div>
+          <div class="step-arrow">➔</div>
+          <div class="level-tag-step">
+            <span class="step-num">3</span>
+            <span class="step-desc">外送訂單大挑戰</span>
+          </div>
+        </div>
+
+        <div class="start-action-row">
+          <button id="btn-start-game" class="btn-primary btn-large">
+            <span>🍰 開始營業！</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. 關卡主遊玩畫面 -->
+    <section id="game-screen" class="view-screen">
+      <div class="workspace-grid">
+
+        <!-- 左側：顧客訂單需求卡片 -->
+        <aside class="customer-order-panel">
+          <div class="panel-header-badge">
+            <span id="current-level-title">第一關：精打細算的生日派對</span>
+          </div>
+
+          <div class="customer-profile-card">
+            <div class="customer-avatar-box">
+              <img id="customer-avatar-img" src="assets/characters/customer_qing.svg" alt="顧客角色" class="customer-img">
+            </div>
+            <div class="customer-meta">
+              <span class="customer-role-tag">今日客人</span>
+              <h2 id="customer-name" class="customer-name">小晴</h2>
+            </div>
+          </div>
+
+          <div class="speech-dialogue-bubble">
+            <div class="bubble-arrow"></div>
+            <p id="customer-dialogue-text">
+              「你好！我要幫家人準備生日蛋糕！我們總共有 5 個人，預算只有 700 元。希望吃到有水果和布丁的蛋糕。我們會自己來店裡拿，只買 1 個就好！」
+            </p>
+          </div>
+
+          <!-- 需求摘要條列標籤 -->
+          <div class="requirements-summary">
+            <div class="req-item">
+              <span class="req-label">👥 聚會人數</span>
+              <span id="req-headcount" class="req-val">5 人</span>
+            </div>
+            <div class="req-item">
+              <span class="req-label">💰 顧客預算</span>
+              <span id="req-budget" class="req-val">700 元</span>
+            </div>
+            <div class="req-item">
+              <span class="req-label">🍓 指定口味</span>
+              <span id="req-taste" class="req-val">水果與布丁</span>
+            </div>
+            <div class="req-item">
+              <span class="req-label">📦 取貨方式</span>
+              <span id="req-fulfillment" class="req-val">門市自取</span>
+            </div>
+            <div class="req-item">
+              <span class="req-label">🔢 訂購數量</span>
+              <span id="req-quantity" class="req-val">1 個</span>
+            </div>
+            <div id="req-date-row" class="req-item" style="display: none;">
+              <span class="req-label">📅 預訂日期</span>
+              <span id="req-date" class="req-val">-</span>
+            </div>
+          </div>
+
+          <!-- 提示按鈕 -->
+          <div class="customer-action-bar">
+            <button id="btn-open-hint" class="btn-hint">
+              <span>💡 查看小店長提示</span>
+            </button>
+          </div>
+        </aside>
+
+        <!-- 中央：六款蛋糕菜單展示區 -->
+        <main class="menu-selection-panel">
+          <div class="menu-panel-heading">
+            <h3 class="menu-title">🎂 蛋糕菜單（請點擊選擇一款商品）</h3>
+            <span class="menu-sub-tip">閱讀特色與標籤，點選最合適的商品</span>
+          </div>
+
+          <div id="cake-cards-grid" class="cake-cards-grid">
+            <!-- 6款蛋糕卡片由 JavaScript 動態生成渲染 -->
+          </div>
+        </main>
+
+        <!-- 右側：訂單客製設定與即時收銀台 -->
+        <aside class="order-cashier-panel">
+          <div class="cashier-card">
+            <div class="cashier-title-bar">
+              <span class="cashier-title">🧾 點單收銀台</span>
+              <span class="cashier-status-pill">即時試算</span>
+            </div>
+
+            <!-- 目前選取之蛋糕預覽 -->
+            <div id="selected-cake-summary" class="selected-cake-summary">
+              <div class="summary-thumbnail" id="summary-thumbnail">
+                <!-- 縮圖或占位 -->
+              </div>
+              <div class="summary-info">
+                <span class="summary-label">目前選擇商品</span>
+                <h4 id="summary-cake-name" class="summary-cake-name">請選擇蛋糕</h4>
+                <span id="summary-cake-tag" class="summary-cake-tag">-</span>
+              </div>
+            </div>
+
+            <!-- 尺寸選擇器 -->
+            <div class="config-block">
+              <label class="config-label">
+                <span>📏 選擇尺寸</span>
+                <span class="size-hint-text">（依人數建議挑選）</span>
+              </label>
+              <div id="size-options-container" class="size-btn-group">
+                <!-- 動態注入可選尺寸按鈕 -->
+              </div>
+            </div>
+
+            <!-- 數量選擇器 -->
+            <div class="config-block">
+              <label class="config-label">
+                <span>🔢 購買數量</span>
+                <span class="qty-hint-text">（本菜單限同尺寸 1～2 個）</span>
+              </label>
+              <div class="quantity-stepper">
+                <button id="btn-qty-minus" class="stepper-btn" title="減少數量" aria-label="減少數量">−</button>
+                <span id="display-quantity" class="stepper-value">1</span>
+                <button id="btn-qty-plus" class="stepper-btn" title="增加數量" aria-label="增加數量">＋</button>
+              </div>
+            </div>
+
+            <!-- 取貨方式選擇器 -->
+            <div class="config-block">
+              <label class="config-label">
+                <span>🚚 取貨方式</span>
+              </label>
+              <div class="fulfillment-toggle-group">
+                <button id="btn-fulfill-pickup" class="fulfill-btn active" data-type="pickup">
+                  <span class="f-icon">🏪</span>
+                  <span class="f-text">門市自取</span>
+                  <span class="f-fee">免運費</span>
+                </button>
+                <button id="btn-fulfill-delivery" class="fulfill-btn" data-type="delivery">
+                  <span class="f-icon">🛵</span>
+                  <span class="f-text">專人外送</span>
+                  <span class="f-fee">依表計費</span>
+                </button>
+              </div>
+              <!-- 外送限制或時間提示 -->
+              <div id="delivery-condition-note" class="condition-note" style="display: none;">
+                💡 提醒：外送服務僅限下午 2 點（14:00）以後，且當日下午 4 點前須完成預訂。
+              </div>
+            </div>
+
+            <!-- 收據金額即時試算表 -->
+            <div class="receipt-paper">
+              <div class="receipt-header">
+                <span>🎂 甜蜜蛋糕店 結帳明細</span>
+              </div>
+              <div class="receipt-body">
+                <div class="receipt-row">
+                  <span class="r-item" id="r-item-name">商品名稱：-</span>
+                  <span class="r-price" id="r-item-unit">單價：-</span>
+                </div>
+                <div class="receipt-row">
+                  <span class="r-item">購買數量：</span>
+                  <span class="r-price" id="r-item-qty">1 個</span>
+                </div>
+                <div class="receipt-row subtotal-row">
+                  <span class="r-item">商品小計：</span>
+                  <span class="r-price" id="r-subtotal">NT$ 0</span>
+                </div>
+                <div class="receipt-row shipping-row">
+                  <span class="r-item">外送運費：</span>
+                  <span class="r-price" id="r-shipping">NT$ 0</span>
+                </div>
+                <div class="receipt-divider"></div>
+                <div class="receipt-row total-row">
+                  <span class="r-item-total">訂單總金額：</span>
+                  <span class="r-price-total" id="r-grand-total">NT$ 0</span>
+                </div>
+                <!-- 預算對比欄位 -->
+                <div id="receipt-budget-feedback" class="receipt-budget-feedback">
+                  <!-- 動態注入預算提示 -->
+                </div>
+              </div>
+              <div class="receipt-zigzag"></div>
+            </div>
+
+            <!-- 確認訂單與重設按鈕 -->
+            <div class="cashier-actions">
+              <button id="btn-submit-order" class="btn-primary btn-block">
+                <span>✨ 確認訂單！</span>
+              </button>
+              <button id="btn-reset-order" class="btn-secondary btn-block">
+                <span>🔄 重新調整</span>
+              </button>
+            </div>
+          </div>
+        </aside>
+
+      </div>
+    </section>
+
+    <!-- 3. 最終通關畫面 -->
+    <section id="victory-screen" class="view-screen">
+      <div class="victory-container">
+        <div class="victory-header-box">
+          <div class="trophy-bounce">
+            <img src="assets/icons/trophy.svg" alt="金牌獎盃" class="trophy-img">
+          </div>
+          <h1 class="victory-title">🎉 金牌蛋糕小店長！ 🎉</h1>
+          <div class="victory-subtitle">恭喜通過全部訂單挑戰 ． 榮獲最高店長榮譽</div>
+        </div>
+
+        <div class="victory-story-box">
+          <p class="story-p">恭喜你成功完成三筆生日蛋糕訂單！</p>
+          <p class="story-p">
+            你學會了<strong>閱讀菜單、挑選蛋糕、比較價格，還能精準計算外送運費</strong>！<br>
+            生活中的每一筆聰明消費，都離不開仔細閱讀與生活數學。<br>
+            你已經成為最厲害的金牌蛋糕小店長！
+          </p>
+        </div>
+
+        <!-- 三張收據成果展示 -->
+        <div class="final-receipts-shelf">
+          <h3 class="shelf-title">📋 今日營業完成訂單記錄</h3>
+
+          <div class="receipt-cards-grid">
+            <!-- 訂單 1 -->
+            <div class="finished-receipt-card">
+              <div class="rc-header">
+                <span class="rc-badge">訂單 1</span>
+                <span class="rc-customer">顧客：小晴</span>
+              </div>
+              <div class="rc-body">
+                <div class="rc-cake-name">🏰 城堡（6 吋）</div>
+                <div class="rc-detail">口味：香草、什錦水果、布丁</div>
+                <div class="rc-detail">方式：門市自取（運費 0 元）</div>
+                <div class="rc-price">金額：660 元</div>
+              </div>
+              <div class="rc-footer">
+                <span class="rc-status-check">✅ 符合預算與 5 人分享</span>
+              </div>
+            </div>
+
+            <!-- 訂單 2 -->
+            <div class="finished-receipt-card">
+              <div class="rc-header">
+                <span class="rc-badge">訂單 2</span>
+                <span class="rc-customer">顧客：小樂</span>
+              </div>
+              <div class="rc-body">
+                <div class="rc-cake-name">🥭 浪漫嘉年華（8 吋）</div>
+                <div class="rc-detail">口味：芒果、椰子慕斯</div>
+                <div class="rc-detail">方式：門市自取（運費 0 元）</div>
+                <div class="rc-price">金額：990 元</div>
+              </div>
+              <div class="rc-footer">
+                <span class="rc-status-check">✅ 符合 7 月限定與 8 人分享</span>
+              </div>
+            </div>
+
+            <!-- 訂單 3 -->
+            <div class="finished-receipt-card">
+              <div class="rc-header">
+                <span class="rc-badge">訂單 3</span>
+                <span class="rc-customer">顧客：小宇</span>
+              </div>
+              <div class="rc-body">
+                <div class="rc-cake-name">💘 邱比特（8 吋 × 2）</div>
+                <div class="rc-detail">口味：巧克力蛋糕、水蜜桃焦糖慕斯</div>
+                <div class="rc-detail">方式：專人外送（運費 200 元）</div>
+                <div class="rc-price">小計 1,760 元 ＋ 運費 200 元 ＝ 1,960 元</div>
+              </div>
+              <div class="rc-footer">
+                <span class="rc-status-check">✅ 符合 2 個 8 吋外送與預算</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 營業總金額統計 -->
+          <div class="grand-total-banner">
+            <div class="gt-left">
+              <span class="gt-label">三位顧客訂單總金額：</span>
+              <span class="gt-sum">NT$ 3,610 元</span>
+            </div>
+            <div class="gt-note">
+              ※ 此金額為三位不同顧客（小晴、小樂、小宇）訂單之銷售總和，非單一顧客消費。
+            </div>
+          </div>
+        </div>
+
+        <!-- 結算操作按鈕 -->
+        <div class="victory-actions">
+          <button id="btn-play-again" class="btn-primary btn-large">
+            <span>🔄 再玩一次</span>
+          </button>
+          <button id="btn-back-home" class="btn-secondary btn-large">
+            <span>🏠 返回首頁</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 彈出視窗 1：閱讀菜單與訂購規則手冊 -->
+    <div id="modal-rules" class="modal-overlay" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-header">
+          <h2 class="modal-title">📖 生日蛋糕店 ． 菜單與訂購規則說明</h2>
+          <button class="modal-close-btn" data-close="modal-rules" aria-label="關閉">✕</button>
+        </div>
+        <div class="modal-content scrollable-content">
+          <section class="rules-section">
+            <h3 class="rules-heading">一、六款精選生日蛋糕菜單</h3>
+            <div class="rules-table-responsive">
+              <table class="rules-table">
+                <thead>
+                  <tr>
+                    <th>蛋糕名稱</th>
+                    <th>特色與口味介紹</th>
+                    <th>可選尺寸與價格</th>
+                    <th>特殊規定 / 限定月份</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong>城堡</strong></td>
+                    <td>香草蛋糕搭配什錦水果和布丁夾層，以小巧卡士達泡芙裝飾，造型如同城堡。</td>
+                    <td>6 吋：660 元<br>8 吋：880 元<br>10 吋：1,100 元</td>
+                    <td><span class="tag-pill tag-hot">人氣推薦</span><br>全年供應，可自取或外送</td>
+                  </tr>
+                  <tr>
+                    <td><strong>浪漫嘉年華</strong></td>
+                    <td>芒果與椰子慕斯相遇，搭配明亮豐富的表層裝飾。</td>
+                    <td>6 吋：750 元<br>8 吋：990 元</td>
+                    <td><span class="tag-pill tag-season">7～8 月限定</span></td>
+                  </tr>
+                  <tr>
+                    <td><strong>邱比特</strong></td>
+                    <td>水蜜桃慕斯、焦糖慕斯搭配濃郁的巧克力蛋糕，外層有鮮奶油披覆。</td>
+                    <td>8 吋：880 元<br>10 吋：1,100 元<br><em>（無 6 吋）</em></td>
+                    <td>全年供應，可自取或外送</td>
+                  </tr>
+                  <tr>
+                    <td><strong>HAPPY TIME</strong></td>
+                    <td>鬆軟的手指蛋糕裝盛著焦糖洋梨丁及水果慕斯。</td>
+                    <td>6 吋：750 元<br>8 吋：990 元</td>
+                    <td><span class="tag-pill tag-alert">限門市取貨</span><br>（不提供外送服務）</td>
+                  </tr>
+                  <tr>
+                    <td><strong>珠寶音樂盒</strong></td>
+                    <td>香草蛋糕搭配起司布蕾夾層，以新鮮草莓裝飾。</td>
+                    <td>6 吋：880 元<br>8 吋：1,100 元</td>
+                    <td><span class="tag-pill tag-season">12～2 月限定</span><br>（含 12、1、2 月）</td>
+                  </tr>
+                  <tr>
+                    <td><strong>真情告白</strong></td>
+                    <td>使用食品級墨水及印製材料，可將顧客提供的照片完整呈現在蛋糕上。</td>
+                    <td>6 吋：880 元<br>8 吋：1,100 元</td>
+                    <td><span class="tag-pill tag-notice">需提前 7 天預訂</span><br>並提供照片檔案</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="rules-section">
+            <h3 class="rules-heading">二、蛋糕尺寸與建議分享人數</h3>
+            <div class="size-guide-cards">
+              <div class="sg-card">
+                <span class="sg-size">6 吋</span>
+                <span class="sg-people">適合 4～6 人</span>
+              </div>
+              <div class="sg-card">
+                <span class="sg-size">8 吋</span>
+                <span class="sg-people">適合 6～8 人</span>
+              </div>
+              <div class="sg-card">
+                <span class="sg-size">10 吋</span>
+                <span class="sg-people">適合 8～10 人</span>
+              </div>
+            </div>
+          </section>
+
+          <section class="rules-section">
+            <h3 class="rules-heading">三、外送運費查詢表與配送規則</h3>
+            <div class="rules-table-responsive">
+              <table class="rules-table shipping-table">
+                <thead>
+                  <tr>
+                    <th>蛋糕尺寸</th>
+                    <th>購買 1 個之運費</th>
+                    <th>購買 2 個之運費</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong>6 吋</strong></td>
+                    <td>150 元</td>
+                    <td>180 元</td>
+                  </tr>
+                  <tr>
+                    <td><strong>8 吋</strong></td>
+                    <td>150 元</td>
+                    <td>200 元</td>
+                  </tr>
+                  <tr>
+                    <td><strong>10 吋</strong></td>
+                    <td>200 元</td>
+                    <td><span class="tag-pill tag-danger">超過體積，不提供外送</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="notes-bullet-box">
+              <p>📌 <strong>重要訂購注意事項：</strong></p>
+              <ol>
+                <li>門市自取運費一律為 <strong>0 元</strong>。</li>
+                <li>預訂蛋糕結單時間為<strong>每日下午 4 點</strong>，下午 4 點後訂購視為隔日訂單。</li>
+                <li>外送服務時間<strong>僅限下午 2 點（14:00）以後</strong>。</li>
+                <li>若需要提前取貨，需自行至門市取貨。</li>
+                <li>HAPPY TIME 特殊蛋糕僅限門市取貨，不提供外送。</li>
+                <li>2 個 10 吋蛋糕因超過配送體積上限，無法提供外送服務。</li>
+              </ol>
+            </div>
+          </section>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-primary" data-close="modal-rules">我了解了，返回點單</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 彈出視窗 2：小店長提示視窗 -->
+    <div id="modal-hint" class="modal-overlay" aria-hidden="true">
+      <div class="modal-dialog modal-sm">
+        <div class="modal-header">
+          <h2 class="modal-title">💡 小店長小提示</h2>
+          <button class="modal-close-btn" data-close="modal-hint" aria-label="關閉">✕</button>
+        </div>
+        <div class="modal-content">
+          <div class="hint-body">
+            <div class="hint-avatar">
+              <img src="assets/characters/manager_normal.svg" alt="店長提示" class="hint-manager-img">
+            </div>
+            <p id="hint-text-content" class="hint-text">
+              仔細看一下顧客的需求喔！
+            </p>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-primary" data-close="modal-hint">收到！我再想想</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 彈出視窗 3：訂單判定回饋視窗（成功 / 需修改） -->
+    <div id="modal-feedback" class="modal-overlay" aria-hidden="true">
+      <div class="modal-dialog modal-md">
+        <div class="modal-header">
+          <h2 id="feedback-modal-title" class="modal-title">訂單結果</h2>
+        </div>
+        <div class="modal-content">
+          <div class="feedback-layout">
+            <div class="feedback-icon-wrap" id="feedback-icon-box">
+              <!-- 動態置入慶祝星星或思考表情 -->
+            </div>
+            <div class="feedback-message-wrap">
+              <h3 id="feedback-headline" class="feedback-headline">訊息標題</h3>
+              <p id="feedback-explanation" class="feedback-explanation">詳細說明文字</p>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer" id="feedback-modal-footer">
+          <!-- 動態置入「下一位顧客」或「修改訂單」按鈕 -->
+        </div>
+      </div>
+    </div>
+
+    <!-- 彈出視窗 4：蛋糕圖片大圖預覽視窗 -->
+    <div id="modal-lightbox" class="modal-overlay" aria-hidden="true">
+      <div class="modal-dialog modal-lightbox-dialog">
+        <div class="modal-header">
+          <h2 id="lightbox-cake-name" class="modal-title">蛋糕大圖查看</h2>
+          <button class="modal-close-btn" data-close="modal-lightbox" aria-label="關閉">✕</button>
+        </div>
+        <div class="modal-content lightbox-content">
+          <div id="lightbox-img-container" class="lightbox-img-box">
+            <!-- 注入放大圖或素材占位區 -->
+          </div>
+          <p id="lightbox-desc" class="lightbox-desc"></p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>

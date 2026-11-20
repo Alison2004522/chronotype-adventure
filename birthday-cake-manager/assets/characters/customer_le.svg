@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 240" width="100%" height="100%">
+  <defs>
+    <filter id="shadow-le" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="4" stdDeviation="3" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+  <g filter="url(#shadow-le)">
+    <!-- Legs & Shorts -->
+    <rect x="80" y="195" width="14" height="28" rx="6" fill="#FFE0B2"/>
+    <rect x="106" y="195" width="14" height="28" rx="6" fill="#FFE0B2"/>
+    <rect x="74" y="172" width="24" height="26" rx="4" fill="#42A5F5"/>
+    <rect x="102" y="172" width="24" height="26" rx="4" fill="#42A5F5"/>
+    <!-- Sneakers -->
+    <ellipse cx="87" cy="225" rx="14" ry="7" fill="#FFA726"/>
+    <ellipse cx="113" cy="225" rx="14" ry="7" fill="#FFA726"/>
+    <rect x="80" y="222" width="14" height="4" rx="1" fill="#FFFFFF"/>
+    <rect x="106" y="222" width="14" height="4" rx="1" fill="#FFFFFF"/>
+
+    <!-- T-Shirt -->
+    <path d="M62 135 Q100 125 138 135 L142 178 Q100 183 58 178 Z" fill="#FFCA28"/>
+    <!-- Mango Slice Decal on Shirt -->
+    <path d="M93 152 Q100 144 107 152 Q100 162 93 152 Z" fill="#FB8C00"/>
+    <circle cx="98" cy="151" r="1.5" fill="#FFE082"/>
+
+    <!-- Arms (One hand on hip, one waving) -->
+    <path d="M62 135 Q40 150 55 168" fill="none" stroke="#FFE0B2" stroke-width="12" stroke-linecap="round"/>
+    <path d="M138 135 Q165 145 158 120" fill="none" stroke="#FFE0B2" stroke-width="12" stroke-linecap="round"/>
+    <circle cx="158" cy="116" r="7" fill="#FFE0B2"/>
+
+    <!-- Head -->
+    <circle cx="100" cy="85" r="42" fill="#FFE0B2"/>
+    <!-- Short Spiky Hair -->
+    <path d="M56 80 Q52 45 75 42 Q90 35 105 38 Q130 35 144 65 Q145 85 142 90 Z" fill="#3E2723"/>
+    <path d="M58 75 L68 60 L78 72 L90 55 L102 70 L115 56 L128 72 L138 65 L142 80" fill="#3E2723"/>
+
+    <!-- Cute Sun Visor Cap -->
+    <path d="M60 62 Q100 50 140 62 L155 68 Q100 55 45 68 Z" fill="#26A69A"/>
+    <path d="M65 60 Q100 48 135 60 L132 48 Q100 38 68 48 Z" fill="#80CBC4"/>
+
+    <circle cx="58" cy="88" r="8" fill="#FFE0B2"/>
+    <circle cx="142" cy="88" r="8" fill="#FFE0B2"/>
+
+    <!-- Blush -->
+    <ellipse cx="75" cy="98" rx="8" ry="4.5" fill="#FF8A80" opacity="0.65"/>
+    <ellipse cx="125" cy="98" rx="8" ry="4.5" fill="#FF8A80" opacity="0.65"/>
+
+    <!-- Sparkling Energetic Eyes -->
+    <ellipse cx="80" cy="88" rx="5.5" ry="7" fill="#212121"/>
+    <ellipse cx="120" cy="88" rx="5.5" ry="7" fill="#212121"/>
+    <circle cx="78" cy="85" r="2.5" fill="#FFFFFF"/>
+    <circle cx="118" cy="85" r="2.5" fill="#FFFFFF"/>
+    <circle cx="82" cy="90" r="1.2" fill="#FFFFFF"/>
+    <circle cx="122" cy="90" r="1.2" fill="#FFFFFF"/>
+
+    <!-- Confident Eyebrows -->
+    <path d="M73 76 L87 78" stroke="#3E2723" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M127 76 L113 78" stroke="#3E2723" stroke-width="2.5" stroke-linecap="round"/>
+
+    <!-- Big Cheerful Grin -->
+    <path d="M90 97 Q100 95 110 97 Q108 110 100 110 Q92 110 90 97 Z" fill="#D81B60"/>
+    <rect x="94" y="97" width="12" height="4" rx="1" fill="#FFFFFF"/>
+  </g>
+</svg>

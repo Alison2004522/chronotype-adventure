@@ -1,0 +1,1785 @@
+/* ==========================================================================
+   《生日蛋糕小店長》（Birthday Cake Shop Manager）視覺樣式表
+   設計風格：日系 Q 版溫暖卡通烘焙坊風格
+   主要配色：奶油白 (#FFF8EF)、草莓粉 (#F6A9B8 / #FF6584)、焦糖棕 (#8B5E4A)、
+             淡鵝黃 (#FFE6A7)、薄荷綠 (#C7E9D0 / #4CAF50)
+   ========================================================================== */
+
+:root {
+  --color-cream-bg: #FFF8EF;
+  --color-cream-card: #FFFFFF;
+  --color-pink-primary: #FF6584;
+  --color-pink-soft: #F6A9B8;
+  --color-pink-light: #FFEBF0;
+  --color-caramel-deep: #5D4037;
+  --color-caramel-mid: #8B5E4A;
+  --color-caramel-light: #D7CCC8;
+  --color-yellow-custard: #FFE6A7;
+  --color-yellow-bright: #FFCA28;
+  --color-mint-soft: #C7E9D0;
+  --color-mint-dark: #2E7D32;
+  --color-danger: #E53935;
+  --color-text-main: #3E2723;
+  --color-text-muted: #6D4C41;
+  --color-shadow: rgba(93, 64, 55, 0.12);
+  --color-shadow-hover: rgba(255, 101, 132, 0.25);
+
+  --font-family-base: -apple-system, BlinkMacSystemFont, "Segoe UI", "Nunito",
+    "PingFang TC", "Microsoft JhengHei", "微軟正黑體", sans-serif;
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-full: 9999px;
+  --transition-fast: 0.2s ease;
+  --transition-normal: 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+/* 基礎重設 */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: var(--font-family-base);
+  background-color: #F7EFE5;
+  background-image: 
+    radial-gradient(#F0DFCE 15%, transparent 16%),
+    radial-gradient(#F0DFCE 15%, transparent 16%);
+  background-size: 40px 40px;
+  background-position: 0 0, 20px 20px;
+  color: var(--color-text-main);
+  line-height: 1.6;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 12px;
+  overflow-x: hidden;
+}
+
+/* 主遊戲外框 */
+#game-app {
+  width: 100%;
+  max-width: 1280px;
+  min-height: 720px;
+  background: var(--color-cream-bg);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 12px 36px rgba(93, 64, 55, 0.18), 0 2px 8px rgba(93, 64, 55, 0.08);
+  border: 4px solid #F0DECB;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ==========================================================================
+   頂部導航 HUD 資訊列
+   ========================================================================== */
+#game-hud {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #FFFDF9;
+  border-bottom: 2px solid #EEDCC8;
+  padding: 10px 24px;
+  z-index: 10;
+}
+
+.hud-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.hud-logo {
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: var(--color-pink-primary);
+  letter-spacing: 0.5px;
+}
+
+.level-pill {
+  background: var(--color-pink-light);
+  color: var(--color-pink-primary);
+  font-size: 0.85rem;
+  font-weight: 800;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  border: 1.5px solid var(--color-pink-soft);
+}
+
+.star-progress-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #FFF3E0;
+  padding: 4px 16px;
+  border-radius: var(--radius-full);
+  border: 1.5px dashed #FFB74D;
+}
+
+.star-slot {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform var(--transition-normal);
+}
+
+.star-slot.filled {
+  animation: starPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.star-icon {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.hud-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.hud-btn {
+  background: #FFFFFF;
+  border: 2px solid #D7CCC8;
+  color: var(--color-caramel-deep);
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all var(--transition-fast);
+  box-shadow: 0 2px 4px var(--color-shadow);
+}
+
+.hud-btn:hover {
+  background: var(--color-pink-light);
+  border-color: var(--color-pink-soft);
+  color: var(--color-pink-primary);
+  transform: translateY(-1px);
+}
+
+.hud-btn:active {
+  transform: translateY(1px);
+}
+
+.sound-btn {
+  padding: 6px 10px;
+  font-size: 1.1rem;
+}
+
+/* ==========================================================================
+   視圖切換機制
+   ========================================================================== */
+.view-screen {
+  display: none;
+  flex: 1;
+  width: 100%;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.view-screen.active {
+  display: flex;
+  flex-direction: column;
+  opacity: 1;
+}
+
+/* ==========================================================================
+   1. 遊戲開始畫面 (#start-screen)
+   ========================================================================== */
+#start-screen {
+  justify-content: center;
+  align-items: center;
+  padding: 30px 20px;
+  background: radial-gradient(circle at center, #FFFDF8 0%, #FFF5EA 100%);
+}
+
+.start-card {
+  max-width: 780px;
+  width: 100%;
+  background: #FFFFFF;
+  border-radius: var(--radius-lg);
+  border: 3px solid #EEDCC8;
+  padding: 36px 32px;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(93, 64, 55, 0.12);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.bakery-banner-flag {
+  display: inline-block;
+  background: var(--color-yellow-custard);
+  color: var(--color-caramel-deep);
+  font-weight: 800;
+  font-size: 0.95rem;
+  padding: 6px 20px;
+  border-radius: var(--radius-full);
+  border: 2px solid #FFD54F;
+  margin-bottom: 12px;
+}
+
+.game-main-title {
+  font-size: 2.5rem;
+  font-weight: 900;
+  color: var(--color-pink-primary);
+  margin-bottom: 6px;
+  text-shadow: 2px 2px 0 #FFF0F3;
+  letter-spacing: 1px;
+}
+
+.game-subtitle {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--color-caramel-mid);
+  margin-bottom: 24px;
+}
+
+.start-hero-visual {
+  position: relative;
+  margin: 10px 0 20px 0;
+}
+
+.hero-character-box {
+  width: 140px;
+  height: 170px;
+  margin: 0 auto;
+  filter: drop-shadow(0 6px 12px rgba(93, 64, 55, 0.18));
+  animation: floatManager 3s ease-in-out infinite alternate;
+}
+
+.start-manager-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.floating-cake-preview {
+  margin-top: 10px;
+  background: #FFF8E1;
+  border: 1.5px solid #FFE082;
+  padding: 4px 16px;
+  border-radius: var(--radius-full);
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 0.85rem;
+}
+
+.preview-badge {
+  background: #FFB300;
+  color: #FFFFFF;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+}
+
+.preview-text {
+  color: var(--color-caramel-deep);
+  font-weight: 700;
+}
+
+.start-story-bubble {
+  background: #FFFDF8;
+  border: 2px dashed #D7CCC8;
+  border-radius: var(--radius-md);
+  padding: 18px 24px;
+  margin: 16px 0 24px 0;
+  max-width: 650px;
+  text-align: left;
+}
+
+.story-lead {
+  font-size: 1.15rem;
+  font-weight: 900;
+  color: var(--color-pink-primary);
+  margin-bottom: 8px;
+}
+
+.start-story-bubble p {
+  color: var(--color-caramel-deep);
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+.start-level-preview-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 28px;
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+.level-tag-step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #F5EFEB;
+  padding: 8px 16px;
+  border-radius: var(--radius-full);
+  border: 1.5px solid #E0D4C5;
+}
+
+.step-num {
+  background: var(--color-pink-primary);
+  color: #FFFFFF;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 900;
+}
+
+.step-desc {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--color-caramel-deep);
+}
+
+.step-arrow {
+  color: #BCAAA4;
+  font-weight: 900;
+}
+
+/* ==========================================================================
+   2. 關卡主遊玩畫面 (#game-screen)
+   ========================================================================== */
+#game-screen {
+  padding: 16px 20px;
+}
+
+.workspace-grid {
+  display: grid;
+  grid-template-columns: 280px 1fr 340px;
+  gap: 18px;
+  flex: 1;
+}
+
+/* --------------------------------------------------------------------------
+   左側：顧客需求卡片
+   -------------------------------------------------------------------------- */
+.customer-order-panel {
+  background: #FFFFFF;
+  border: 2px solid #EAD8C4;
+  border-radius: var(--radius-md);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 4px 14px var(--color-shadow);
+}
+
+.panel-header-badge {
+  background: var(--color-pink-soft);
+  color: #FFFFFF;
+  font-weight: 800;
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  box-shadow: 0 2px 4px rgba(246, 169, 184, 0.4);
+}
+
+.customer-profile-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #FFFDF9;
+  border: 1.5px solid #F0E3D3;
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+}
+
+.customer-avatar-box {
+  width: 64px;
+  height: 76px;
+  flex-shrink: 0;
+  background: #FFF2F4;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1.5px solid #FFDCE2;
+}
+
+.customer-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.customer-meta {
+  display: flex;
+  flex-direction: column;
+}
+
+.customer-role-tag {
+  font-size: 0.75rem;
+  color: var(--color-pink-primary);
+  font-weight: 800;
+}
+
+.customer-name {
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: var(--color-caramel-deep);
+}
+
+.speech-dialogue-bubble {
+  position: relative;
+  background: #FFF8E7;
+  border: 2px solid #FFE082;
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: var(--color-caramel-deep);
+  font-weight: 600;
+}
+
+.bubble-arrow {
+  position: absolute;
+  top: -8px;
+  left: 28px;
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 8px solid #FFE082;
+}
+
+.requirements-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: #FFFDF9;
+  border: 1px solid #EEDCC8;
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+}
+
+.req-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.86rem;
+  padding: 3px 0;
+  border-bottom: 1px dashed #F0E2D5;
+}
+
+.req-item:last-child {
+  border-bottom: none;
+}
+
+.req-label {
+  color: var(--color-caramel-mid);
+  font-weight: 700;
+}
+
+.req-val {
+  color: var(--color-text-main);
+  font-weight: 800;
+}
+
+.customer-action-bar {
+  margin-top: auto;
+}
+
+.btn-hint {
+  width: 100%;
+  background: #FFF9C4;
+  border: 2px solid #FBC02D;
+  color: #795548;
+  font-weight: 800;
+  font-size: 0.88rem;
+  padding: 8px;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.btn-hint:hover {
+  background: #FFF59D;
+  transform: translateY(-1px);
+}
+
+/* --------------------------------------------------------------------------
+   中央：六款蛋糕菜單展示區
+   -------------------------------------------------------------------------- */
+.menu-selection-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  max-height: calc(100vh - 120px);
+  padding-right: 4px;
+}
+
+.menu-panel-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  border-bottom: 2px solid #EAD8C4;
+  padding-bottom: 6px;
+}
+
+.menu-title {
+  font-size: 1.15rem;
+  font-weight: 900;
+  color: var(--color-caramel-deep);
+}
+
+.menu-sub-tip {
+  font-size: 0.82rem;
+  color: var(--color-caramel-mid);
+  font-weight: 600;
+}
+
+.cake-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+/* 單張蛋糕卡片 */
+.cake-card {
+  background: #FFFFFF;
+  border: 2px solid #EBD9C7;
+  border-radius: var(--radius-md);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  position: relative;
+  box-shadow: 0 3px 8px var(--color-shadow);
+}
+
+.cake-card:hover {
+  border-color: var(--color-pink-soft);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 18px var(--color-shadow-hover);
+}
+
+.cake-card.selected {
+  border-color: var(--color-pink-primary);
+  border-width: 2.5px;
+  background: #FFF8FA;
+  box-shadow: 0 0 0 3px rgba(255, 101, 132, 0.25), 0 8px 18px rgba(255, 101, 132, 0.2);
+}
+
+/* 蛋糕圖片容器 */
+.cake-img-wrap {
+  width: 100%;
+  height: 150px;
+  background-color: #FFF8EF;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+  border: 1px solid #F2E4D6;
+}
+
+.cake-img-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transition: transform var(--transition-fast);
+  padding: 6px;
+}
+
+.cake-card:hover .cake-img-wrap img,
+.cake-card.selected .cake-img-wrap img {
+  transform: scale(1.05);
+}
+
+/* 圖片未就位時的優雅占位盤（零 Emoji、零 AI 生成，保持純淨） */
+.img-placeholder-box {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #FFFDF9;
+  border: 1.5px dashed #D7CCC8;
+  border-radius: var(--radius-sm);
+  padding: 8px;
+  text-align: center;
+}
+
+.plate-drawing {
+  width: 50px;
+  height: 24px;
+  border: 2px solid #BCAAA4;
+  border-radius: 50%;
+  margin-bottom: 6px;
+  position: relative;
+}
+
+.plate-drawing::after {
+  content: "";
+  position: absolute;
+  top: 4px;
+  left: 6px;
+  width: 34px;
+  height: 12px;
+  border: 1px dashed #D7CCC8;
+  border-radius: 50%;
+}
+
+.ph-cake-title {
+  font-size: 0.95rem;
+  font-weight: 900;
+  color: var(--color-caramel-deep);
+}
+
+.ph-file-name {
+  font-size: 0.72rem;
+  color: var(--color-pink-primary);
+  font-weight: 700;
+  margin-top: 2px;
+}
+
+.ph-sub-hint {
+  font-size: 0.65rem;
+  color: #8D6E63;
+  margin-top: 2px;
+}
+
+/* 蛋糕卡片文字資訊 */
+.cake-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.cake-name-text {
+  font-size: 1.05rem;
+  font-weight: 900;
+  color: var(--color-caramel-deep);
+}
+
+.cake-tag-badge {
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  display: inline-block;
+}
+
+.tag-hot {
+  background: #FFEBEE;
+  color: #D32F2F;
+  border: 1px solid #FFCDD2;
+}
+
+.tag-season {
+  background: #E8F5E9;
+  color: #2E7D32;
+  border: 1px solid #C8E6C9;
+}
+
+.tag-alert {
+  background: #FFF3E0;
+  color: #E65100;
+  border: 1px solid #FFE0B2;
+}
+
+.tag-notice {
+  background: #EDE7F6;
+  color: #512DA8;
+  border: 1px solid #D1C4E9;
+}
+
+.cake-desc-text {
+  font-size: 0.8rem;
+  color: var(--color-caramel-mid);
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 2.3em;
+}
+
+.cake-price-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.price-pill {
+  font-size: 0.74rem;
+  background: #F5EFEB;
+  color: var(--color-caramel-deep);
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  border: 1px solid #E5D7CA;
+}
+
+/* --------------------------------------------------------------------------
+   右側：點單收銀台面板
+   -------------------------------------------------------------------------- */
+.order-cashier-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.cashier-card {
+  background: #FFFFFF;
+  border: 2px solid #EAD8C4;
+  border-radius: var(--radius-md);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 4px 14px var(--color-shadow);
+  height: 100%;
+}
+
+.cashier-title-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid #F0E3D3;
+  padding-bottom: 8px;
+}
+
+.cashier-title {
+  font-size: 1.1rem;
+  font-weight: 900;
+  color: var(--color-caramel-deep);
+}
+
+.cashier-status-pill {
+  background: var(--color-mint-soft);
+  color: var(--color-mint-dark);
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+}
+
+/* 目前選中蛋糕縮圖摘要 */
+.selected-cake-summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #FFFDF9;
+  border: 1.5px solid #F2E4D6;
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+}
+
+.summary-thumbnail {
+  width: 48px;
+  height: 48px;
+  background: #FFF8EF;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid #EEDCC8;
+  flex-shrink: 0;
+}
+
+.summary-thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.summary-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.summary-label {
+  font-size: 0.72rem;
+  color: var(--color-caramel-mid);
+  font-weight: 700;
+}
+
+.summary-cake-name {
+  font-size: 1rem;
+  font-weight: 900;
+  color: var(--color-caramel-deep);
+}
+
+.summary-cake-tag {
+  font-size: 0.72rem;
+  color: var(--color-pink-primary);
+  font-weight: 800;
+}
+
+/* 設定區塊 */
+.config-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.config-label {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: var(--color-caramel-deep);
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.size-hint-text, .qty-hint-text {
+  font-size: 0.75rem;
+  color: var(--color-caramel-mid);
+  font-weight: 600;
+}
+
+/* 尺寸選擇按鈕組 */
+.size-btn-group {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+  gap: 8px;
+}
+
+.size-btn {
+  background: #FFFDF9;
+  border: 2px solid #D7CCC8;
+  border-radius: var(--radius-sm);
+  padding: 8px 4px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  transition: all var(--transition-fast);
+}
+
+.size-btn:hover {
+  border-color: var(--color-pink-soft);
+  background: #FFF9FA;
+}
+
+.size-btn.active {
+  border-color: var(--color-pink-primary);
+  background: var(--color-pink-light);
+  box-shadow: 0 0 0 2px rgba(255, 101, 132, 0.2);
+}
+
+.size-name {
+  font-size: 0.92rem;
+  font-weight: 900;
+  color: var(--color-caramel-deep);
+}
+
+.size-price {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--color-pink-primary);
+}
+
+.size-servings {
+  font-size: 0.68rem;
+  color: var(--color-caramel-mid);
+  font-weight: 600;
+}
+
+/* 數量加減器 */
+.quantity-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #FFFDF9;
+  border: 2px solid #D7CCC8;
+  border-radius: var(--radius-sm);
+  padding: 4px;
+}
+
+.stepper-btn {
+  width: 36px;
+  height: 36px;
+  background: #FFFFFF;
+  border: 1.5px solid #E0D4C5;
+  border-radius: var(--radius-sm);
+  color: var(--color-caramel-deep);
+  font-size: 1.25rem;
+  font-weight: 900;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+}
+
+.stepper-btn:hover:not(:disabled) {
+  background: var(--color-pink-light);
+  border-color: var(--color-pink-soft);
+  color: var(--color-pink-primary);
+}
+
+.stepper-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.stepper-value {
+  font-size: 1.15rem;
+  font-weight: 900;
+  color: var(--color-caramel-deep);
+}
+
+/* 取貨方式切換 */
+.fulfillment-toggle-group {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.fulfill-btn {
+  background: #FFFDF9;
+  border: 2px solid #D7CCC8;
+  border-radius: var(--radius-sm);
+  padding: 8px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  transition: all var(--transition-fast);
+}
+
+.fulfill-btn:hover {
+  border-color: var(--color-pink-soft);
+}
+
+.fulfill-btn.active {
+  border-color: var(--color-pink-primary);
+  background: var(--color-pink-light);
+}
+
+.f-icon {
+  font-size: 1.1rem;
+}
+
+.f-text {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: var(--color-caramel-deep);
+}
+
+.f-fee {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--color-caramel-mid);
+}
+
+.condition-note {
+  font-size: 0.75rem;
+  background: #FFFDE7;
+  color: #F57F17;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid #FFF59D;
+  margin-top: 4px;
+}
+
+/* --------------------------------------------------------------------------
+   真實感烘焙收據明細紙
+   -------------------------------------------------------------------------- */
+.receipt-paper {
+  background: #FFFDF8;
+  border: 1.5px solid #E6D7C3;
+  border-radius: 6px 6px 0 0;
+  padding: 12px 14px 6px 14px;
+  box-shadow: 0 4px 8px rgba(93, 64, 55, 0.08);
+  position: relative;
+}
+
+.receipt-header {
+  text-align: center;
+  font-size: 0.85rem;
+  font-weight: 900;
+  color: var(--color-caramel-deep);
+  border-bottom: 1px dashed #BCAAA4;
+  padding-bottom: 6px;
+  margin-bottom: 8px;
+}
+
+.receipt-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.receipt-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.84rem;
+}
+
+.r-item {
+  color: var(--color-caramel-mid);
+  font-weight: 700;
+}
+
+.r-price {
+  color: var(--color-caramel-deep);
+  font-weight: 800;
+}
+
+.subtotal-row {
+  border-top: 1px dashed #E0D4C5;
+  padding-top: 4px;
+  margin-top: 2px;
+}
+
+.shipping-row .r-price {
+  color: #1976D2;
+}
+
+.receipt-divider {
+  height: 2px;
+  background: #8D6E63;
+  margin: 6px 0;
+}
+
+.total-row {
+  font-size: 1.05rem;
+  font-weight: 900;
+}
+
+.r-item-total {
+  color: var(--color-caramel-deep);
+}
+
+.r-price-total {
+  color: var(--color-pink-primary);
+  font-size: 1.2rem;
+}
+
+.receipt-budget-feedback {
+  margin-top: 6px;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-align: center;
+  display: none;
+}
+
+.receipt-budget-feedback.ok {
+  display: block;
+  background: #E8F5E9;
+  color: #2E7D32;
+  border: 1px solid #C8E6C9;
+}
+
+.receipt-budget-feedback.over {
+  display: block;
+  background: #FFEBEE;
+  color: #C62828;
+  border: 1px solid #FFCDD2;
+}
+
+/* 收據鋸齒狀底部 */
+.receipt-zigzag {
+  height: 10px;
+  background: radial-gradient(circle, transparent, transparent 50%, #FFFDF8 50%, #FFFDF8 100%);
+  background-size: 12px 12px;
+  margin: 6px -14px -6px -14px;
+  position: relative;
+}
+
+/* 點單收銀按鈕群 */
+.cashier-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+/* ==========================================================================
+   通用按鈕樣式
+   ========================================================================== */
+.btn-primary {
+  background: linear-gradient(180deg, #FF7B96 0%, #FF5277 100%);
+  color: #FFFFFF;
+  border: none;
+  font-weight: 900;
+  font-size: 1.05rem;
+  padding: 12px 24px;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(255, 82, 119, 0.35), 0 2px 4px rgba(255, 82, 119, 0.2);
+  transition: all var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: linear-gradient(180deg, #FF8DA6 0%, #FF6585 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(255, 82, 119, 0.45);
+}
+
+.btn-primary:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: 0 2px 6px rgba(255, 82, 119, 0.3);
+}
+
+.btn-primary:disabled {
+  background: #E0D4C5;
+  color: #9E9E9E;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: #FFFFFF;
+  color: var(--color-caramel-deep);
+  border: 2px solid #D7CCC8;
+  font-weight: 800;
+  font-size: 0.95rem;
+  padding: 10px 20px;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.btn-secondary:hover {
+  background: #F5EFEB;
+  border-color: #BCAAA4;
+  transform: translateY(-1px);
+}
+
+.btn-large {
+  font-size: 1.15rem;
+  padding: 14px 36px;
+}
+
+.btn-block {
+  width: 100%;
+}
+
+/* ==========================================================================
+   3. 最終通關結算畫面 (#victory-screen)
+   ========================================================================== */
+#victory-screen {
+  justify-content: center;
+  align-items: center;
+  padding: 24px 20px;
+  background: radial-gradient(circle at center, #FFFDF8 0%, #FFF3E6 100%);
+  overflow-y: auto;
+}
+
+.victory-container {
+  max-width: 960px;
+  width: 100%;
+  background: #FFFFFF;
+  border: 3px solid #EEDCC8;
+  border-radius: var(--radius-lg);
+  padding: 32px 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(93, 64, 55, 0.12);
+}
+
+.trophy-bounce {
+  width: 110px;
+  height: 110px;
+  margin-bottom: 8px;
+  animation: trophyBounce 1.2s ease infinite alternate;
+}
+
+.trophy-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.victory-title {
+  font-size: 2.3rem;
+  font-weight: 900;
+  color: var(--color-pink-primary);
+  margin-bottom: 4px;
+}
+
+.victory-subtitle {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--color-caramel-mid);
+  margin-bottom: 16px;
+}
+
+.victory-story-box {
+  background: #FFFDF8;
+  border: 2px dashed #E0D4C5;
+  border-radius: var(--radius-md);
+  padding: 16px 24px;
+  margin-bottom: 24px;
+  max-width: 760px;
+}
+
+.story-p {
+  font-size: 1rem;
+  color: var(--color-caramel-deep);
+  line-height: 1.7;
+}
+
+.final-receipts-shelf {
+  width: 100%;
+  background: #FFF8EF;
+  border: 2px solid #EEDCC8;
+  border-radius: var(--radius-md);
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.shelf-title {
+  font-size: 1.15rem;
+  font-weight: 900;
+  color: var(--color-caramel-deep);
+  margin-bottom: 16px;
+}
+
+.receipt-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.finished-receipt-card {
+  background: #FFFFFF;
+  border: 2px solid #E0D4C5;
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 0 4px 10px rgba(93, 64, 55, 0.08);
+}
+
+.rc-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1.5px dashed #D7CCC8;
+  padding-bottom: 6px;
+}
+
+.rc-badge {
+  background: var(--color-pink-soft);
+  color: #FFFFFF;
+  font-weight: 800;
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+}
+
+.rc-customer {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--color-caramel-deep);
+}
+
+.rc-cake-name {
+  font-size: 1rem;
+  font-weight: 900;
+  color: var(--color-caramel-deep);
+}
+
+.rc-detail {
+  font-size: 0.82rem;
+  color: var(--color-caramel-mid);
+  line-height: 1.4;
+}
+
+.rc-price {
+  font-size: 0.95rem;
+  font-weight: 900;
+  color: var(--color-pink-primary);
+  margin-top: 4px;
+}
+
+.rc-footer {
+  border-top: 1px dashed #E0D4C5;
+  padding-top: 6px;
+  font-size: 0.75rem;
+  color: var(--color-mint-dark);
+  font-weight: 800;
+}
+
+.grand-total-banner {
+  background: #FFFFFF;
+  border: 2.5px solid #FFD54F;
+  border-radius: var(--radius-sm);
+  padding: 14px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+}
+
+.gt-left {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.gt-label {
+  font-size: 1.15rem;
+  font-weight: 900;
+  color: var(--color-caramel-deep);
+}
+
+.gt-sum {
+  font-size: 1.8rem;
+  font-weight: 900;
+  color: var(--color-pink-primary);
+}
+
+.gt-note {
+  font-size: 0.82rem;
+  color: var(--color-caramel-mid);
+  font-weight: 700;
+}
+
+.victory-actions {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* ==========================================================================
+   彈出視窗（Modal）通用樣式
+   ========================================================================== */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(62, 39, 35, 0.6);
+  backdrop-filter: blur(3px);
+  z-index: 1000;
+  justify-content: center;
+  align-items: center;
+  padding: 16px;
+}
+
+.modal-overlay.active {
+  display: flex;
+  animation: modalFadeIn 0.25s ease;
+}
+
+.modal-dialog {
+  background: #FFFFFF;
+  border: 3px solid #EEDCC8;
+  border-radius: var(--radius-md);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
+.modal-sm { max-width: 440px; }
+.modal-md { max-width: 540px; }
+.modal-lg { max-width: 780px; }
+.modal-lightbox-dialog { max-width: 600px; }
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px;
+  background: #FFFDF9;
+  border-bottom: 2px solid #EEDCC8;
+}
+
+.modal-title {
+  font-size: 1.15rem;
+  font-weight: 900;
+  color: var(--color-caramel-deep);
+}
+
+.modal-close-btn {
+  background: transparent;
+  border: none;
+  font-size: 1.3rem;
+  color: #8D6E63;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+}
+
+.modal-close-btn:hover {
+  background: #F5EFEB;
+  color: var(--color-pink-primary);
+}
+
+.modal-content {
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.scrollable-content {
+  max-height: 65vh;
+}
+
+.modal-footer {
+  padding: 12px 20px;
+  background: #FFFDF9;
+  border-top: 1.5px solid #EEDCC8;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+/* 規則說明表格樣式 */
+.rules-section {
+  margin-bottom: 20px;
+}
+
+.rules-heading {
+  font-size: 1.05rem;
+  font-weight: 900;
+  color: var(--color-pink-primary);
+  border-left: 4px solid var(--color-pink-primary);
+  padding-left: 8px;
+  margin-bottom: 10px;
+}
+
+.rules-table-responsive {
+  overflow-x: auto;
+}
+
+.rules-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  text-align: left;
+}
+
+.rules-table th {
+  background: #FFF3E0;
+  color: var(--color-caramel-deep);
+  font-weight: 800;
+  padding: 8px 10px;
+  border: 1px solid #E0D4C5;
+}
+
+.rules-table td {
+  padding: 8px 10px;
+  border: 1px solid #E0D4C5;
+  color: var(--color-text-main);
+  line-height: 1.5;
+}
+
+.rules-table tbody tr:nth-child(even) {
+  background: #FFFDF9;
+}
+
+.tag-pill {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: var(--radius-full);
+}
+
+.tag-danger {
+  background: #FFEBEE;
+  color: #C62828;
+  border: 1px solid #FFCDD2;
+}
+
+.size-guide-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.sg-card {
+  background: #FFF8EF;
+  border: 1.5px solid #E0D4C5;
+  border-radius: var(--radius-sm);
+  padding: 10px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sg-size {
+  font-size: 1.05rem;
+  font-weight: 900;
+  color: var(--color-pink-primary);
+}
+
+.sg-people {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-caramel-deep);
+}
+
+.notes-bullet-box {
+  background: #FFFDE7;
+  border: 1.5px solid #FFF59D;
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  margin-top: 12px;
+}
+
+.notes-bullet-box p {
+  color: #E65100;
+  font-size: 0.9rem;
+  margin-bottom: 6px;
+}
+
+.notes-bullet-box ol {
+  padding-left: 20px;
+  font-size: 0.84rem;
+  color: var(--color-caramel-deep);
+  line-height: 1.6;
+}
+
+/* 提示視窗內容 */
+.hint-body {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.hint-avatar {
+  width: 70px;
+  height: 85px;
+  flex-shrink: 0;
+}
+
+.hint-manager-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.hint-text {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--color-caramel-deep);
+  line-height: 1.6;
+}
+
+/* 回饋視窗內容 */
+.feedback-layout {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.feedback-icon-wrap {
+  width: 70px;
+  height: 70px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fb-icon {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.feedback-message-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.feedback-headline {
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: var(--color-caramel-deep);
+}
+
+.feedback-explanation {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--color-caramel-mid);
+}
+
+/* 大圖預覽 */
+.lightbox-img-box {
+  width: 100%;
+  max-height: 350px;
+  background: #FFF8EF;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1.5px solid #EEDCC8;
+  margin-bottom: 12px;
+}
+
+.lightbox-img-box img {
+  max-width: 100%;
+  max-height: 350px;
+  object-fit: contain;
+}
+
+.lightbox-desc {
+  font-size: 0.9rem;
+  color: var(--color-caramel-deep);
+  line-height: 1.6;
+}
+
+/* ==========================================================================
+   動畫效果（CSS Keyframes）
+   ========================================================================== */
+@keyframes starPop {
+  0% { transform: scale(0.3); opacity: 0; }
+  60% { transform: scale(1.3); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes trophyBounce {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-8px); }
+}
+
+@keyframes floatManager {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-6px); }
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* ==========================================================================
+   響應式設計（Responsive RWD）
+   支援平板、手機與直向螢幕
+   ========================================================================== */
+@media (max-width: 1080px) {
+  .workspace-grid {
+    grid-template-columns: 260px 1fr 300px;
+    gap: 14px;
+  }
+}
+
+@media (max-width: 920px) {
+  #game-app {
+    min-height: auto;
+  }
+
+  .workspace-grid {
+    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .menu-selection-panel {
+    max-height: none;
+    overflow-y: visible;
+  }
+
+  .cake-cards-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .receipt-cards-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  body {
+    padding: 4px;
+  }
+
+  #game-hud {
+    padding: 8px 12px;
+  }
+
+  .hud-logo {
+    font-size: 1.05rem;
+  }
+
+  .level-pill {
+    display: none;
+  }
+
+  .game-main-title {
+    font-size: 1.9rem;
+  }
+
+  .cake-cards-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .size-guide-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .grand-total-banner {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .gt-left {
+    flex-direction: column;
+    gap: 2px;
+  }
+}

@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 240" width="100%" height="100%">
+  <defs>
+    <filter id="shadow-q" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="4" stdDeviation="3" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+  <g filter="url(#shadow-q)">
+    <!-- Ponytail -->
+    <path d="M130 90 Q165 100 160 135 Q145 145 135 115 Z" fill="#4E342E"/>
+    <circle cx="135" cy="98" r="6" fill="#FF80AB"/>
+
+    <!-- Legs & Skirt -->
+    <rect x="82" y="195" width="14" height="28" rx="6" fill="#FFE0B2"/>
+    <rect x="104" y="195" width="14" height="28" rx="6" fill="#FFE0B2"/>
+    <ellipse cx="89" cy="225" rx="12" ry="6" fill="#FF8DA1"/>
+    <ellipse cx="111" cy="225" rx="12" ry="6" fill="#FF8DA1"/>
+
+    <!-- Dress -->
+    <path d="M60 140 Q100 130 140 140 L152 195 Q100 205 48 195 Z" fill="#FFE082"/>
+    <!-- Cardigan Top -->
+    <path d="M65 135 Q100 125 135 135 L140 170 Q100 175 60 170 Z" fill="#FF8DA1"/>
+    <path d="M92 135 L100 155 L108 135" fill="#FFE082"/>
+
+    <!-- Arms -->
+    <path d="M65 140 Q48 165 72 175" fill="none" stroke="#FFE0B2" stroke-width="11" stroke-linecap="round"/>
+    <path d="M135 140 Q152 165 128 175" fill="none" stroke="#FFE0B2" stroke-width="11" stroke-linecap="round"/>
+    <!-- Hands holding handbag -->
+    <rect x="90" y="168" width="20" height="16" rx="3" fill="#D7CCC8"/>
+    <path d="M95 168 Q100 160 105 168" fill="none" stroke="#8D6E63" stroke-width="2"/>
+
+    <!-- Head -->
+    <circle cx="100" cy="85" r="42" fill="#FFE0B2"/>
+    <!-- Hair back -->
+    <path d="M58 85 Q54 130 75 130 Q100 135 125 130 Q146 130 142 85 Z" fill="#4E342E"/>
+    <!-- Hair bangs -->
+    <path d="M60 80 Q80 50 100 50 Q120 50 140 80 Q115 65 100 75 Q85 65 60 80 Z" fill="#4E342E"/>
+    <circle cx="58" cy="88" r="8" fill="#FFE0B2"/>
+    <circle cx="142" cy="88" r="8" fill="#FFE0B2"/>
+
+    <!-- Hair accessory -->
+    <circle cx="70" cy="65" r="5" fill="#FFF59D"/>
+    <circle cx="70" cy="65" r="2.5" fill="#FFA726"/>
+
+    <!-- Blush -->
+    <ellipse cx="75" cy="97" rx="7" ry="4" fill="#FF8A80" opacity="0.6"/>
+    <ellipse cx="125" cy="97" rx="7" ry="4" fill="#FF8A80" opacity="0.6"/>
+
+    <!-- Eyes (Gentle, warm, smiling) -->
+    <ellipse cx="80" cy="88" rx="5" ry="6.5" fill="#3E2723"/>
+    <ellipse cx="120" cy="88" rx="5" ry="6.5" fill="#3E2723"/>
+    <circle cx="78.5" cy="86" r="2" fill="#FFFFFF"/>
+    <circle cx="118.5" cy="86" r="2" fill="#FFFFFF"/>
+
+    <!-- Eyebrows -->
+    <path d="M74 78 Q80 75 86 78" fill="none" stroke="#4E342E" stroke-width="2" stroke-linecap="round"/>
+    <path d="M114 78 Q120 75 126 78" fill="none" stroke="#4E342E" stroke-width="2" stroke-linecap="round"/>
+
+    <!-- Smile -->
+    <path d="M94 99 Q100 107 106 99" fill="none" stroke="#C2185B" stroke-width="2.5" stroke-linecap="round"/>
+  </g>
+</svg>
